@@ -53,7 +53,6 @@ modest (3.2.6) unstable; urgency=low
   * Fixes: NB#139674 Semicolon in To field should be ignored when sending a message
   * Fixes: NB#150632 Reply to a message: the message is received broken at the receipient's end 
   * Fixes: NB#145849 "Check names" should not be performed for contacts' email addresses
-  * Fixes: NB#150565 Modest crashes when attempt to download unsupported file.
   * Fixes: NB#150572 Message content is lost when read message is moved from Inbox to local folder
   * Fixes: NB#150923 Modest crashed when tapped on email address from contacts application
   * Fixes: NB#150963 Editor tool bar: Red color is selected by just open and cancel the color selector window
@@ -79,7 +78,6 @@ modest (3.2.4-1) unstable; urgency=low
   * Fixes: NB#125223  Account setup wizard: mandatory fields are not marked with an asterisk  
   * Fixes: NB#144815  Attachment is downloaded automatically when opening received email (Gmail IMAP)  
   * Fixes: NB#145704  POP "Leave messages on serve" unchecked - functionality doesn't work  
-  * Fixes: NB#150022  Email reply has empty "TO" field when "FROM" contained Russian letters  
 
  -- Moises Martinez <moises.martinez@nokia.com>  Sat, 12 Dec 2009 14:40:18 +0200
 
@@ -91,8 +89,6 @@ modest (3.2.4) unstable; urgency=low
   * Fixes: NB#145849 "Check names" should not be performed for contacts' email addresses
   * Fixes: NB#149093 Unneeded work-heavy restart of modest done every 30 minutes
   * Fixes: NB#149855 Ovi account: messages deleted from the device are not deleted from the server 
-  * Fixes: NB#148667 Text wrapping issues after multiple replies
- 
 
  -- Moises Martinez <moises.martinez@nokia.com>  Thu, 10 Dec 2009 18:36:35 +0200
 
