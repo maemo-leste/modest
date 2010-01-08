@@ -684,6 +684,12 @@ find_cid_image (TnyMsg *msg, const gchar *cid)
 }
 
 
+static void
+fetch_url_decode_to_stream_cb (TnyMimePart *self, gboolean cancelled, TnyStream *stream, GError *err, gpointer user_data)
+{
+	tny_stream_close (stream);
+}
+
 static gboolean
 on_fetch_url (GtkWidget *widget, const gchar *uri,
 	      TnyStream *stream, ModestWebkitMsgView *self)
@@ -725,8 +731,7 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 		}
 	}
 
-	tny_mime_part_decode_to_stream ((TnyMimePart*)part, stream, NULL);
-	tny_stream_close (stream);
+	tny_mime_part_decode_to_stream_async ((TnyMimePart*)part, stream, fetch_url_decode_to_stream_cb, NULL, NULL);
 	g_object_unref (G_OBJECT(part));
 	return TRUE;
 }
