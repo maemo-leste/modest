@@ -2,6 +2,7 @@ modest (3.2.9) unstable; urgency=low
 
   * Week 02, 2010 - first release candidate
   * 
+  * Fixes: NB#151499 Modest incorrectly disables singleton accounts
   * Fixes: NB#151895 Viewer view: Download external image button is active while forwarding the message
   * Fixes: NB#152038 Viewer view: Removed attachment received in active state with wrong icon when
   * 	 message is forwarded from local folder. 
