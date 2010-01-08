@@ -1690,7 +1690,7 @@ modest_account_mgr_singleton_protocol_exists (ModestAccountMgr *mgr,
 	gboolean found = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR (mgr), FALSE);
-	account_names = modest_account_mgr_account_names (mgr, TRUE);
+	account_names = modest_account_mgr_account_names (mgr, FALSE);
 
 	for (node = account_names; node != NULL; node = g_slist_next (node)) {
 		ModestProtocolType current_protocol;
