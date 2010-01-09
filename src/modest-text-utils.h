@@ -158,7 +158,7 @@
 #define _FM_NEW_FOLDER_DIALOG_OK _("Save")
 #define _FM_NEW_FOLDER_LOCATION _("Location")
 #define _FM_NEW_FOLDER_NAME _("Name")
-#define _FM_FOLDER_UP "stock_up"
+#define _FM_FOLDER_UP GTK_STOCK_GO_UP
 #define _FM_SIZE_KB _("%d KB")
 #define _FM_SIZE_1KB_99KB _("%d KB")
 #define _FM_SIZE_100KB_1MB _("%d KB")
