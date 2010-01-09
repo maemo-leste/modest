@@ -206,11 +206,7 @@ modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	if (MODEST_IS_FOLDER_WINDOW (win)) {
-#ifdef MODEST_TOOLKIT_HILDON2
 		dimmed = modest_ui_dimming_rules_on_folder_window_delete (win, user_data);
-#else
-		dimmed = FALSE;
-#endif
 	} else if (MODEST_IS_HEADER_WINDOW (win)) {
 
 		if (!dimmed)
@@ -559,17 +555,9 @@ modest_ui_dimming_rules_on_move_to (ModestWindow *win, gpointer user_data)
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	if (MODEST_IS_HEADER_WINDOW (win))
-#ifdef MODEST_TOOLKIT_HILDON2
 		dimmed = modest_ui_dimming_rules_on_header_window_move_to (win, user_data);
-#else
-	dimmed = TRUE;
-#endif
 	else if (MODEST_IS_FOLDER_WINDOW (win))
-#ifdef MODEST_TOOLKIT_HILDON2
 		dimmed = modest_ui_dimming_rules_on_folder_window_move_to (win, user_data);
-#else
-	dimmed = TRUE;
-#endif
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) 
 		 dimmed = modest_ui_dimming_rules_on_view_window_move_to (win, user_data);
 
@@ -1756,10 +1744,6 @@ _msgs_send_in_progress (void)
 	return found;
 }
 
-/*****************************************************************************/
-/********************** HILDON2 only dimming rules ***************************/
-/*****************************************************************************/
-
 gboolean 
 modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer user_data)
 {
@@ -1833,7 +1817,7 @@ modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer us
 	return dimmed;
 }
 
-gboolean 
+gboolean
 modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
@@ -1843,7 +1827,7 @@ modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer use
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
-	/* Check dimmed rule */	
+	/* Check dimmed rule */
 	dimmed = _transfer_mode_enabled (win);
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
