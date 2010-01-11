@@ -3088,6 +3088,10 @@ save_mime_part_to_file_connect_idle (SaveMimePartInfo *info)
 					     TNY_ACCOUNT (account),
 					     (ModestConnectedPerformer) save_mime_part_to_file_connect_handler,
 					     info);
+
+	if (account)
+		g_object_unref (account);
+
 	return FALSE;
 }
 
@@ -3100,8 +3104,34 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 
 	if (TNY_IS_CAMEL_BS_MIME_PART (pair->part) &&
 	    !tny_camel_bs_mime_part_is_fetched (TNY_CAMEL_BS_MIME_PART (pair->part))) {
-		g_idle_add ((GSourceFunc) save_mime_part_to_file_connect_idle, info);
-		return NULL;
+		gboolean check_online = TRUE;
+		ModestMsgViewWindowPrivate *priv = NULL;
+
+		/* Check if we really need to connect to save the mime part */
+		priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (info->window);
+		if (g_str_has_prefix (priv->msg_uid, "merge:")) {
+			check_online = FALSE;
+		} else {
+			TnyAccountStore *acc_store;
+			TnyAccount *account = NULL;
+
+			acc_store = (TnyAccountStore*) modest_runtime_get_account_store ();
+			account = tny_account_store_find_account (acc_store, priv->msg_uid);
+
+			if (account) {
+				if (tny_account_get_connection_status (account) ==
+				    TNY_CONNECTION_STATUS_CONNECTED)
+					check_online = FALSE;
+				g_object_unref (account);
+			} else {
+				check_online = !tny_device_is_online (tny_account_store_get_device (acc_store));
+			}
+		}
+
+		if (check_online) {
+			g_idle_add ((GSourceFunc) save_mime_part_to_file_connect_idle, info);
+			return NULL;
+		}
 	}
 
 	info->result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0644);
