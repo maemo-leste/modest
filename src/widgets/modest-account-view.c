@@ -823,7 +823,7 @@ update_display_mode (ModestAccountView *self)
 
 	/* Name column */
 	column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 1);
-	renderers = gtk_tree_view_column_get_cell_renderers (column);
+	renderers = gtk_cell_layout_get_cells (GTK_CELL_LAYOUT (column));
 	renderer = (GtkCellRenderer *) renderers->data;
 	g_object_set (renderer, 
 		      "align-set", TRUE,

@@ -662,7 +662,7 @@ on_response (GtkDialog *dialog,
 		hildon_banner_show_information (gtk_widget_get_parent (GTK_WIDGET (dialog)), 
 						NULL, _CS_FOLDER_ALREADY_EXISTS);
 		/* Select the text */
-		gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
+		gtk_editable_select_region (GTK_EDITABLE (entry), 0, -1);
 		gtk_widget_grab_focus (entry);
 		/* Do not close the dialog */
 		g_signal_stop_emission_by_name (dialog, "response");
@@ -1044,7 +1044,7 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 		gtk_entry_set_width_chars (GTK_ENTRY (entry),
 					   MAX (g_utf8_strlen (gtk_entry_get_text (GTK_ENTRY (entry)), -1),
 						g_utf8_strlen (_FM_NEW_FOLDER_NAME_STUB, -1)));
-		gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
+		gtk_editable_select_region (GTK_EDITABLE (entry), 0, -1);
 	}
 	
 	if (show_parent) {

@@ -1441,8 +1441,7 @@ set_hadjustment (ModestGtkhtmlMsgView *self, GtkAdjustment *hadj)
 	if (!hadj)
 		hadj = GTK_ADJUSTMENT (gtk_adjustment_new (0.0,0.0,0.0,0.0,0.0,0.0));
 	disconnect_hadjustment (self);
-	g_object_ref (G_OBJECT (hadj));
-	gtk_object_sink (GTK_OBJECT (hadj));
+	g_object_ref_sink (G_OBJECT (hadj));
 	priv->hadj = hadj;
 	set_hadjustment_values (self, &value_changed);
 
@@ -1470,8 +1469,7 @@ set_vadjustment (ModestGtkhtmlMsgView *self, GtkAdjustment *vadj)
 	if (!vadj)
 		vadj = (GtkAdjustment *) gtk_adjustment_new (0.0,0.0,0.0,0.0,0.0,0.0);
 	disconnect_vadjustment (self);
-	g_object_ref (G_OBJECT (vadj));
-	gtk_object_sink (GTK_OBJECT (vadj));
+	g_object_ref_sink (G_OBJECT (vadj));
 	priv->vadj = vadj;
 	set_vadjustment_values (self, &value_changed);
 

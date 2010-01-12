@@ -181,7 +181,8 @@ modest_progress_bar_init (ModestProgressBar *self)
 
 	/* Build GtkProgressBar */
 	adj = (GtkAdjustment *) gtk_adjustment_new (0, LOWER, UPPER, 0, 0, 0);
-	priv->progress_bar = gtk_progress_bar_new_with_adjustment (adj);		
+	priv->progress_bar = gtk_progress_bar_new ();
+	g_object_set (priv->progress_bar, "adjustment", adj, NULL);
 	req.width = 228;
 	req.height = 64;
 	gtk_progress_set_text_alignment (GTK_PROGRESS (priv->progress_bar), 0, 0.5);

@@ -29,7 +29,6 @@
 
 #include "modest-validating-entry.h"
 #include <modest-ui-constants.h>
-#include <gtk/gtksignal.h> /* For the gtk_signal_stop_emit_by_name() convenience function. */
 #include <string.h> /* For strlen(). */
 
 /* Include config.h so that _() works: */
@@ -209,12 +208,10 @@ on_insert_text(GtkEditable *editable,
 	}
 	
 	if(!allow) {
-		/* The signal documentation says 
-		 * "by connecting to this signal and then stopping the signal with 
-		 * gtk_signal_emit_stop(), it is possible to modify the inserted text, 
-		 * or prevent it from being inserted entirely."
-		 */
-		 gtk_signal_emit_stop_by_name (GTK_OBJECT (self), "insert-text");
+		/* The signal documentation says: */
+		/*   "by connecting to this signal and then stopping the signal with */
+		/*   g_signal_stop_emission(), it is possible to modify the inserted text, */
+		g_signal_stop_emission_by_name (self, "insert-text");
 	}
 
 } 

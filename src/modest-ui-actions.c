@@ -265,7 +265,7 @@ modest_ui_actions_on_about (GtkAction *action, ModestWindow *win)
 		NULL
 	};
 	about = gtk_about_dialog_new ();
-	gtk_about_dialog_set_name (GTK_ABOUT_DIALOG(about), PACKAGE_NAME);
+	gtk_about_dialog_set_program_name (GTK_ABOUT_DIALOG(about), PACKAGE_NAME);
 	gtk_about_dialog_set_version (GTK_ABOUT_DIALOG(about),PACKAGE_VERSION);
 	gtk_about_dialog_set_copyright (GTK_ABOUT_DIALOG(about),
 					_("Copyright (c) 2006, Nokia Corporation\n"
