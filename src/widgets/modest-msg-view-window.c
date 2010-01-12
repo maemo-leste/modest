@@ -3337,6 +3337,28 @@ save_attachments_response (GtkDialog *dialog,
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
+static gboolean
+msg_is_attachment (TnyList *mime_parts)
+{
+	TnyIterator *iter;
+	gboolean retval = FALSE;
+
+	if (tny_list_get_length (mime_parts) > 1)
+		return FALSE;
+
+	iter = tny_list_create_iterator (mime_parts);
+	if (iter) {
+		TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
+		if (part) {
+			if (TNY_IS_MSG (part))
+				retval = TRUE;
+			g_object_unref (part);
+		}
+		g_object_unref (iter);
+	}
+	return retval;
+}
+
 void
 modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, 
 					 TnyList *mime_parts)
@@ -3352,13 +3374,34 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	if (mime_parts == NULL) {
+		gboolean allow_msgs = FALSE;
+
 		/* In Hildon 2.2 save and delete operate over all the attachments as there's no
 		 * selection available */
 		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		if (mime_parts && !modest_toolkit_utils_select_attachments (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (window))), mime_parts, FALSE)) {
+
+		/* Check if the message is composed by an unique MIME
+		   part whose content disposition is attachment. There
+		   could be messages like this:
+
+		   Date: Tue, 12 Jan 2010 20:40:59 +0000
+		   From: <sender@example.org>
+		   To: <recipient@example.org>
+		   Subject: no body
+		   Content-Type: image/jpeg
+		   Content-Disposition: attachment; filename="bug7718.jpeg"
+
+		   whose unique MIME part is the message itself whose
+		   content disposition is attachment
+		*/
+		if (mime_parts && msg_is_attachment (mime_parts))
+			allow_msgs = TRUE;
+
+		if (mime_parts && !modest_toolkit_utils_select_attachments (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (window))), mime_parts, allow_msgs)) {
 			g_object_unref (mime_parts);
 			return;
 		}
+
 		if (mime_parts == NULL || tny_list_get_length (mime_parts) == 0) {
 			if (mime_parts) {
 				g_object_unref (mime_parts);
