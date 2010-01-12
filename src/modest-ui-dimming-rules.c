@@ -420,11 +420,14 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		 * or when viewing a search result.
 		 */
 		if (!dimmed) {
-			if (!modest_msg_view_window_is_search_result (MODEST_MSG_VIEW_WINDOW(win))) {
-				dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
- 				if (dimmed) {
-					modest_dimming_rule_set_notification (rule, _CS_UNABLE_TO_DELETE);
-				}
+			TnyMsg *top_msg = NULL;
+			top_msg = modest_msg_view_window_get_top_message ((ModestMsgViewWindow *) win);
+			if (top_msg != NULL) {
+				g_object_unref (top_msg);
+				dimmed = TRUE;
+			}
+			if (dimmed) {
+				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
 			}
 		}
 	}
