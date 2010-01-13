@@ -87,19 +87,10 @@ on_security_changed (GtkWidget *widget,
 	is_secure = modest_protocol_registry_protocol_type_has_tag (proto_registry, proto_type, 
 								    MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS);
 
-	if (MODEST_SECURITY_OPTIONS_VIEW (self)->type == MODEST_SECURITY_OPTIONS_INCOMING) {
-		/* Activate and dim checkbutton if it's secure */
-		hildon_check_button_set_active (HILDON_CHECK_BUTTON (ppriv->auth_view), 
-						is_secure);
-		gtk_widget_set_sensitive (ppriv->auth_view, !is_secure);
-	} else {
-
-	}
-
 	if (ppriv->full) {
 		gint port_number = 
 			modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (ppriv->security_view));
-		
+
 		if(port_number) {
 			modest_number_editor_set_value (MODEST_NUMBER_EDITOR (ppriv->port_view), 
 							port_number);
@@ -129,7 +120,7 @@ on_auth_changed (GtkWidget *widget,
 	/* Get captions, well dimm the whole widget */
 	user_caption = gtk_widget_get_parent (ppriv->user_entry);
 	pwd_caption = gtk_widget_get_parent (ppriv->pwd_entry);
-	
+
 	/* Enable / disable */
 	gtk_widget_set_sensitive (user_caption, secureauth_used);
 	gtk_widget_set_sensitive (pwd_caption, secureauth_used);
