@@ -1025,7 +1025,7 @@ modest_text_utils_quote_body (GString *output, const gchar *text,
 
 	const gchar *iter;
 	gsize len;
-	gint indent, breakpoint, rem_indent = 0;
+	gint indent = 0, breakpoint, rem_indent = 0;
 	GString *l, *remaining;
 	gchar *forced_wrap_append;
 
