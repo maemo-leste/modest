@@ -198,24 +198,34 @@ _modest_global_settings_dialog_get_update_interval (void)
 {
 	GSList *list = NULL;
 
-	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_5_MIN, 
-				 _("mcen_va_options_updateinterval_5min"), 
+	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_5_MIN,
+				 _("mcen_va_options_updateinterval_5min"),
 				 &list);
-	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_10_MIN, 
-				 _("mcen_va_options_updateinterval_10min"), 
+	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_10_MIN,
+				 _("mcen_va_options_updateinteval_10min"),
 				 &list);
-	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_15_MIN, 
-				 _("mcen_va_options_updateinterval_15min"), 
+	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_15_MIN,
+				 _("mcen_va_options_updateinterval_15min"),
 				 &list);
-	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_30_MIN, 
-				 _("mcen_va_options_updateinterval_30min"), 
+	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_30_MIN,
+				 _("mcen_va_options_updateinterval_30min"),
 				 &list);
-	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_1_HOUR, 
-				 _("mcen_va_options_updateinterval_1h"), 
+	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_1_HOUR,
+				 _("mcen_va_options_updateinterval_1h"),
 				 &list);
-	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_2_HOUR, 
-				 _("mcen_va_options_updateinterval_2h"), 
+	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_2_HOUR,
+				 _("mcen_va_options_updateinterval_2h"),
 				 &list);
+	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_4_HOUR,
+				 _("mcen_va_options_updateinterval_4h"),
+				 &list);
+	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_8_HOUR,
+				 _("mcen_va_options_updateinterval_8h"),
+				 &list);
+	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_24_HOUR,
+				 _("mcen_va_options_updateinterval_24h"),
+				 &list);
+
 
 	return (ModestPairList *) g_slist_reverse (list);
 }
