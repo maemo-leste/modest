@@ -941,6 +941,9 @@ get_breakpoint_utf8 (const gchar * s, gint indent, const gint limit)
 	const gchar *pos, *last;
 	gunichar *uni;
 
+	if (2*indent >= limit)
+		return strlen (s);
+
 	indent = indent < 0 ? abs (indent) - 1 : indent;
 
 	last = NULL;
@@ -1024,15 +1027,42 @@ modest_text_utils_quote_body (GString *output, const gchar *text,
 	gsize len;
 	gint indent, breakpoint, rem_indent = 0;
 	GString *l, *remaining;
+	gchar *forced_wrap_append;
 
 	iter = text;
 	len = strlen(text);
 	remaining = g_string_new ("");
+	forced_wrap_append = NULL;
 	do {
-		l = get_next_line (text, len, iter);
-		iter = iter + l->len + 1;
-		indent = get_indent_level (l->str);
-		unquote_line (l, quote_symbol);
+
+		if (forced_wrap_append) {
+			gint next_line_indent;
+			gint l_len_with_indent;
+
+			g_string_erase (remaining, 0, -1);
+			next_line_indent = get_indent_level (iter);
+			l = get_next_line (text, len, iter);
+			l_len_with_indent = l->len;
+			unquote_line (l, quote_symbol);
+			if ((l->str && l->str[0] == '\0') || (next_line_indent != indent)) {
+				g_string_free (l, TRUE);
+				l = g_string_new (forced_wrap_append);
+			} else {
+				gunichar first_in_l;
+				iter = iter + l_len_with_indent + 1;
+				first_in_l = g_utf8_get_char_validated (l->str, l->len);
+				if (!g_unichar_isspace (first_in_l)) 
+					l = g_string_prepend (l, " ");
+				l = g_string_prepend (l, forced_wrap_append);
+			}
+			g_free (forced_wrap_append);
+			forced_wrap_append = NULL;
+		} else {
+			l = get_next_line (text, len, iter);
+			iter = iter + l->len + 1;
+			indent = get_indent_level (l->str);
+			unquote_line (l, quote_symbol);
+		}
 
 		if (remaining->len) {
 			if (l->len && indent == rem_indent) {
@@ -1045,8 +1075,14 @@ modest_text_utils_quote_body (GString *output, const gchar *text,
 						get_breakpoint (remaining->str,
 								rem_indent,
 								limit);
-					append_quoted (output, quote_symbol, rem_indent,
-						       remaining, breakpoint);
+					if (breakpoint < remaining->len) {
+					        g_free (forced_wrap_append);
+						forced_wrap_append = g_strdup (remaining->str + breakpoint);
+					} else {
+						if (!forced_wrap_append)
+							append_quoted (output, quote_symbol, rem_indent,
+								       remaining, breakpoint);
+					}
 					g_string_erase (remaining, 0,
 							breakpoint);
 					remaining_first = g_utf8_get_char_validated (remaining->str, remaining->len);
@@ -1065,9 +1101,13 @@ modest_text_utils_quote_body (GString *output, const gchar *text,
 			g_string_erase (remaining, 0, 1);
 		}
 		rem_indent = indent;
+		if (remaining->len > 0) {
+			g_free (forced_wrap_append);
+			forced_wrap_append = g_strdup (remaining->str);
+		}
 		append_quoted (output, quote_symbol, indent, l, breakpoint);
 		g_string_free (l, TRUE);
-	} while ((iter < text + len) || (remaining->str[0]));
+	} while ((iter < text + len) || (remaining->str[0]) || forced_wrap_append);
 
 	return output;
 }

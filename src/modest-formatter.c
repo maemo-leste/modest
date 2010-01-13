@@ -80,6 +80,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	ModestFormatterPrivate *priv;
 	gint total, lines, total_lines, line_chars;
 	gboolean is_html, first_time;
+	gboolean forced_wrap;
 
 	buf = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM (tny_gtk_text_buffer_stream_new (buf));
@@ -98,6 +99,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	line_chars = 0;
 	lines = 0;
 
+	forced_wrap = FALSE;
 	first_time = TRUE;
 	while (!tny_stream_is_eos (input_stream)) {
 		gchar buffer [128];
@@ -116,14 +118,18 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 		offset = buffer;
 		while (offset < buffer + n_read) {
 
-			if (*offset == '\n') {
+			if (*offset == '\n' && !(forced_wrap && offset[1] == '\n')) {
 				total_lines ++;
 				line_chars = 0;
 			} else {
+				if (*offset == '\n') {
+					forced_wrap = FALSE;
+				}
 				line_chars ++;
 				if (line_chars >= LINE_WRAP) {
 					total_lines ++;
 					line_chars = 0;
+					forced_wrap = TRUE;
 				}
 			}
 			if (total_lines >= MAX_BODY_LINES)
