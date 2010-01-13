@@ -83,10 +83,30 @@ modest_tny_mime_part_is_attachment_for_modest (TnyMimePart *part)
 	gboolean has_content_disp_name = FALSE;
 
 	g_return_val_if_fail (part && TNY_IS_MIME_PART(part), FALSE);
-	
-	/* if tinymail thinks it's an attachment, it definitely is */
-	if (tny_mime_part_is_attachment (part) || tny_mime_part_is_purged (part))
+
+	/* purged attachments were attachments in the past, so they're
+	 * still attachments */
+	if (tny_mime_part_is_purged (part))
 		return TRUE; 
+	
+	/* if tinymail thinks it's an attachment, it is. One exception: if it's
+	 * a multipart and it's not a message/rfc822 it cannot be an attahcment */
+	if (tny_mime_part_is_attachment (part)) {
+		if (!TNY_IS_MSG (part)) {
+			const gchar *content_type;
+			gchar *down_content_type;
+			gboolean is_attachment;
+
+			content_type = tny_mime_part_get_content_type (part);
+			down_content_type = g_ascii_strdown (content_type, -1);
+
+			is_attachment = !g_str_has_prefix (down_content_type, "multipart/");
+			g_free (down_content_type);
+			return is_attachment;
+		} else {
+			return TRUE;
+		}
+	}
 
 	/* if the mime part is a message itself (ie. embedded), it's an attachment */
 	if (TNY_IS_MSG (part))
