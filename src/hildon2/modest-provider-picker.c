@@ -398,9 +398,9 @@ modest_provider_picker_refresh (ModestProviderPicker *self)
 					continue;
 
 				do {
-					const gchar *id;
-					gtk_tree_model_get (priv->model, &iter, 
-							    MODEL_COL_ID, id,
+					gchar *id = NULL;
+					gtk_tree_model_get (priv->model, &iter,
+							    MODEL_COL_ID, &id,
 							    -1);
 
 					if (g_strcmp0 (id, modest_protocol_get_name (proto)) == 0) {
