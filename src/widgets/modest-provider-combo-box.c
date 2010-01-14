@@ -55,6 +55,7 @@ typedef struct _ModestProviderComboBoxPrivate ModestProviderComboBoxPrivate;
 struct _ModestProviderComboBoxPrivate
 {
 	GtkTreeModel *model;
+	GHashTable *enabled_plugin_ids;
 };
 
 static void
@@ -91,6 +92,8 @@ modest_provider_combo_box_finalize (GObject *object)
 
 	g_object_unref (G_OBJECT (priv->model));
 
+	g_hash_table_destroy (priv->enabled_plugin_ids);
+	
 	G_OBJECT_CLASS (modest_provider_combo_box_parent_class)->finalize (object);
 }
 
@@ -152,6 +155,8 @@ modest_provider_combo_box_init (ModestProviderComboBox *self)
 	 * This must match our MODEL_COLS enum constants.
 	 */
 	priv->model = GTK_TREE_MODEL (gtk_list_store_new (3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT));
+	priv->enabled_plugin_ids = g_hash_table_new_full (g_str_hash, g_str_equal,
+							  g_free, NULL);
 
 	/* Setup the combo box: */
 	GtkComboBox *combobox = GTK_COMBO_BOX (self);
@@ -207,7 +212,9 @@ modest_provider_combo_box_fill (ModestProviderComboBox *combobox,
 	iter_provider_names = provider_names;
 	iter_provider_ids = provider_ids;
 
-	while(iter_provider_names && *iter_provider_names && iter_provider_ids && *iter_provider_ids) {
+	g_hash_table_remove_all (priv->enabled_plugin_ids);
+
+ 	while(iter_provider_names && *iter_provider_names && iter_provider_ids && *iter_provider_ids) {
 		const gchar* provider_name = *iter_provider_names;
 		const gchar* provider_id = *iter_provider_ids;
 
@@ -225,7 +232,7 @@ modest_provider_combo_box_fill (ModestProviderComboBox *combobox,
 					   MODEL_COL_NAME, provider_name, 
 					   MODEL_COL_ID_TYPE, MODEST_PROVIDER_COMBO_BOX_ID_PROVIDER,
 					   -1);
-			
+	
 			provider_ids_used_already = g_slist_prepend (
 				provider_ids_used_already, (gpointer)g_strdup (provider_id));
 		}
@@ -265,6 +272,7 @@ modest_provider_combo_box_fill (ModestProviderComboBox *combobox,
 						    MODEL_COL_NAME, name,
 						    MODEL_COL_ID_TYPE, MODEST_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL,
 						    -1);
+				g_hash_table_insert (priv->enabled_plugin_ids, g_strdup (modest_protocol_get_name (proto)), NULL);
 			}
 		}
 		tmp = g_slist_next (tmp);
@@ -285,6 +293,88 @@ modest_provider_combo_box_fill (ModestProviderComboBox *combobox,
 	
 	g_slist_foreach (provider_ids_used_already, (GFunc)g_free, NULL);
 	g_slist_free (provider_ids_used_already);
+}
+
+void
+modest_provider_combo_box_refresh (ModestProviderComboBox *self)
+{	
+	ModestProviderComboBoxPrivate *priv;
+	GtkListStore *liststore;	
+	GSList *provider_protos, *tmp;
+	ModestProtocolRegistry *registry;
+
+	g_return_if_fail (MODEST_IS_PROVIDER_COMBO_BOX(self));
+
+	priv = MODEST_PROVIDER_COMBO_BOX_GET_PRIVATE (self);
+	liststore = GTK_LIST_STORE (priv->model);
+	/* Add the provider protocols */
+	registry = modest_runtime_get_protocol_registry ();
+	provider_protos = modest_protocol_registry_get_by_tag (registry, 
+							       MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS);
+	for (tmp = provider_protos; tmp != NULL; tmp = g_slist_next (tmp)) {
+
+		GtkTreeIter iter;
+		ModestProtocol *proto = MODEST_PROTOCOL (tmp->data);
+		const gchar *name = modest_protocol_get_display_name (proto);
+		gboolean provider_exists;
+
+		/* only add store protocols, no need to duplicate them */
+		if (!modest_protocol_registry_protocol_type_has_tag (registry, 
+								     modest_protocol_get_type_id (proto),
+								     MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS))
+			continue;
+		  
+		if (modest_protocol_registry_protocol_type_has_tag 
+		    (registry,
+		     modest_protocol_get_type_id (proto),
+		     MODEST_PROTOCOL_REGISTRY_SINGLETON_PROVIDER_PROTOCOLS)) {
+			/* Check if there's already an account configured with this account type */
+			if (modest_account_mgr_singleton_protocol_exists (modest_runtime_get_account_mgr (),
+									  modest_protocol_get_type_id (proto)))
+				continue;
+		}
+
+		provider_exists = g_hash_table_lookup_extended (priv->enabled_plugin_ids, modest_protocol_get_name (proto),
+								NULL, NULL);
+
+		if (MODEST_ACCOUNT_PROTOCOL (proto) && 
+		    !modest_account_protocol_is_supported (MODEST_ACCOUNT_PROTOCOL (proto))) {
+
+			if (provider_exists) {
+				GtkTreeIter iter;
+
+				if (!gtk_tree_model_get_iter_first (priv->model, &iter))
+					continue;
+
+				do {
+					const gchar *id;
+					gtk_tree_model_get (priv->model, &iter, 
+							    MODEL_COL_ID, id,
+							    -1);
+
+					if (g_strcmp0 (id, modest_protocol_get_name (proto)) == 0) {
+						gtk_list_store_remove (GTK_LIST_STORE (priv->model), &iter);
+						break;
+					}
+
+				} while (gtk_tree_model_iter_next (priv->model, &iter));
+			}
+
+			continue;
+		}
+
+		if (!provider_exists) {
+			gtk_list_store_append (liststore, &iter);
+			gtk_list_store_set (liststore, &iter,
+					    MODEL_COL_ID, modest_protocol_get_name (proto),
+					    MODEL_COL_NAME, name,
+					    MODEL_COL_ID_TYPE, MODEST_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL,
+					    -1);
+			g_hash_table_insert (priv->enabled_plugin_ids, g_strdup (modest_protocol_get_name (proto)), NULL);
+		}
+	}
+	g_slist_free (provider_protos);
+	
 }
 
 /**

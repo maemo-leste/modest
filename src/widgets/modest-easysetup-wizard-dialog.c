@@ -141,6 +141,7 @@ struct _ModestEasysetupWizardDialogPrivate
 
 	GtkWidget *page_complete_customsetup;
 
+	gint last_mcc;
 	ModestProtocolType last_plugin_protocol_selected;
 	GSList *missing_data_signals;
 };
@@ -460,7 +461,12 @@ on_account_country_selector_changed (GtkWidget *widget, gpointer user_data)
 	/* Fill the providers selector, based on the selected country: */
 	if (priv->presets != NULL) {
 		gint mcc = modest_country_selector_get_active_country_mcc (priv->account_country_selector);
-		modest_provider_selector_fill (priv->account_serviceprovider_selector, priv->presets, mcc);
+		if (priv->last_mcc != mcc) {
+			modest_provider_selector_fill (priv->account_serviceprovider_selector, priv->presets, mcc);
+		} else {
+			modest_provider_selector_refresh (priv->account_serviceprovider_selector);
+		}
+		priv->last_mcc = mcc;
 	}
 }
 
@@ -1398,9 +1404,13 @@ fill_providers (ModestEasysetupWizardDialog *self)
 
 		modest_country_selector_set_active_country_locale (priv->account_country_selector);
 		mcc = modest_country_selector_get_active_country_mcc (priv->account_country_selector);
-		modest_provider_selector_fill (
-			priv->account_serviceprovider_selector,
-			priv->presets, mcc);
+		if (priv->last_mcc != mcc) {
+			modest_provider_selector_fill (priv->account_serviceprovider_selector,
+						       priv->presets, mcc);
+		} else {
+			modest_provider_selector_refresh (priv->account_serviceprovider_selector);
+		}
+		priv->last_mcc = mcc;
 		/* connect to providers picker's changed signal, so we can fill the email address: */
 		if (GTK_IS_COMBO_BOX (priv->account_serviceprovider_selector)) {
 			g_signal_connect (priv->account_serviceprovider_selector,
@@ -1584,6 +1594,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	priv->page_complete_easysetup = NULL;
 	priv->page_complete_customsetup = NULL;
 	priv->last_plugin_protocol_selected = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
+	priv->last_mcc = -1;
 	priv->missing_data_signals = NULL;
 
 	/* Add the common pages */

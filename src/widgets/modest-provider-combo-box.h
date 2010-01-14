@@ -87,6 +87,8 @@ ModestProviderComboBox* modest_provider_combo_box_new (void);
 void modest_provider_combo_box_fill (ModestProviderComboBox *combobox, ModestPresets *presets,
 				     gint mcc);
 
+void modest_provider_combo_box_refresh (ModestProviderComboBox *combobox);
+
 gchar* modest_provider_combo_box_get_active_provider_id (ModestProviderComboBox *combobox);
 
 gchar* modest_provider_combo_box_get_active_provider_label (ModestProviderComboBox *combobox);

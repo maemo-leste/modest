@@ -537,6 +537,16 @@ modest_provider_selector_fill (GtkWidget *widget,
 #endif
 }
 
+void
+modest_provider_selector_refresh (GtkWidget *widget)
+{
+#ifdef USE_PROVIDER_COMBOBOX
+	modest_provider_combo_box_refresh (MODEST_PROVIDER_COMBO_BOX (widget));
+#else
+	modest_provider_picker_refresh (MODEST_PROVIDER_PICKER (widget));
+#endif
+}
+
 gchar *
 modest_provider_selector_get_active_provider_id (GtkWidget *widget)
 {

@@ -184,6 +184,9 @@ typedef enum {
 void
 modest_provider_selector_fill (GtkWidget *widget, ModestPresets *presets, gint mcc);
 
+void
+modest_provider_selector_refresh (GtkWidget *widget);
+
 gchar *
 modest_provider_selector_get_active_provider_id (GtkWidget *widget);
 
