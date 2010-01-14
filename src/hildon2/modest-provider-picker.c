@@ -343,7 +343,7 @@ modest_provider_picker_refresh (ModestProviderPicker *self)
 {	
 	ModestProviderPickerPrivate *priv;
 	GtkListStore *liststore;	
-	GSList *provider_ids_used_already = NULL, *provider_protos, *tmp;
+	GSList *provider_protos, *tmp;
 	ModestProtocolRegistry *registry;
 
 	g_return_if_fail (MODEST_IS_PROVIDER_PICKER(self));
