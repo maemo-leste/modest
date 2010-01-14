@@ -425,9 +425,6 @@ modest_provider_picker_refresh (ModestProviderPicker *self)
 	}
 	g_slist_free (provider_protos);
 	
-	g_slist_foreach (provider_ids_used_already, (GFunc)g_free, NULL);
-	g_slist_free (provider_ids_used_already);
-
 }
 
 /**
