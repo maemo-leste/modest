@@ -347,9 +347,9 @@ modest_provider_combo_box_refresh (ModestProviderComboBox *self)
 					continue;
 
 				do {
-					const gchar *id;
+					gchar *id = NULL;
 					gtk_tree_model_get (priv->model, &iter, 
-							    MODEL_COL_ID, id,
+							    MODEL_COL_ID, &id,
 							    -1);
 
 					if (g_strcmp0 (id, modest_protocol_get_name (proto)) == 0) {
