@@ -5177,8 +5177,8 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 	}
 
 	/* Create and run the dialog */
-	dialog = create_move_to_dialog (win, NULL, list_to_move);
 	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+	dialog = create_move_to_dialog (toplevel, NULL, list_to_move);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 				     GTK_WINDOW (dialog),
 				     toplevel);
