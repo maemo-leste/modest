@@ -1,3 +1,16 @@
+modest (3.2.10) unstable; urgency=low
+
+  * Week 03, 2010 - first release candidate
+  * 
+  * Fixes: NB#151763  Workaround in BS support for Gmail problems assigning part IDs
+  * Fixes: NB#125155  "Delete" toolbar icon should not be dimmed when viewer is opened from a new mail notification
+  * Fixes: NB#148667  Better quote/wrap in reply algorithm
+  * Fixes: NB#153035  unable to save attachment from e-mail without e-mail body
+  * Fixes: NB#147994  add 4,8 and 24 hour update intervals
+  * Fixed bodystructure parsing of headers.
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 14 Jan 2010 13:22:37 +0200
+
 modest (3.2.9) unstable; urgency=low
 
   * Week 02, 2010 - first release candidate
