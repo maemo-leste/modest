@@ -88,6 +88,8 @@ ModestProviderPicker* modest_provider_picker_new (HildonSizeType size,
 void modest_provider_picker_fill (ModestProviderPicker *combobox, ModestPresets *presets,
 				  gint mcc);
 
+void modest_provider_picker_refresh (ModestProviderPicker *combobox);
+
 gchar* modest_provider_picker_get_active_provider_id (ModestProviderPicker *combobox);
 
 ModestProviderPickerIdType modest_provider_picker_get_active_id_type (ModestProviderPicker *combobox);

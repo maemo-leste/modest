@@ -142,6 +142,7 @@ struct _ModestEasysetupWizardDialogPrivate
 
 	GtkWidget *page_complete_customsetup;
 
+	gint last_mcc;
 	ModestProtocolType last_plugin_protocol_selected;
 	GSList *missing_data_signals;
 };
@@ -460,8 +461,13 @@ on_account_country_selector_changed (HildonTouchSelector *widget, gpointer user_
 	if (priv->presets != NULL) {
 		gint mcc = modest_country_picker_get_active_country_mcc (
 			MODEST_COUNTRY_PICKER (priv->account_country_picker));
-		modest_provider_picker_fill (
-			MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker), priv->presets, mcc);
+		if (priv->last_mcc != mcc) {
+			modest_provider_picker_fill (
+				MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker), priv->presets, mcc);
+		} else {
+			modest_provider_picker_refresh (MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+		}
+		priv->last_mcc = mcc;
 	}
 }
 
@@ -1308,9 +1314,15 @@ fill_providers (ModestEasysetupWizardDialog *self)
 			MODEST_COUNTRY_PICKER (priv->account_country_picker));
 		mcc = modest_country_picker_get_active_country_mcc (
 		        MODEST_COUNTRY_PICKER (priv->account_country_picker));
-		modest_provider_picker_fill (
-			MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker),
-			priv->presets, mcc);
+		if (priv->last_mcc != mcc) {
+			modest_provider_picker_fill (
+				MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker),
+				priv->presets, mcc);
+		} else {
+			modest_provider_picker_refresh (
+				MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+		}
+		priv->last_mcc = mcc;
 		/* connect to providers picker's changed signal, so we can fill the email address: */
 		g_signal_connect (G_OBJECT (hildon_picker_button_get_selector
 					    (HILDON_PICKER_BUTTON (priv->account_serviceprovider_picker))),
@@ -1487,6 +1499,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	priv->page_complete_easysetup = NULL;
 	priv->page_complete_customsetup = NULL;
 	priv->last_plugin_protocol_selected = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
+	priv->last_mcc = -1;
 	priv->missing_data_signals = NULL;
 
 	/* Add the common pages */
