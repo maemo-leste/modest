@@ -1,3 +1,48 @@
+modest (3.90.3) unstable; urgency=low
+
+  * Add applications .desktop file for gtk
+  * Properly detect inline images in multipart/related messages
+  * Do not reload messages from bodystruct
+  * Also fetch asyncrhonously embedded images in webkit.
+  * Use the ModestWindow to create the Move to dialog instead of ModestShell
+  * Fixed dimming rules for moving/deleting messages
+  * Show the proper UP icon in the "Move to" dialog
+  * Fixes an infinite loop while saving BS mime parts
+  * Do allow to remove messages when opened from notifications
+  * Include in the "Save attachments" dialog the messages that only contain 1 mime
+  *    part and whose content disposition is attachment
+  * Fix detection of what an attachment is. Attachment is never a multipart that's
+  *    not a TnyMsg, because in this case it would never be an attachment even if
+  *    disposition lies and tells it is.
+  * Do not disable editing authentication method checkbox if the connection
+  *    protocol is secure
+  * Added 4h, 8h and 24h update interval periods
+  * Some build fixes
+  * Remove some deprecated GTK+ symbols
+  * Fixes: NB#139674  Do ignore empty recipients when checking names
+  * Fixes: NB#145849  Do not search into emails when more than 1 recipient is
+  *    resolved
+  * Fixes: NB#148667  Better quote+wrap algorithm. Fixes NB#148667.
+  * Fixes: NB#151298  Automatic add to contacts not working if "Check names" is
+  *    performed
+  * Fixes: NB#151328  Do not allow to send messages to empty recipients
+  * Fixes: NB#151343  Show remote folders in "Move to" dialog when viewing
+  *    archive folder
+  * Fixes: NB#151499  On checking if singleton accounts exist, take into account
+  *    if they're enabled.
+  * Fixes: NB#151640  Properly handle download of parts for forwarding subpart
+  *    messages.
+  * Fixes: NB#151892  Retrieve image attachments asynchronously to avoid hanging
+  *    UI
+  * Fixes: NB#151895  Dim fetch images in msg view while downloading a message.
+  * Fixes: NB#152038  Don't add purged attachments on creating reply or forward
+  *    messages
+  * Fixes: NB#152716  In wizard, if country picker change, only refresh the
+  *    plugins entries in provider picker if the MCC hasn't changed. This
+  *    should decrease the lag after cancelling the plugin protocols check.
+
+ -- Jose Dapena Paz <jdapena@igalia.com>  Thu, 14 Jan 2010 15:51:35 +0100
+
 modest (3.90.2) unstable; urgency=low
 
   * Removed gnome folder, and added new gtk folder. Now gtk port will be more
