@@ -471,7 +471,7 @@ modest_platform_connect_and_perform_if_network_folderstore (GtkWindow *parent_wi
 
 
 void 
-modest_platform_remove_new_mail_notifications (gboolean only_visuals)
+modest_platform_remove_new_mail_notifications (gboolean only_visuals, const gchar *acc_name)
 {
 	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 }

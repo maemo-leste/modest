@@ -436,6 +436,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	HildonWindowStack *stack;
 	gboolean nested_msg = FALSE;
 	ModestWindow *current_top;
+	const gchar *acc_name;
 
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
 	g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
@@ -580,6 +581,15 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	handler_id = g_malloc0 (sizeof (gint));
 	*handler_id = g_signal_connect (window, "delete-event", G_CALLBACK (on_window_destroy), self);
 	g_hash_table_insert (priv->destroy_handlers, window, handler_id);
+
+	if (!MODEST_IS_MSG_EDIT_WINDOW (window) &&
+	    !MODEST_IS_ACCOUNTS_WINDOW (window)) {
+		acc_name = modest_window_get_active_account (window);
+
+		if (acc_name) {
+			modest_platform_remove_new_mail_notifications (FALSE, acc_name);
+		}
+	}
 
 	/* Show toolbar always */
 	modest_window_show_toolbar (window, TRUE);
@@ -1058,7 +1068,7 @@ osso_display_event_cb (osso_display_state_t state,
 
 	/* Stop blinking if the screen becomes on */
 	if (priv->display_state == OSSO_DISPLAY_ON)
-		modest_platform_remove_new_mail_notifications (TRUE);
+		modest_platform_remove_new_mail_notifications (TRUE, NULL);
 }
 
 static gboolean

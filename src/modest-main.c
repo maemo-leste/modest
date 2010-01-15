@@ -220,8 +220,6 @@ main (int argc, char *argv[])
 			retval = 1;
 			goto cleanup;
 		}
-		/* Remove new mail notifications if exist */
-		modest_platform_remove_new_mail_notifications (FALSE);
 	}
 
 	gtk_main ();

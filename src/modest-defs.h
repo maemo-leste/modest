@@ -248,6 +248,7 @@ const gchar *modest_defs_namespace (const gchar *string);
 
 /* Notification ids */
 #define MODEST_CONF_NOTIFICATION_IDS (modest_defs_namespace ("/notification_ids"))      /* list of ints */
+#define MODEST_ACCOUNT_NOTIFICATION_IDS "notification_ids"      /* list of ints */
 
 #ifdef MODEST_TOOLKIT_HILDON2
 #define MODEST_EXAMPLE_EMAIL_ADDRESS _("mcen_va_example_email_address")

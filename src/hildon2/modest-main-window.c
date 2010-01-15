@@ -1003,7 +1003,7 @@ on_hildon_program_is_topmost_notify(GObject *self,
 		hildon_program_set_can_hibernate (app, FALSE);
 
 		/* Remove new mail visual notifications */
-		modest_platform_remove_new_mail_notifications (TRUE);
+		modest_platform_remove_new_mail_notifications (TRUE, NULL);
 	} else {
 		/* Allow hibernation if the program has gone to the background: */
 		
@@ -1081,7 +1081,7 @@ osso_display_event_cb (osso_display_state_t state,
 
 	/* Stop blinking if the screen becomes on */
 	if (priv->display_state == OSSO_DISPLAY_ON)
-		modest_platform_remove_new_mail_notifications (TRUE);
+		modest_platform_remove_new_mail_notifications (TRUE, NULL);
 }
 
 ModestWindow *

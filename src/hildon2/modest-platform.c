@@ -1609,6 +1609,7 @@ modest_platform_on_new_headers_received (GList *URI_list,
 	gchar *from;
 	TnyAccountStore *acc_store;
 	TnyAccount *account;
+	gchar *acc_name;
 
 	data = (ModestMsgNotificationData *) URI_list->data;
 
@@ -1658,10 +1659,9 @@ modest_platform_on_new_headers_received (GList *URI_list,
 	/* Set the account of the headers */
 	acc_store = (TnyAccountStore *) modest_runtime_get_account_store ();
 	account = tny_account_store_find_account (acc_store, data->uri);
+	acc_name = NULL;
 	if (account) {
-		const gchar *acc_name;
-		acc_name =
-			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		acc_name = g_strdup (modest_tny_account_get_parent_modest_account_name_for_server_account (account));
 		notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
 						    "email-account",
 						    acc_name);
@@ -1672,9 +1672,11 @@ modest_platform_on_new_headers_received (GList *URI_list,
 		GSList *notifications_list = NULL;
 
 		/* Get previous notifications ids */
-		notifications_list = modest_conf_get_list (modest_runtime_get_conf (),
-							   MODEST_CONF_NOTIFICATION_IDS,
-							   MODEST_CONF_VALUE_INT, NULL);
+		if (acc_name) {
+			notifications_list = modest_account_mgr_get_list (modest_runtime_get_account_mgr (), acc_name,
+									  MODEST_ACCOUNT_NOTIFICATION_IDS,
+									  MODEST_CONF_VALUE_INT, FALSE);
+		}
 
 		/* Save id in the list */
 		g_object_get(G_OBJECT (notification), "id", &notif_id, NULL);
@@ -1685,19 +1687,22 @@ modest_platform_on_new_headers_received (GList *URI_list,
 		   not to store the list in gconf */
 
 		/* Save the ids */
-		modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS,
-				      notifications_list, MODEST_CONF_VALUE_INT, NULL);
-
+		if (acc_name)
+			modest_account_mgr_set_list (modest_runtime_get_account_mgr (), acc_name,
+						     MODEST_ACCOUNT_NOTIFICATION_IDS,
+						     notifications_list, MODEST_CONF_VALUE_INT, FALSE);
+			
 		g_slist_free (notifications_list);
 	} else {
 		g_warning ("Failed to send notification");
 	}
+	g_free (acc_name);
 
 #endif /*MODEST_HAVE_HILDON_NOTIFY*/
 }
 
 void
-modest_platform_remove_new_mail_notifications (gboolean only_visuals) 
+modest_platform_remove_new_mail_notifications (gboolean only_visuals, const gchar *acc_name) 
 {
 	if (only_visuals) {
 #ifdef MODEST_HAVE_MCE
@@ -1717,9 +1722,10 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals)
 	GSList *notif_list = NULL;
 
 	/* Get previous notifications ids */
-	notif_list = modest_conf_get_list (modest_runtime_get_conf (), 
-					   MODEST_CONF_NOTIFICATION_IDS, 
-					   MODEST_CONF_VALUE_INT, NULL);
+	notif_list = modest_account_mgr_get_list (modest_runtime_get_account_mgr (), 
+						  acc_name,
+						  MODEST_ACCOUNT_NOTIFICATION_IDS, 
+						  MODEST_CONF_VALUE_INT, FALSE);
 
         while (notif_list) {
 		gint notif_id;
@@ -1742,8 +1748,9 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals)
         }
 
 	/* Save the ids */
-	modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS, 
-			      notif_list, MODEST_CONF_VALUE_INT, NULL);
+	modest_account_mgr_set_list (modest_runtime_get_account_mgr (), acc_name,
+				     MODEST_ACCOUNT_NOTIFICATION_IDS,
+				     notif_list, MODEST_CONF_VALUE_INT, FALSE);
 
 	g_slist_free (notif_list);
 

@@ -404,10 +404,11 @@ gboolean modest_platform_run_alert_dialog (const gchar* prompt, gboolean is_ques
 /**
  * modest_platform_remove_new_mail_notifications:
  * @only_visuals: remove only the visual notifications (like LEDs)
+ * @acc_name: account to remove notifications
  *
  * Removes all the active new mail notifications
  **/
-void modest_platform_remove_new_mail_notifications (gboolean only_visuals);
+void modest_platform_remove_new_mail_notifications (gboolean only_visuals, const gchar *acc_name);
 
 /* ModestConnectedPerformer:
  * @canceled: whether or not the user canceled
