@@ -51,6 +51,7 @@
 #include <modest-tny-folder.h>
 #include <tny-simple-list.h>
 #include <gdk/gdkkeysyms.h>
+#include <modest-isearch-toolbar.h>
 
 typedef enum {
 	CONTENTS_STATE_NONE = 0,
@@ -101,6 +102,8 @@ struct _ModestHeaderWindowPrivate {
 
 	/* weak refs */
 	GtkTreeModel *model_weak_ref;
+
+	GtkWidget   *isearch_toolbar;
 };
 #define MODEST_HEADER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_HEADER_WINDOW, \
@@ -181,6 +184,15 @@ static gboolean on_key_press(GtkWidget *widget,
 					GdkEventKey *event,
 					gpointer user_data);
 #endif
+
+static void  show_isearch_toolbar   (GtkWidget *obj, gpointer data);
+static void  isearch_toolbar_close  (GtkWidget *widget,
+				     ModestHeaderWindow *obj);
+static void  isearch_toolbar_search (GtkWidget *widget,
+				     ModestHeaderWindow *obj);
+static void  toggle_isearch_toolbar (GtkWidget *obj,
+				     gpointer data);
+
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -848,6 +860,14 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));
 #endif
 
+	priv->isearch_toolbar = modest_toolkit_factory_create_isearch_toolbar (modest_runtime_get_toolkit_factory (),
+									       NULL);
+	modest_window_add_toolbar (MODEST_WINDOW (self), GTK_TOOLBAR (priv->isearch_toolbar));
+	g_signal_connect (G_OBJECT (priv->isearch_toolbar), "isearch-close", 
+			  G_CALLBACK (isearch_toolbar_close), self);
+	g_signal_connect (G_OBJECT (priv->isearch_toolbar), "isearch-search", 
+			  G_CALLBACK (isearch_toolbar_search), self);
+
 
 	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
 	modest_window_set_active_mailbox (MODEST_WINDOW (self), mailbox);
@@ -957,6 +977,8 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_cancel_send),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("Find..."), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (toggle_isearch_toolbar), NULL);
 }
 
 static void 
@@ -1476,3 +1498,57 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	return FALSE;
 }
 #endif
+
+/* Used for the Ctrl+F accelerator */
+static void
+toggle_isearch_toolbar (GtkWidget *obj,
+			gpointer data)
+{
+	ModestHeaderWindow *window = MODEST_HEADER_WINDOW (data);
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (window);
+
+	if (GTK_WIDGET_VISIBLE (priv->isearch_toolbar)) {
+		isearch_toolbar_close (obj, data);
+       } else {
+		show_isearch_toolbar (obj, data);
+       }
+}
+
+/* Handler for menu option */
+static void
+show_isearch_toolbar (GtkWidget *obj,
+		      gpointer data)
+{
+	ModestHeaderWindow *window = MODEST_HEADER_WINDOW (data);
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (window);
+
+	gtk_widget_show (priv->isearch_toolbar);
+	modest_isearch_toolbar_highlight_entry (MODEST_ISEARCH_TOOLBAR (priv->isearch_toolbar), TRUE);
+}
+
+/* Handler for click on the "X" close button in isearch toolbar */
+static void
+isearch_toolbar_close (GtkWidget *widget,
+		       ModestHeaderWindow *obj)
+{
+	ModestHeaderWindowPrivate *priv;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (obj);
+
+	/* Hide toolbar */
+	gtk_widget_hide (priv->isearch_toolbar);
+
+	modest_header_view_set_filter_string (MODEST_HEADER_VIEW (priv->header_view), NULL);
+}
+
+static void
+isearch_toolbar_search (GtkWidget *widget,
+			ModestHeaderWindow *obj)
+{
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (obj);
+
+	/* TODO: set filter */
+	modest_header_view_set_filter_string (MODEST_HEADER_VIEW (priv->header_view), 
+					      modest_isearch_toolbar_get_search (MODEST_ISEARCH_TOOLBAR (priv->isearch_toolbar)));
+
+}

@@ -173,6 +173,9 @@ struct _ModestHeaderViewPrivate {
 
 	GdkColor active_color;
 	GdkColor secondary_color;
+
+	gchar *filter_string;
+	gchar **filter_string_splitted;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -625,6 +628,8 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
 	priv->filter = MODEST_HEADER_VIEW_FILTER_NONE;
+	priv->filter_string = NULL;
+	priv->filter_string_splitted = NULL;
 	priv->selection_changed_handler = 0;
 	priv->acc_removed_handler = 0;
 
@@ -710,6 +715,14 @@ modest_header_view_finalize (GObject *obj)
 	if (priv->autoselect_reference != NULL) {
 		gtk_tree_row_reference_free (priv->autoselect_reference);
 		priv->autoselect_reference = NULL;
+	}
+
+	if (priv->filter_string) {
+		g_free (priv->filter_string);
+	}
+
+	if (priv->filter_string_splitted) {
+		g_strfreev (priv->filter_string_splitted);
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
@@ -2109,6 +2122,42 @@ current_folder_needs_filtering (ModestHeaderViewPrivate *priv)
 }
 
 static gboolean
+header_match_string (TnyHeader *header, gchar **words)
+{
+	gchar **current_word;
+	gboolean found;
+
+	found = FALSE;
+
+	for (current_word = words; !found && *current_word != NULL; current_word++) {
+		gchar *subject;
+		gchar *cc;
+		gchar *bcc;
+		gchar *to;
+		gchar *from;
+
+		subject = tny_header_dup_subject (header);
+		cc = tny_header_dup_cc (header);
+		bcc = tny_header_dup_bcc (header);
+		to = tny_header_dup_to (header);
+		from = tny_header_dup_from (header);
+
+		if ((subject && g_strstr_len (subject, -1, *current_word))
+		    || (cc && g_strstr_len (cc, -1, *current_word))
+		    || (bcc && g_strstr_len (bcc, -1, *current_word))
+		    || (to && g_strstr_len (to, -1, *current_word))
+		    || (from && g_strstr_len (from, -1, *current_word)))
+			found = TRUE;
+		g_free (subject);
+		g_free (cc);
+		g_free (bcc);
+		g_free (to);
+		g_free (from);
+	}
+	return found;
+}
+
+static gboolean
 filter_row (GtkTreeModel *model,
 	    GtkTreeIter *iter,
 	    gpointer user_data)
@@ -2158,6 +2207,13 @@ filter_row (GtkTreeModel *model,
 	if (visible && (priv->filter & MODEST_HEADER_VIEW_FILTER_MOVEABLE)) {
 		if (current_folder_needs_filtering (priv) &&
 		    modest_tny_all_send_queues_get_msg_status (header) == MODEST_TNY_SEND_QUEUE_SENDING) {
+			visible = FALSE;
+			goto frees;
+		}
+	}
+
+	if (visible && priv->filter_string) {
+		if (!header_match_string (header, priv->filter_string_splitted)) {
 			visible = FALSE;
 			goto frees;
 		}
@@ -2482,4 +2538,29 @@ modest_header_view_get_header_at_pos (ModestHeaderView *header_view,
 			    &header, -1);
 
 	return header;
+}
+
+void
+modest_header_view_set_filter_string (ModestHeaderView *self,
+				      const gchar *filter_string)
+{
+	ModestHeaderViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (self));
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+
+	if (priv->filter_string)
+		g_free (priv->filter_string);
+
+	priv->filter_string = g_strdup (filter_string);
+
+	if (priv->filter_string_splitted) {
+		g_strfreev (priv->filter_string_splitted);
+		priv->filter_string_splitted = NULL;
+	}
+
+	if (priv->filter_string) {
+		priv->filter_string_splitted = g_strsplit (priv->filter_string, " ", 0);
+	}
+	modest_header_view_refilter (MODEST_HEADER_VIEW (self));
 }
