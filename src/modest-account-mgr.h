@@ -375,6 +375,15 @@ gboolean modest_account_mgr_singleton_protocol_exists (ModestAccountMgr *mgr,
 
 gchar * modest_account_mgr_get_string (ModestAccountMgr *self, const gchar *name,
 				       const gchar *key, gboolean server_account);
+GSList * modest_account_mgr_get_list (ModestAccountMgr *self, const gchar *name,
+				      const gchar *key, ModestConfValueType list_type,
+				      gboolean server_account);
+gboolean modest_account_mgr_set_list (ModestAccountMgr *self,
+				      const gchar *name,
+				      const gchar *key,
+				      GSList *val,
+				      ModestConfValueType list_type,
+				      gboolean server_account);
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_MGR_H__ */

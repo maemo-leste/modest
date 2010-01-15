@@ -1365,11 +1365,6 @@ on_idle_top_application (gpointer user_data)
 
 		mgr = modest_runtime_get_window_mgr ();
 		window = (GtkWidget *) modest_window_mgr_show_initial_window (mgr);
-		if (window) {
-			modest_platform_remove_new_mail_notifications (FALSE);
-		} else {
-			g_printerr ("modest: failed to get main window instance\n");
-		}
 	}
 
 	gdk_threads_leave (); /* CHECKED */

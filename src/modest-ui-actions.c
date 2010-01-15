@@ -5836,7 +5836,7 @@ modest_ui_actions_on_delete_account (GtkWindow *parent_window,
 			   distinguish if the notification belongs to
 			   this account or not, so for safety reasons
 			   we remove them all */
-			modest_platform_remove_new_mail_notifications (FALSE);
+			modest_platform_remove_new_mail_notifications (FALSE, account_name);
 		} else {
 			g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
 		}

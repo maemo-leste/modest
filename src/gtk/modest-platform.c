@@ -1239,7 +1239,7 @@ modest_platform_on_new_headers_received (GList *URI_list,
 }
 
 void
-modest_platform_remove_new_mail_notifications (gboolean only_visuals) 
+modest_platform_remove_new_mail_notifications (gboolean only_visuals, const gchar *acc_name) 
 {
 	return;
 }
