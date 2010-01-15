@@ -85,15 +85,10 @@ static void     modest_window_set_zoom_default           (ModestWindow *window,
 							  gdouble zoom);
 
 static gboolean on_key_pressed (GtkWidget *self, GdkEventKey *event, gpointer user_data);
-static void _make_zoom_buttons_grabeable (GtkWidget* widget);
-static gboolean _modest_window_map_event (GtkWidget *widget,
-					  GdkEvent *event,
-					  gpointer userdata);
+
 static void modest_window_pack_toolbar_not_implemented (ModestWindow *self,
 							GtkPackType pack_type,
 							GtkWidget *toolbar);
-
-
 /* list my signals  */
 enum {
 	LAST_SIGNAL
@@ -187,9 +182,6 @@ modest_window_init (ModestWindow *obj)
 	g_signal_connect (G_OBJECT (obj), 
 			  "key-press-event", 
 			  G_CALLBACK (on_key_pressed), NULL);
-	g_signal_connect (G_OBJECT (obj), "map-event",
-			  G_CALLBACK (_modest_window_map_event),
-			  G_OBJECT (obj));
 }
 
 static void
@@ -632,35 +624,11 @@ on_key_pressed (GtkWidget *self,
 		}
 		break;
 	}
-	
-	return FALSE;
-}
 
-static gboolean 
-_modest_window_map_event (GtkWidget *widget,
-			  GdkEvent *event,
-			  gpointer userdata)
-{
-	_make_zoom_buttons_grabeable (GTK_WIDGET (widget));
 	return FALSE;
 }
 
 static void
-_make_zoom_buttons_grabeable (GtkWidget* widget)
-{
-    GdkDisplay *display;
-    Atom atom;
-    unsigned long val = 1;
-
-    display = gdk_drawable_get_display (widget->window);
-    atom = gdk_x11_get_xatom_by_name_for_display (display, "_HILDON_ZOOM_KEY_ATOM");
-    XChangeProperty (GDK_DISPLAY_XDISPLAY (display),
-                     GDK_WINDOW_XID (widget->window), atom,
-                     XA_INTEGER, 32, PropModeReplace,
-                     (unsigned char *) &val, 1);
-}
-
-static void 
 modest_window_pack_toolbar_not_implemented (ModestWindow *self,
 					    GtkPackType pack_type,
 					    GtkWidget *toolbar)
@@ -679,4 +647,3 @@ modest_window_pack_toolbar (ModestWindow *self,
 
 	MODEST_WINDOW_GET_CLASS (self)->pack_toolbar_func (self, pack_type, toolbar);
 }
-
