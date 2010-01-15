@@ -48,10 +48,12 @@
 #include <hildon/hildon-button.h>
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-banner.h>
+#include <hildon/hildon-find-toolbar.h>
 #include <modest-ui-dimming-rules.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-account.h>
 #include <tny-simple-list.h>
+#include <gdk/gdkkeysyms.h>
 
 #define SHOW_LATEST_SIZE 250
 
@@ -106,6 +108,8 @@ struct _ModestHeaderWindowPrivate {
 
 	/* weak refs */
 	GtkTreeModel *model_weak_ref;
+
+	GtkWidget   *isearch_toolbar;
 };
 #define MODEST_HEADER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_HEADER_WINDOW, \
@@ -182,6 +186,15 @@ static gboolean on_key_press(GtkWidget *widget,
 					GdkEventKey *event,
 					gpointer user_data);
 static void modest_header_window_show_more (GtkAction *action, ModestWindow *win);
+
+static void  show_isearch_toolbar   (GtkWidget *obj, gpointer data);
+static void  isearch_toolbar_close  (GtkWidget *widget,
+				     ModestHeaderWindow *obj);
+static void  isearch_toolbar_search (GtkWidget *widget,
+				     ModestHeaderWindow *obj);
+static void  toggle_isearch_toolbar (GtkWidget *obj,
+				     gpointer data);
+
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -879,6 +892,13 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));
 
+	priv->isearch_toolbar = hildon_find_toolbar_new (NULL);
+	hildon_window_add_toolbar (HILDON_WINDOW (self), GTK_TOOLBAR (priv->isearch_toolbar));
+	g_signal_connect (G_OBJECT (priv->isearch_toolbar), "close", 
+			  G_CALLBACK (isearch_toolbar_close), self);
+	g_signal_connect (G_OBJECT (priv->isearch_toolbar), "search", 
+			  G_CALLBACK (isearch_toolbar_search), self);
+
 
 	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
 	modest_window_set_active_mailbox (MODEST_WINDOW (self), mailbox);
@@ -983,6 +1003,8 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("Find..."), NULL,
+					   APP_MENU_CALLBACK (toggle_isearch_toolbar), NULL);
 }
 
 static void 
@@ -1611,4 +1633,66 @@ modest_header_window_show_more (GtkAction *action, ModestWindow *win)
 						    SHOW_LATEST_SIZE);
 		update_view (self, NULL);
 	}
+}
+
+/* Used for the Ctrl+F accelerator */
+static void
+toggle_isearch_toolbar (GtkWidget *obj,
+			gpointer data)
+{
+	ModestHeaderWindow *window = MODEST_HEADER_WINDOW (data);
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (window);
+
+	if (GTK_WIDGET_VISIBLE (priv->isearch_toolbar)) {
+		isearch_toolbar_close (obj, data);
+       } else {
+		show_isearch_toolbar (obj, data);
+       }
+}
+
+/* Handler for menu option */
+static void
+show_isearch_toolbar (GtkWidget *obj,
+		      gpointer data)
+{
+	ModestHeaderWindow *window = MODEST_HEADER_WINDOW (data);
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (window);
+
+	gtk_widget_show (priv->isearch_toolbar);
+	hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->isearch_toolbar), TRUE);
+}
+
+/* Handler for click on the "X" close button in isearch toolbar */
+static void
+isearch_toolbar_close (GtkWidget *widget,
+		       ModestHeaderWindow *obj)
+{
+	ModestHeaderWindowPrivate *priv;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (obj);
+
+	/* Hide toolbar */
+	gtk_widget_hide (priv->isearch_toolbar);
+
+	modest_header_view_set_filter_string (MODEST_HEADER_VIEW (priv->header_view), NULL);
+}
+
+static void
+isearch_toolbar_search (GtkWidget *widget,
+			ModestHeaderWindow *obj)
+{
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (obj);
+	gchar *current_search;
+
+	g_object_get (G_OBJECT (widget), "prefix", &current_search, NULL);
+
+	if (current_search && *current_search == '\0') {
+		g_free (current_search);
+		current_search = NULL;
+	}
+
+	/* TODO: set filter */
+	modest_header_view_set_filter_string (MODEST_HEADER_VIEW (priv->header_view), 
+					      current_search);
+	g_free (current_search);
 }

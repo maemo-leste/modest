@@ -421,6 +421,16 @@ void modest_header_view_set_filter (ModestHeaderView *self,
 void modest_header_view_unset_filter (ModestHeaderView *self,
 				      ModestHeaderViewFilter filter);
 
+/**
+ * modest_header_view_set_filter_string:
+ * @self: a #ModestHeaderView
+ * @filter_string: a string
+ *
+ * Set a string for filtering visible messages. If %NULL, no filtering is done.
+ */
+void modest_header_view_set_filter_string (ModestHeaderView *self,
+					   const gchar *filter_string);
+
 
 
 /**
