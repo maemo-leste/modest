@@ -169,12 +169,6 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_widget_show (GTK_WIDGET (priv->new_message_button));
 	g_signal_connect (G_OBJECT (priv->new_message_button), "clicked", G_CALLBACK (on_new_msg_button_clicked), obj);
 
-	priv->back_button = gtk_tool_button_new_from_stock (GTK_STOCK_GO_BACK);
-	g_object_set (priv->back_button, "is-important", TRUE, NULL);
-	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), priv->back_button, -1);
-	gtk_widget_show (GTK_WIDGET (priv->back_button));
-	g_signal_connect (G_OBJECT (priv->back_button), "clicked", G_CALLBACK (on_back_button_clicked), obj);
-
 	separator_toolitem = gtk_separator_tool_item_new ();
 	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), separator_toolitem, -1);
 	gtk_widget_show (GTK_WIDGET (separator_toolitem));
@@ -202,6 +196,12 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_container_child_set (GTK_CONTAINER (priv->top_toolbar), GTK_WIDGET (priv->title_button), "expand", TRUE, NULL);
 	g_object_set (priv->title_button, "is-important", TRUE, NULL);
 	g_signal_connect (G_OBJECT (priv->title_button), "clicked", G_CALLBACK (on_title_button_clicked), obj);
+
+	priv->back_button = gtk_tool_button_new_from_stock (GTK_STOCK_GO_BACK);
+	g_object_set (priv->back_button, "is-important", TRUE, NULL);
+	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), priv->back_button, -1);
+	gtk_widget_show (GTK_WIDGET (priv->back_button));
+	g_signal_connect (G_OBJECT (priv->back_button), "clicked", G_CALLBACK (on_back_button_clicked), obj);
 
 	priv->notebook = gtk_notebook_new ();
 	gtk_notebook_set_show_tabs ((GtkNotebook *)priv->notebook, FALSE);
