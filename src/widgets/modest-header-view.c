@@ -2129,6 +2129,11 @@ header_match_string (TnyHeader *header, gchar **words)
 	gchar *bcc;
 	gchar *to;
 	gchar *from;
+	gchar *subject_fold;
+	gchar *cc_fold;
+	gchar *bcc_fold;
+	gchar *to_fold;
+	gchar *from_fold;
 
 	gchar **current_word;
 	gboolean found;
@@ -2139,15 +2144,26 @@ header_match_string (TnyHeader *header, gchar **words)
 	to = tny_header_dup_to (header);
 	from = tny_header_dup_from (header);
 
+	subject_fold = g_utf8_casefold (subject, -1);
+	g_free (subject);
+	bcc_fold = g_utf8_casefold (bcc, -1);
+	g_free (bcc);
+	cc_fold = g_utf8_casefold (cc, -1);
+	g_free (cc);
+	to_fold = g_utf8_casefold (to, -1);
+	g_free (to);
+	from_fold = g_utf8_casefold (from, -1);
+	g_free (from);
+
 	found = FALSE;
 
 	for (current_word = words; *current_word != NULL; current_word++) {
 
-		if ((subject && g_strstr_len (subject, -1, *current_word))
-		    || (cc && g_strstr_len (cc, -1, *current_word))
-		    || (bcc && g_strstr_len (bcc, -1, *current_word))
-		    || (to && g_strstr_len (to, -1, *current_word))
-		    || (from && g_strstr_len (from, -1, *current_word))) {
+		if ((subject && g_strstr_len (subject_fold, -1, *current_word))
+		    || (cc && g_strstr_len (cc_fold, -1, *current_word))
+		    || (bcc && g_strstr_len (bcc_fold, -1, *current_word))
+		    || (to && g_strstr_len (to_fold, -1, *current_word))
+		    || (from && g_strstr_len (from_fold, -1, *current_word))) {
 			found = TRUE;
 		} else {
 			found = FALSE;
@@ -2155,11 +2171,11 @@ header_match_string (TnyHeader *header, gchar **words)
 		}
 	}
 
-	g_free (subject);
-	g_free (cc);
-	g_free (bcc);
-	g_free (to);
-	g_free (from);
+	g_free (subject_fold);
+	g_free (cc_fold);
+	g_free (bcc_fold);
+	g_free (to_fold);
+	g_free (from_fold);
 
 	return found;
 }
@@ -2567,7 +2583,18 @@ modest_header_view_set_filter_string (ModestHeaderView *self,
 	}
 
 	if (priv->filter_string) {
-		priv->filter_string_splitted = g_strsplit (priv->filter_string, " ", 0);
+		gchar **split, **current, **current_target;;
+
+		split = g_strsplit (priv->filter_string, " ", 0);
+
+		priv->filter_string_splitted = g_malloc0 (sizeof (gchar *)*(g_strv_length (split) + 1));
+		current_target = priv->filter_string_splitted;
+		for (current = split; *current != 0; current ++) {
+			*current_target = g_utf8_casefold (*current, -1);
+			current_target++;
+		}
+		*current_target = '\0';
+		g_strfreev (split);
 	}
 	modest_header_view_refilter (MODEST_HEADER_VIEW (self));
 }
