@@ -489,6 +489,7 @@ on_account_activated (GtkTreeView *account_view,
 	} else {
 
 		new_window = GTK_WIDGET (modest_folder_window_new (NULL));
+		modest_window_set_active_account (MODEST_WINDOW (new_window), account_name);
 	}
 
 	registered = modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
