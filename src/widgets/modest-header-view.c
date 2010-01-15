@@ -176,6 +176,9 @@ struct _ModestHeaderViewPrivate {
 
 	gchar *filter_string;
 	gchar **filter_string_splitted;
+	gboolean filter_date_range;
+	time_t date_range_start;
+	time_t date_range_end;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -630,6 +633,7 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->filter = MODEST_HEADER_VIEW_FILTER_NONE;
 	priv->filter_string = NULL;
 	priv->filter_string_splitted = NULL;
+	priv->filter_date_range = FALSE;
 	priv->selection_changed_handler = 0;
 	priv->acc_removed_handler = 0;
 
@@ -2155,7 +2159,7 @@ header_match_string (TnyHeader *header, gchar **words)
 	from_fold = g_utf8_casefold (from, -1);
 	g_free (from);
 
-	found = FALSE;
+	found = TRUE;
 
 	for (current_word = words; *current_word != NULL; current_word++) {
 
@@ -2240,6 +2244,13 @@ filter_row (GtkTreeModel *model,
 			visible = FALSE;
 			goto frees;
 		}
+		if (priv->filter_date_range) {
+			if ((tny_header_get_date_sent (TNY_HEADER (header)) < priv->date_range_start) ||
+			    ((priv->date_range_end != -1) && (tny_header_get_date_sent (TNY_HEADER (header)) > priv->date_range_end))) {
+				visible = FALSE;
+				goto frees;
+			}
+		}
 	}
 
 	/* If no data on clipboard, return always TRUE */
@@ -2279,7 +2290,7 @@ filter_row (GtkTreeModel *model,
 								   notify_filter_change_destroy);
 		}
 	}
-
+	
 	return visible;
 }
 
@@ -2563,6 +2574,92 @@ modest_header_view_get_header_at_pos (ModestHeaderView *header_view,
 	return header;
 }
 
+static gboolean
+parse_date_side (const gchar *string, time_t *date_side)
+{
+	gchar *today;
+	gchar *yesterday;
+	gchar *casefold;
+	GDate *date;
+	gboolean result = FALSE;
+
+	if (string && string[0] == '\0') {
+		*date_side = 0;
+		return TRUE;
+	}
+
+	casefold = g_utf8_casefold (string, -1);
+	today = g_utf8_casefold (dgettext ("gtk20", "Today"), -1);
+	yesterday = g_utf8_casefold (dgettext ("gtk20", "Yesterday"), -1);
+	date = g_date_new ();
+
+	if (g_utf8_collate (casefold, today) == 0) {
+		*date_side = time (NULL);
+		result = TRUE;
+		goto frees;
+	}
+
+	if (g_utf8_collate (casefold, yesterday) == 0) {
+		*date_side = time (NULL) - 24*60*60;
+		result = TRUE;
+		goto frees;
+	}
+
+	g_date_set_parse (date, string);
+	if (g_date_valid (date)) {
+		struct tm tm = {0};
+		g_date_to_struct_tm (date, &tm);
+		*date_side = mktime (&tm);
+		
+		result = TRUE;
+		goto frees;
+	}
+frees:
+	g_free (today);
+	g_free (yesterday);
+	g_free (casefold);
+	g_date_free (date);
+
+	return result;
+}
+
+static gboolean
+parse_date_range (const gchar *string, time_t *date_range_start, time_t *date_range_end)
+{
+	gchar ** parts;
+	gboolean valid;
+
+	parts = g_strsplit (string, "..", 2);
+	valid = TRUE;
+
+	if (g_strv_length (parts) != 2) {
+		valid = FALSE;
+		goto frees;
+		g_strfreev (parts);
+		return FALSE;
+	}
+
+	if (!parse_date_side (parts[0], date_range_start)) {
+		valid = FALSE;
+		goto frees;
+	}
+
+	if (parse_date_side (parts[1], date_range_end)) {
+		if (*date_range_end == 0) {
+			*date_range_end = (time_t) -1;
+		} else {
+			*date_range_end += (24*60*60 - 1);
+		}
+	} else {
+		valid = FALSE;
+		goto frees;
+	}
+		
+frees:
+	g_strfreev (parts);
+	return valid;
+}
+
 void
 modest_header_view_set_filter_string (ModestHeaderView *self,
 				      const gchar *filter_string)
@@ -2576,6 +2673,7 @@ modest_header_view_set_filter_string (ModestHeaderView *self,
 		g_free (priv->filter_string);
 
 	priv->filter_string = g_strdup (filter_string);
+	priv->filter_date_range = FALSE;
 
 	if (priv->filter_string_splitted) {
 		g_strfreev (priv->filter_string_splitted);
@@ -2583,15 +2681,28 @@ modest_header_view_set_filter_string (ModestHeaderView *self,
 	}
 
 	if (priv->filter_string) {
-		gchar **split, **current, **current_target;;
+		gchar **split, **current, **current_target;
 
 		split = g_strsplit (priv->filter_string, " ", 0);
 
 		priv->filter_string_splitted = g_malloc0 (sizeof (gchar *)*(g_strv_length (split) + 1));
 		current_target = priv->filter_string_splitted;
 		for (current = split; *current != 0; current ++) {
-			*current_target = g_utf8_casefold (*current, -1);
-			current_target++;
+			gboolean has_date_range = FALSE;;
+			if (g_strstr_len (*current, -1, "..") && strcmp(*current, "..")) {
+				time_t range_start, range_end;
+				/* It contains .. but it's not ".." so it may be a date range */
+				if (parse_date_range (*current, &range_start, &range_end)) {
+					priv->filter_date_range = TRUE;
+					has_date_range = TRUE;
+					priv->date_range_start = range_start;
+					priv->date_range_end = range_end;
+				}
+			}
+			if (!has_date_range) {
+				*current_target = g_utf8_casefold (*current, -1);
+				current_target++;
+			}
 		}
 		*current_target = '\0';
 		g_strfreev (split);
