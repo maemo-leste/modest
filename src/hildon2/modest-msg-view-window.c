@@ -71,6 +71,10 @@
 #include <tny-camel-msg.h>
 #include <tny-camel-bs-mime-part.h>
 #include <tny-camel-bs-msg.h>
+#include <gdk/gdkx.h>
+#include <X11/Xatom.h>
+#include <X11/XKBlib.h>
+#include <X11/Xdmcp.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
@@ -236,6 +240,9 @@ static gboolean _modest_msg_view_window_map_event (GtkWidget *widget,
 						   gpointer userdata);
 static void update_branding (ModestMsgViewWindow *self);
 static void sync_flags      (ModestMsgViewWindow *self);
+
+static gboolean on_realize (GtkWidget *widget,
+			    gpointer userdata);
 
 /* list my signals */
 enum {
@@ -483,15 +490,20 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->remove_attachment_banner = NULL;
 	priv->msg_uid = NULL;
 	priv->other_body = NULL;
-	
+
 	priv->sighandlers = NULL;
-	
+
 	/* Init window */
 	init_window (MODEST_MSG_VIEW_WINDOW(obj));
-	
+
 	hildon_program_add_window (hildon_program_get_instance(),
 				   HILDON_WINDOW(obj));
 
+	/* Grab the zoom keys, it will be used for Zoom and not for
+	   changing volume */
+       g_signal_connect (G_OBJECT (obj), "realize",
+                         G_CALLBACK (on_realize),
+                         NULL);
 }
 
 static void
@@ -4088,4 +4100,22 @@ sync_flags (ModestMsgViewWindow *self)
 		}
 		g_object_unref (header);
 	}
+}
+
+static gboolean
+on_realize (GtkWidget *widget,
+	    gpointer userdata)
+{
+	GdkDisplay *display;
+	Atom atom;
+	unsigned long val = 1;
+
+	display = gdk_drawable_get_display (widget->window);
+	atom = gdk_x11_get_xatom_by_name_for_display (display, "_HILDON_ZOOM_KEY_ATOM");
+	XChangeProperty (GDK_DISPLAY_XDISPLAY (display),
+			 GDK_WINDOW_XID (widget->window), atom,
+			 XA_INTEGER, 32, PropModeReplace,
+			 (unsigned char *) &val, 1);
+
+	return FALSE;
 }
