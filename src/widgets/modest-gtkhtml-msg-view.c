@@ -1250,7 +1250,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	if (priv->calendar_icon) {
 		priv->calendar_box = (GtkWidget *)
 			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view),
-								   _("TODO: invitation"),
+								   _("mail_fi_invitation"),
 								   priv->calendar_icon,
 								   FALSE, FALSE);
 								   
