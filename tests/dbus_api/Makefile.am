@@ -31,6 +31,7 @@ noinst_PROGRAMS = \
 	test_get_folders \
 	test_top_application \
 	test_update_account \
+	test_update_folder_counts \
 	test_open_account \
 	test_open_edit_accounts_dialog
 
@@ -60,6 +61,9 @@ test_top_application_LDADD = $(objects)
 
 test_update_account_SOURCES = test_update_account.c
 test_update_account_LDADD = $(objects)
+
+test_update_folder_counts_SOURCES = test_update_folder_counts.c
+test_update_folder_counts_LDADD = $(objects)
 
 test_open_account_SOURCES = test_open_account.c
 test_open_account_LDADD = $(objects)
