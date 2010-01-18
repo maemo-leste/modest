@@ -983,8 +983,6 @@ on_idle_send_receive(gpointer user_data)
 	return FALSE;
 }
 
-
-
 static gint 
 on_dbus_method_dump_send_queues (DBusConnection *con, DBusMessage *message)
 {
@@ -1251,6 +1249,41 @@ on_send_receive_full (GArray *arguments, gpointer data, osso_rpc_t * retval)
 		modest_platform_connect_and_perform (NULL, FALSE, NULL, on_send_receive_performer, srp_data);
 	else
 		on_send_receive_performer (FALSE, NULL, NULL, NULL, srp_data);
+
+	return OSSO_OK;
+}
+
+static gboolean
+on_idle_update_folder_counts (gpointer userdata)
+{
+	ModestMailOperation *mail_op;
+	gchar *account_id = (gchar *) userdata;
+
+	mail_op = modest_mail_operation_new (NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 mail_op);
+	modest_mail_operation_update_folder_counts (mail_op, account_id);
+	g_object_unref (mail_op);
+	g_free (account_id);
+
+	return FALSE;
+
+}
+
+static gint
+on_update_folder_counts (GArray *arguments, gpointer data, osso_rpc_t * retval)
+{
+ 	osso_rpc_t val;
+	gchar *account_id;
+
+	val = g_array_index (arguments, osso_rpc_t, MODEST_DBUS_SEND_RECEIVE_FULL_ARG_ACCOUNT_ID);
+	account_id = g_strdup (val.value.s);
+
+	if (account_id != NULL) {
+		g_idle_add (on_idle_update_folder_counts, g_strdup (account_id));
+	}
+
+	g_free (account_id);
 
 	return OSSO_OK;
 }
@@ -1544,6 +1577,10 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 		if (arguments->len != MODEST_DBUS_SEND_RECEIVE_FULL_ARGS_COUNT)
 			goto param_error;
 		return on_send_receive_full (arguments, data, retval);
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_UPDATE_FOLDER_COUNTS) == 0) {
+		if (arguments->len != MODEST_DBUS_UPDATE_FOLDER_COUNTS_ARGS_COUNT)
+			goto param_error;
+		return on_update_folder_counts (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
 		if (arguments->len != MODEST_DBUS_COMPOSE_MAIL_ARGS_COUNT)
 			goto param_error;
