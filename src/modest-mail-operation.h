@@ -78,6 +78,7 @@ typedef enum {
 	MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER,
 	MODEST_MAIL_OPERATION_TYPE_SHUTDOWN,
 	MODEST_MAIL_OPERATION_TYPE_QUEUE_WAKEUP,
+	MODEST_MAIL_OPERATION_TYPE_UPDATE_FOLDER_COUNTS,
 	MODEST_MAIL_OPERATION_TYPE_UNKNOWN,
 } ModestMailOperationTypeOperation;
 
@@ -472,6 +473,17 @@ void          modest_mail_operation_update_account (ModestMailOperation *self,
 						    gboolean interactive,
 						    UpdateAccountCallback callback,
 						    gpointer user_data);
+
+/**
+ * modest_mail_operation_update_folder_counts:
+ * @self: a #ModestMailOperation
+ * @account_name: the id of a Modest account
+ * 
+ * Asynchronously refreshes the folder counts of the given store
+ * account.
+ */
+void          modest_mail_operation_update_folder_counts (ModestMailOperation *self,
+							  const gchar *account_name);
 
 /* Functions that perform store operations */
 
