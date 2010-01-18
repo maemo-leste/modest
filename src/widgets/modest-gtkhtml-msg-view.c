@@ -250,9 +250,9 @@ struct _ModestGtkhtmlMsgViewPrivate {
 #ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget   *priority_box;
 	GtkWidget   *priority_icon;
+#endif
 	GtkWidget   *calendar_box;
 	GtkWidget   *calendar_icon;
-#endif
 	GtkWidget   *calendar_actions_box;
 	GtkWidget   *calendar_actions_container;
 
@@ -1243,6 +1243,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 								   
 		gtk_widget_hide_all (priv->priority_box);
 	}
+#endif
 	priv->calendar_actions_box = NULL;
 	priv->calendar_icon = gtk_image_new ();
 	gtk_image_set_from_icon_name (GTK_IMAGE (priv->calendar_icon), MODEST_HEADER_ICON_CALENDAR, GTK_ICON_SIZE_MENU);
@@ -1256,7 +1257,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 								   
 		gtk_widget_hide_all (priv->calendar_box);
 	}
-#endif
+
 	if (priv->attachments_view) {
 #ifndef MODEST_TOOLKIT_HILDON2
 		gchar *att_label = g_strconcat (_("mcen_me_viewer_attachments"), ":", NULL);
@@ -1846,8 +1847,8 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 		gtk_widget_hide_all (priv->attachments_box);
 #ifdef MODEST_TOOKIT_HILDON2
 		gtk_widget_hide_all (priv->priority_box);
-		gtk_widget_hide_all (priv->calendar_box);
 #endif
+		gtk_widget_hide_all (priv->calendar_box);
 		gtk_widget_hide_all (priv->calendar_actions_container);
 		gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 		tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
@@ -1928,16 +1929,16 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	gtk_widget_show (priv->body_view);
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_set_no_show_all (priv->priority_box, TRUE);
-	gtk_widget_set_no_show_all (priv->calendar_box, TRUE);
 #endif
+	gtk_widget_set_no_show_all (priv->calendar_box, TRUE);
 	gtk_widget_set_no_show_all (priv->calendar_actions_container, TRUE);
 	gtk_widget_set_no_show_all (priv->attachments_box, TRUE);
 	gtk_widget_show_all (priv->mail_header_view);
 	gtk_widget_set_no_show_all (priv->attachments_box, FALSE);
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_set_no_show_all (priv->priority_box, FALSE);
-	gtk_widget_set_no_show_all (priv->calendar_box, FALSE);
 #endif
+	gtk_widget_set_no_show_all (priv->calendar_box, FALSE);
 	gtk_widget_set_no_show_all (priv->calendar_actions_container, FALSE);
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 
@@ -2021,8 +2022,8 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 	gtk_widget_hide_all (priv->attachments_box);
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_hide_all (priv->priority_box);
-	gtk_widget_hide_all (priv->calendar_box);
 #endif
+	gtk_widget_hide_all (priv->calendar_box);
 	gtk_widget_hide_all (priv->calendar_actions_container);
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
