@@ -62,6 +62,7 @@
 #define MODEST_HEADER_ICON_NORM_PRIORITY        PIXMAP_PREFIX"modest_normal_no_attachment.png"
 #define MODEST_HEADER_ICON_HIGH        "stock_mail-priority-high"
 #define MODEST_HEADER_ICON_LOW         "stock_mail-priority-low"
+#define MODEST_HEADER_ICON_CALENDAR    "appointment"
 /*
  *
  */
