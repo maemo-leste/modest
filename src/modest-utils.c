@@ -37,9 +37,6 @@
 #include <tny-camel-account.h>
 #include <tny-status.h>
 #include <tny-camel-send-queue.h>
-#include <tny-camel-transport-account.h>
-#include <tny-camel-imap-store-account.h>
-#include <tny-camel-pop-store-account.h>
 #include <locale.h>
 #include <modest-defs.h>
 #include "modest-utils.h"
