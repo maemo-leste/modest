@@ -2217,31 +2217,31 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	/* apply special filters */
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS)) {
 		if (TNY_IS_ACCOUNT (instance))
-			return FALSE;
+			retval = FALSE;
 	}
 
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS)) {
 		if (TNY_IS_FOLDER (instance))
-			return FALSE;
+			retval = FALSE;
 	}
 
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS)) {
 		if (TNY_IS_ACCOUNT (instance)) {
 			if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (instance)))
-				return FALSE;
+				retval = FALSE;
 		} else if (TNY_IS_FOLDER (instance)) {
 			if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance)))
-				return FALSE;
+				retval = FALSE;
 		}
 	}
 
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_MCC_FOLDERS)) {
 		if (TNY_IS_ACCOUNT (instance)) {
 			if (modest_tny_account_is_memory_card_account (TNY_ACCOUNT (instance)))
-				return FALSE;
+				retval = FALSE;
 		} else if (TNY_IS_FOLDER (instance)) {
 			if (modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance)))
-				return FALSE;
+				retval = FALSE;
 		}
 	}
 
@@ -2249,12 +2249,12 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 		/* A mailbox is a fake folder with an @ in the middle of the name */
 		if (!TNY_IS_FOLDER (instance) ||
 		    !(tny_folder_get_caps (TNY_FOLDER (instance)) & TNY_FOLDER_CAPS_NOSELECT)) {
-			return FALSE;
+			retval = FALSE;
 		} else {
 			const gchar *folder_name;
 			folder_name = tny_folder_get_name (TNY_FOLDER (instance));
 			if (!folder_name || strchr (folder_name, '@') == NULL)
-				return FALSE;
+				retval = FALSE;
 		}
 		
 	}
