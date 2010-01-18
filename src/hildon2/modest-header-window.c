@@ -664,6 +664,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 								    MODEST_PROTOCOL_REGISTRY_STORE_LIMIT_HEADER_WINDOW)) {
 			limit_headers = TRUE;
 		}
+		g_object_unref (account);
 	}
 	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), limit_headers?SHOW_LATEST_SIZE:0);
 
@@ -775,7 +776,7 @@ on_vertical_movement (HildonPannableArea *area,
 ModestWindow *
 modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gchar *mailbox)
 {
-	ModestHeaderWindow *self = NULL;	
+	ModestHeaderWindow *self = NULL;
 	ModestHeaderWindowPrivate *priv = NULL;
 	HildonProgram *app;
 	GdkPixbuf *window_icon;
@@ -786,7 +787,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	GdkPixbuf *new_message_pixbuf;
 	GtkWidget *alignment;
 	gchar *account_display_name = NULL;
-	
+
 	self  = MODEST_HEADER_WINDOW(g_object_new(MODEST_TYPE_HEADER_WINDOW, NULL));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
 
@@ -830,7 +831,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->header_view), TRUE);
-	
+
 	setup_menu (self);
 
         priv->top_vbox = gtk_vbox_new (FALSE, 0);
@@ -907,7 +908,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 		} else {
 			folder_name = modest_tny_folder_get_display_name (folder);
 		}
-		
+
 		gtk_window_set_title (GTK_WINDOW (self), folder_name);
 		g_free (folder_name);
 	}
