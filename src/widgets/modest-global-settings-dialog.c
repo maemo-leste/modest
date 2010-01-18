@@ -202,7 +202,7 @@ _modest_global_settings_dialog_get_update_interval (void)
 				 _("mcen_va_options_updateinterval_5min"),
 				 &list);
 	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_10_MIN,
-				 _("mcen_va_options_updateinteval_10min"),
+				 _("mcen_va_options_updateinterval_10min"),
 				 &list);
 	add_to_modest_pair_list (MODEST_UPDATE_INTERVAL_15_MIN,
 				 _("mcen_va_options_updateinterval_15min"),
