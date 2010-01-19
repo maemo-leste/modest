@@ -1650,7 +1650,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	ModestMailOperationPrivate *priv;
 	TnyIterator *new_headers_iter;
 	GPtrArray *new_headers_array = NULL;
-	gint max_size, retrieve_limit, i;
+	gint max_size = G_MAXINT, retrieve_limit, i;
 	ModestAccountMgr *mgr;
 	ModestAccountRetrieveType retrieve_type;
 	TnyList *new_headers = NULL;
