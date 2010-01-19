@@ -665,8 +665,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	TnyMsg *msg = NULL;
 	TnyAccount *account = NULL;
 	TnyFolder *folder = NULL;
-	gchar *from_str = NULL, *signature = NULL, *body = NULL;
-	gchar *recipient = NULL;
+	gchar *from_str = NULL, *signature = NULL, *body = NULL, *recipient = NULL, *tmp = NULL;
 	gboolean use_signature = FALSE;
 	ModestWindow *msg_win = NULL;
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr();
@@ -733,34 +732,17 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		goto cleanup;
 	}
 
+
 	recipient = modest_text_utils_get_email_address (from_str);
-	signature = modest_account_mgr_get_signature_from_recipient (mgr, recipient, &use_signature);
+	tmp = modest_account_mgr_get_signature_from_recipient (modest_runtime_get_account_mgr (),
+							       recipient,
+							       &use_signature);
+	signature = modest_text_utils_create_colored_signature (tmp);
+	g_free (tmp);
 	g_free (recipient);
-	if (body_str != NULL) {
-		body = use_signature ? g_strconcat(body_str, "\n",
-						   MODEST_TEXT_UTILS_SIGNATURE_MARKER,
-						   "\n", signature, NULL) : g_strdup(body_str);
-	} else {
 
-		gchar *gray_color_markup = NULL, *color_begin = NULL, *color_end = NULL;
-		GdkColor color;
-
-		if (win && gtk_style_lookup_color (gtk_widget_get_style ((GtkWidget *) win),
-						   "SecondaryTextColor", &color))
-			gray_color_markup = modest_text_utils_get_color_string (&color);
-		if (!gray_color_markup)
-			gray_color_markup = g_strdup ("#babababababa");
-
-		color_begin = g_strdup_printf ("<font color=\"%s\">", gray_color_markup);
-		color_end = "</font>";
-
-		body = use_signature ? g_strconcat("<br/>\n", color_begin,
-						MODEST_TEXT_UTILS_SIGNATURE_MARKER, "<br/>\n",
-						signature, color_end, NULL) : g_strdup("");
-
-		g_free (gray_color_markup);
-		g_free (color_begin);
-	}
+	body = use_signature ? g_strconcat ((body_str) ? body_str : "", signature, NULL) :
+		g_strdup(body_str);
 
 	msg = modest_tny_msg_new_html_plain (to_str, from_str, cc_str, bcc_str, subject_str,
 					NULL, NULL, body, NULL, NULL, NULL, NULL, NULL);
@@ -1595,9 +1577,8 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	gchar *from = NULL;
 	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr = NULL;
-	gchar *signature = NULL;
+	gchar *signature = NULL, *recipient = NULL;
 	gboolean use_signature;
-	gchar *recipient;
 
 	/* If there was any error. The mail operation could be NULL,
 	   this means that we already have the message downloaded and
@@ -1608,9 +1589,10 @@ reply_forward_cb (ModestMailOperation *mail_op,
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 						   rf_helper->account_name, rf_helper->mailbox);
+
 	recipient = modest_text_utils_get_email_address (from);
-	signature = modest_account_mgr_get_signature_from_recipient (modest_runtime_get_account_mgr(), 
-								     recipient, 
+	signature = modest_account_mgr_get_signature_from_recipient (modest_runtime_get_account_mgr (),
+								     recipient,
 								     &use_signature);
 	g_free (recipient);
 

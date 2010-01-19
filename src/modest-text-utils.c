@@ -41,6 +41,7 @@
 #include <regex.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-text-utils.h>
+#include <modest-account-mgr-helpers.h>
 #include <modest-runtime.h>
 #include <ctype.h>
 
@@ -207,23 +208,26 @@ modest_text_utils_cite (const gchar *text,
 			const gchar *from,
 			time_t sent_date)
 {
-	gchar *retval;
-	gchar *tmp_sig;
-	
+	gchar *retval, *tmp;
+
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (content_type, NULL);
-	
-	if (!signature) {
-		tmp_sig = g_strdup (text);
-	} else {
-		tmp_sig = g_strconcat (text, "\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER, "\n", signature, NULL);
-	}
 
 	if (strcmp (content_type, "text/html") == 0) {
-		retval = modest_text_utils_convert_to_html_body (tmp_sig, -1, TRUE);
-		g_free (tmp_sig);
+		tmp = modest_text_utils_convert_to_html_body (text, -1, TRUE);
+		if (signature) {
+			gchar *colored_signature = modest_text_utils_create_colored_signature (signature);
+			retval = g_strconcat (tmp, colored_signature, NULL);
+			g_free (colored_signature);
+			g_free (tmp);
+		} else {
+			retval = tmp;
+		}
 	} else {
-		retval = tmp_sig;
+		if (signature)
+			retval = g_strconcat (text, "\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER, "\n", signature, NULL);
+		else
+			retval = g_strdup (text);
 	}
 
 	return retval;
@@ -1140,18 +1144,19 @@ modest_text_utils_quote_html (const gchar *text,
 {
 	GString *result_string;
 
-	result_string = 
+	result_string =
 		g_string_new ( \
 			      "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \
 			      "<html>\n"				\
-			      "<body>\n<br/>\n");
+			      "<body>\n");
 
 	if (text || cite || signature) {
 		GString *quoted_text;
 		g_string_append (result_string, "<pre>\n");
 		if (signature) {
-			quote_html_add_to_gstring (result_string, MODEST_TEXT_UTILS_SIGNATURE_MARKER);
-			quote_html_add_to_gstring (result_string, signature);
+			gchar *colored_signature = modest_text_utils_create_colored_signature (signature);
+			g_string_append_printf (result_string, "%s<br/>", colored_signature);
+			g_free (colored_signature);
 		}
 		quote_html_add_to_gstring (result_string, cite);
 		quoted_text = g_string_new ("");
@@ -2298,6 +2303,29 @@ modest_text_utils_no_recipient (GtkTextBuffer *buffer)
 		}
 	}
 	g_free (text);
+
+	return retval;
+}
+
+gchar *
+modest_text_utils_create_colored_signature (const gchar *signature)
+{
+	gchar *gray_color_markup = NULL, *retval;
+	GdkColor color;
+	GtkWidget *widget;
+
+	/* Get color from widgets */
+	widget = (GtkWidget *) modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
+	if (widget && gtk_style_lookup_color (gtk_widget_get_style (widget), "SecondaryTextColor", &color))
+		gray_color_markup = modest_text_utils_get_color_string (&color);
+
+	retval = g_strdup_printf ("<br/>\n<font color=\"%s\">%s<br/>\n%s<br/>\n</font>",
+				  (gray_color_markup) ? gray_color_markup : "#babababababa",
+				  MODEST_TEXT_UTILS_SIGNATURE_MARKER,
+				  signature);
+
+	if (gray_color_markup)
+		g_free (gray_color_markup);
 
 	return retval;
 }
