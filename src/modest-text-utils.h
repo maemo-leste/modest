@@ -569,4 +569,6 @@ gchar * modest_text_utils_quote_names (const gchar *recipients);
 
 gboolean modest_text_utils_no_recipient (GtkTextBuffer *buffer);
 
+gchar * modest_text_utils_create_colored_signature (const gchar *signature);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */
