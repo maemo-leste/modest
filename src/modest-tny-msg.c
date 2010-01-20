@@ -224,7 +224,7 @@ add_html_body_part (TnyMsg *msg,
 
 	/* Create the stream */
 	html_body_stream = TNY_STREAM (tny_camel_mem_stream_new_with_buffer
-					(body, strlen(body)));
+				       (body, (body) ? strlen(body) : 0));
 
 	/* Create body part if needed */
 	html_body_part = modest_formatter_create_body_part (NULL, msg);
