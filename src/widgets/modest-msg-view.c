@@ -211,11 +211,11 @@ modest_msg_view_base_init (gpointer g_class)
 		signals[HANDLE_CALENDAR_SIGNAL] =
 			g_signal_new ("handle_calendar",
 				      MODEST_TYPE_MSG_VIEW,
-				      G_SIGNAL_RUN_FIRST,
+				      G_SIGNAL_ACTION | G_SIGNAL_RUN_LAST,
 				      G_STRUCT_OFFSET(ModestMsgViewIface, handle_calendar),
 				      NULL, NULL,
 				      modest_marshal_BOOLEAN__OBJECT_OBJECT,
-				      G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_OBJECT);
+				      G_TYPE_BOOLEAN, 2, G_TYPE_OBJECT, G_TYPE_OBJECT);
 		initialized = TRUE;
 	}
 }
