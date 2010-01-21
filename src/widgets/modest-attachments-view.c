@@ -187,7 +187,8 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 
 		direct_attach = (!g_str_has_prefix (msg_content_type, "message/rfc822") && 
 				 !g_str_has_prefix (msg_content_type, "multipart") && 
-				 !g_str_has_prefix (msg_content_type, "text/"));
+				 !g_str_has_prefix (msg_content_type, "text/plain") &&
+				 !g_str_has_prefix (msg_content_type, "text/html"));
 
 		g_free (msg_content_type);
 
@@ -219,10 +220,13 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 
 			if (g_str_has_prefix (content_type, "multipart/digest")) {
 				add_digest_attachments (attachments_view, part);
-			} else if (body_found && g_str_has_prefix (content_type, "text/")) {
+			} else if (body_found && 
+				   (g_str_has_prefix (content_type, "text/plain") ||
+				    g_str_has_prefix (content_type, "text/html"))) {
 				   modest_attachments_view_add_attachment (attachments_view, part, TRUE, 0);
 			} else if (g_str_has_prefix (content_type, "multipart/") || 
-				   g_str_has_prefix (content_type, "text/")) {
+				   g_str_has_prefix (content_type, "text/plain") ||
+				   g_str_has_prefix (content_type, "text/html")) {
 				body_found = TRUE;
 			}
 		}
