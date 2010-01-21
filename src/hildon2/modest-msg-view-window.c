@@ -3220,7 +3220,7 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 		if (written < 0) {
 			g_warning ("modest: could not save attachment %s: %d (%s)\n", pair->filename, error?error->code:-1, error?error->message:"Unknown error");
 
-			if ((error->domain == TNY_ERROR_DOMAIN) && 
+			if (error && (error->domain == TNY_ERROR_DOMAIN) &&
 			    (error->code == TNY_IO_ERROR_WRITE) &&
 			    (errno == ENOSPC)) {
 				info->result = GNOME_VFS_ERROR_NO_SPACE;
