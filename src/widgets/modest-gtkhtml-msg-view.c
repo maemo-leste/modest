@@ -2805,6 +2805,7 @@ set_calendar (ModestGtkhtmlMsgView *self, TnyHeader *header, TnyMsg *msg)
 	g_return_if_fail (MODEST_IS_GTKHTML_MSG_VIEW (self));
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
+	gtk_widget_hide_all (priv->calendar_actions_container);
 	if (priv->calendar_actions_box) {
 		gtk_widget_destroy (priv->calendar_actions_box);
 		priv->calendar_actions_box = NULL;
