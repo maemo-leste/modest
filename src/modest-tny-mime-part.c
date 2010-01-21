@@ -171,7 +171,8 @@ modest_tny_mime_part_is_msg (TnyMimePart *part)
 	down_content_type = g_ascii_strdown (content_type, -1);
 	if ((g_str_has_prefix (down_content_type, "message/rfc822") ||
 	     g_str_has_prefix (down_content_type, "multipart/") ||
-	     g_str_has_prefix (down_content_type, "text/"))) {
+	     g_str_has_prefix (down_content_type, "text/plain") ||
+	     g_str_has_prefix (down_content_type, "text/html"))) {
 		g_free (down_content_type);
 		return TRUE;
 	} else {
