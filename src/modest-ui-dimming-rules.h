@@ -81,6 +81,7 @@ gboolean modest_ui_dimming_rules_on_send_receive_all (ModestWindow *win, gpointe
 gboolean modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_find_in_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_set_style (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_editor_show_toolbar (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_zoom (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_editor_remove_attachment (ModestWindow *win, gpointer user_data);
