@@ -188,6 +188,8 @@ static void text_buffer_mark_set (GtkTextBuffer *buffer,
 				  GtkTextIter *iter,
 				  GtkTextMark *mark,
 				  ModestMsgEditWindow *userdata);
+static void on_show_toolbar_button_toggled (GtkWidget *button,
+					    ModestMsgEditWindow *window);
 static void on_message_settings (GtkAction *action,
 				 ModestMsgEditWindow *window);
 static void setup_menu (ModestMsgEditWindow *self);
@@ -337,6 +339,7 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *app_menu;
 	GtkWidget   *cc_button;
 	GtkWidget   *bcc_button;
+	GtkWidget   *show_toolbar_button;
 
 	GtkWidget   *max_chars_banner;
 
@@ -2118,11 +2121,15 @@ modest_msg_edit_window_set_format (ModestMsgEditWindow *self,
 	case MODEST_MSG_EDIT_FORMAT_HTML:
 		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 		update_signature (self, priv->last_from_account, priv->last_from_account);
-		if (parent_priv->toolbar) gtk_widget_show (parent_priv->toolbar);
+		if (parent_priv->toolbar) 
+			on_show_toolbar_button_toggled (priv->show_toolbar_button,
+							MODEST_MSG_EDIT_WINDOW (self));
 		break;
 	case MODEST_MSG_EDIT_FORMAT_TEXT:
 		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
-		if (parent_priv->toolbar) gtk_widget_hide (parent_priv->toolbar);
+		if (parent_priv->toolbar) 
+			on_show_toolbar_button_toggled (priv->show_toolbar_button,
+							MODEST_MSG_EDIT_WINDOW (self));
 		break;
 	default:
 		g_return_if_reached ();
@@ -3166,6 +3173,10 @@ modest_msg_edit_window_show_toolbar (ModestWindow *self,
 	} else {
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 	}
+	modest_conf_set_bool(modest_runtime_get_conf(), MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, show_toolbar, NULL);
+	if (modest_togglable_get_active (priv->show_toolbar_button) != show_toolbar) {
+		modest_togglable_set_active (priv->show_toolbar_button, show_toolbar);
+	}
 }
 
 void
@@ -3249,7 +3260,8 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 			remove_tags (WP_TEXT_BUFFER (priv->text_buffer));
 			update_signature (window, priv->last_from_account, priv->last_from_account);
 			if (parent_priv->toolbar)
-				gtk_widget_show (parent_priv->toolbar);
+				on_show_toolbar_button_toggled (priv->show_toolbar_button,
+								MODEST_MSG_EDIT_WINDOW (window));
 			break;
 		case MODEST_FILE_FORMAT_PLAIN_TEXT:
 		{
@@ -3258,7 +3270,8 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 			if (response == GTK_RESPONSE_OK) {
 				wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 				if (parent_priv->toolbar)
-					gtk_widget_hide (parent_priv->toolbar);
+					on_show_toolbar_button_toggled (priv->show_toolbar_button,
+									MODEST_MSG_EDIT_WINDOW (window));
 			} else {
 				GtkToggleAction *action = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatFormattedTextMenu"));
 				modest_utils_toggle_action_set_active_block_notify (action, TRUE);
@@ -3430,10 +3443,8 @@ modest_msg_edit_window_undo (ModestMsgEditWindow *window)
 	is_rich_text = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer));
 
 	if (parent_priv->toolbar && was_rich_text != is_rich_text) {
-		if (is_rich_text)
-			gtk_widget_show (parent_priv->toolbar);
-		else
-			gtk_widget_hide (parent_priv->toolbar);
+		on_show_toolbar_button_toggled (priv->show_toolbar_button,
+						MODEST_MSG_EDIT_WINDOW (window));
 	}
 
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
@@ -4616,6 +4627,16 @@ on_message_settings (GtkAction *action,
 }
 
 static void
+on_show_toolbar_button_toggled (GtkWidget *button,
+				ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	modest_msg_edit_window_show_toolbar (MODEST_WINDOW (window),
+					     modest_togglable_get_active (button));
+}
+
+static void
 on_cc_button_toggled (GtkWidget *button,
 		      ModestMsgEditWindow *window)
 {
@@ -4689,6 +4710,17 @@ setup_menu (ModestMsgEditWindow *self)
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_viewer_find"), "<Ctrl>f",
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_toggle_find_in_page),
 				   NULL);
+
+	priv->show_toolbar_button = modest_toolkit_factory_create_check_menu (modest_runtime_get_toolkit_factory (),
+									      _("mcen_bd_show_toolbar"));
+	modest_togglable_set_active (priv->show_toolbar_button,
+				     FALSE);
+	modest_window_add_item_to_menu (MODEST_WINDOW (self), priv->show_toolbar_button, 
+					MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_editor_show_toolbar));
+	gtk_widget_show (priv->show_toolbar_button);
+	g_signal_connect (G_OBJECT (priv->show_toolbar_button), "toggled",
+			  G_CALLBACK (on_show_toolbar_button_toggled), (gpointer) self);
+
 }
 
 static void

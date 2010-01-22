@@ -983,6 +983,27 @@ modest_ui_dimming_rules_on_set_style (ModestWindow *win, gpointer user_data)
 }
 
 gboolean 
+modest_ui_dimming_rules_on_editor_show_toolbar (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), TRUE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check common dimming rules */
+	ModestMsgEditFormat format;
+	format = modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW (win));
+
+	dimmed = (format != MODEST_MSG_EDIT_FORMAT_HTML);
+	if (dimmed)
+		modest_dimming_rule_set_notification (rule, _("mcen_ib_item_unavailable_plaintext"));
+	
+	return dimmed;
+}
+
+gboolean 
 modest_ui_dimming_rules_on_zoom (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
