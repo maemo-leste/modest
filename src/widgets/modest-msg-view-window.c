@@ -3120,6 +3120,7 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 	} else {
 		modest_platform_system_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
 	}
+	set_progress_hint (info->window, FALSE);
 	save_mime_part_info_free (info, FALSE);
 	gdk_threads_leave (); /* CHECKED */
 
@@ -3314,6 +3315,8 @@ save_mime_parts_to_file_with_checks (GtkWindow *parent,
 	if (!is_ok) {
 		save_mime_part_info_free (info, TRUE);
 	} else {
+		/* Start progress and launch thread */
+		set_progress_hint (info->window, TRUE);
 		g_thread_create ((GThreadFunc)save_mime_part_to_file, info, FALSE, NULL);
 	}
 
