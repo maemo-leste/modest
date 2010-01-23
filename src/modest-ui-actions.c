@@ -328,12 +328,16 @@ headers_action_mark_as_read (TnyHeader *header,
 			     gpointer user_data)
 {
 	TnyHeaderFlags flags;
+	gchar *uid;
 
 	g_return_if_fail (TNY_IS_HEADER(header));
 
 	flags = tny_header_get_flags (header);
 	if (flags & TNY_HEADER_FLAG_SEEN) return;
 	tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
+	uid = modest_tny_folder_get_header_unique_id (header);
+	modest_platform_emit_msg_read_changed_signal (uid, TRUE);
+	g_free (uid);
 }
 
 static void
@@ -347,7 +351,10 @@ headers_action_mark_as_unread (TnyHeader *header,
 
 	flags = tny_header_get_flags (header);
 	if (flags & TNY_HEADER_FLAG_SEEN)  {
+		gchar *uid;
+		uid = modest_tny_folder_get_header_unique_id (header);
 		tny_header_unset_flag (header, TNY_HEADER_FLAG_SEEN);
+		modest_platform_emit_msg_read_changed_signal (uid, FALSE);
 	}
 }
 

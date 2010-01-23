@@ -569,6 +569,7 @@ DBusConnection* modest_platform_get_dbus_connection (void);
 void modest_platform_emit_folder_updated_signal (const gchar *account_id, const gchar *folder_id);
 void modest_platform_emit_account_created_signal (const gchar *account_id);
 void modest_platform_emit_account_removed_signal (const gchar *account_id);
+void modest_platform_emit_msg_read_changed_signal (const gchar *msg_uid, gboolean is_read);
 
 G_END_DECLS
 

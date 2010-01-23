@@ -679,6 +679,8 @@ _on_msg_has_been_sent (TnySendQueue *self,
 
 	tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
 
+	modest_platform_emit_msg_read_changed_signal (msg_id, TRUE);
+
 	tny_folder_sync_async (priv->sentbox, FALSE, NULL, NULL, NULL);
 
 	/* Get status info */
