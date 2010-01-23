@@ -537,6 +537,7 @@ find_msg_async_cb (TnyFolder *folder,
 				ModestMailOperation *mail_op;
 				
                                 tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
+				modest_platform_emit_msg_read_changed_signal (msg_uid, TRUE);
 				/* Sync folder, we need this to save the seen flag */
 				mail_op = modest_mail_operation_new (NULL);
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),

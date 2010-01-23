@@ -2310,8 +2310,14 @@ view_msg_cb (ModestMailOperation *mail_op,
 	}
 
 	/* Mark header as read */
-	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN))
+	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN)) {
+		gchar *uid;
+
 		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
+		uid = modest_tny_folder_get_header_unique_id (header);
+		modest_platform_emit_msg_read_changed_signal (uid, TRUE);
+		g_free (uid);
+	}
 
 	/* Set new message */
 	if (priv->msg_view != NULL && TNY_IS_MSG_VIEW (priv->msg_view)) {

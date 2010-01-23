@@ -677,3 +677,10 @@ modest_platform_emit_account_removed_signal (const gchar *account_id)
 {
 	return;
 }
+
+void
+modest_platform_emit_msg_read_changed_signal (const gchar *msg_uid,
+					      gboolean is_read)
+{
+	return;
+}

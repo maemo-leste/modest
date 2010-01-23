@@ -3208,3 +3208,14 @@ modest_platform_emit_account_removed_signal (const gchar *account_id)
 
 	modest_dbus_emit_account_removed_signal (con, account_id);
 }
+void
+modest_platform_emit_msg_read_changed_signal (const gchar *msg_uid,
+					      gboolean is_read)
+{
+	DBusConnection *con;
+
+	con = modest_platform_get_dbus_connection ();
+	if (!con) return;
+
+	modest_dbus_emit_msg_read_changed_signal (con, msg_uid, is_read);
+}

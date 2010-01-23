@@ -581,7 +581,11 @@ on_mark_read_csm_activated (GtkMenuItem *item,
 						       priv->x_coord, priv->y_coord);
 
 	if (header) {
+		gchar *uid;
 		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
+		uid = modest_tny_folder_get_header_unique_id (header);
+		modest_platform_emit_msg_read_changed_signal (uid, TRUE);
+		g_free (uid);
 		g_object_unref (header);
 	}
 }
@@ -601,7 +605,11 @@ on_mark_unread_csm_activated (GtkMenuItem *item,
 						       priv->x_coord, priv->y_coord);
 
 	if (header) {
+		gchar *uid;
 		tny_header_unset_flag (header, TNY_HEADER_FLAG_SEEN);
+		uid = modest_tny_folder_get_header_unique_id (header);
+		modest_platform_emit_msg_read_changed_signal (uid, FALSE);
+		g_free (uid);
 		g_object_unref (header);
 	}
 }
