@@ -2368,7 +2368,21 @@ modest_platform_get_list_to_move (ModestWindow *window)
 }
 
 void
-modest_platform_emit_folder_updated_signal (const gchar *account_id, const gch
+modest_platform_emit_folder_updated_signal (const gchar *account_id, const gchar *folder_id)
 {
        return;
 }
+
+
+void
+modest_platform_emit_account_created_signal (const gchar *account_id)
+{
+       return;
+}
+
+void
+modest_platform_emit_account_removed_signal (const gchar *account_id)
+{
+       return;
+}
+

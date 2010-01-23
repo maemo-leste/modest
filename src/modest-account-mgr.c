@@ -342,6 +342,7 @@ modest_account_mgr_add_account_from_settings (ModestAccountMgr *self,
 				
 	/* Notify the observers */
 	g_signal_emit (self, signals[ACCOUNT_INSERTED_SIGNAL], 0, account_name);
+	modest_platform_emit_account_created_signal (account_name);
 
 	/* if no default account has been defined yet, do so now */
 	default_account = modest_account_mgr_get_default_account (self);
@@ -456,6 +457,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 
 	/* Notify the observers */
 	g_signal_emit (self, signals[ACCOUNT_INSERTED_SIGNAL], 0, name);
+	modest_platform_emit_account_created_signal (name);
 
 	/* if no default account has been defined yet, do so now */
 	default_account = modest_account_mgr_get_default_account (self);
@@ -717,6 +719,7 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 	   the keys, because otherwise a call to account_names
 	   will retrieve also the deleted account */
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0, name);
+	modest_platform_emit_account_removed_signal (name);
 	
 	return TRUE;
 }
