@@ -2279,3 +2279,26 @@ modest_platform_emit_folder_updated_signal (const gchar *account_id, const gchar
 
 	modest_dbus_emit_folder_updated_signal (con, account_id, folder_id);
 }
+
+
+void
+modest_platform_emit_account_created_signal (const gchar *account_id)
+{
+	DBusConnection *con;
+
+	con = modest_platform_get_dbus_connection ();
+	if (!con) return;
+
+	modest_dbus_emit_account_created_signal (con, account_id);
+}
+
+void
+modest_platform_emit_account_removed_signal (const gchar *account_id)
+{
+	DBusConnection *con;
+
+	con = modest_platform_get_dbus_connection ();
+	if (!con) return;
+
+	modest_dbus_emit_account_removed_signal (con, account_id);
+}

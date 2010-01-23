@@ -565,6 +565,8 @@ TnyList* modest_platform_get_list_to_move (ModestWindow *window);
 DBusConnection* modest_platform_get_dbus_connection (void);
 
 void modest_platform_emit_folder_updated_signal (const gchar *account_id, const gchar *folder_id);
+void modest_platform_emit_account_created_signal (const gchar *account_id);
+void modest_platform_emit_account_removed_signal (const gchar *account_id);
 
 G_END_DECLS
 
