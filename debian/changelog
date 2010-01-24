@@ -1,3 +1,42 @@
+modest (3.90.4) unstable; urgency=low
+
+  * Misc build fixes.
+  * Set active account of folder window before registering, to allow window mgr
+  *    to know it on register stage.
+  * Moved Back button to the top right corner.
+  * Removed unused includes.
+  * New mail operation modest_mail_operation_update_folder_counts. This is for
+  *    only doing poke_status on all folders.
+  * New DBUS API for update_folder_counts method.
+  * Test app for update_folder_counts method.
+  * Show calendar flag in headers list.
+  * New method to find a calendar part in a message.
+  * Detect calendar status from parts in header view.
+  * On showing a calendar event in view, emit a signal to handle it in upper
+  *    layers.
+  * If handle_calendar is not handler, then don't show the calendar containers.
+  * Autoretrieve calendar parts in bodystructure.
+  * Add methods to create a reply to calendar message and open it in editor.
+  * Pass to account protocol request to handle the calendar.
+  * Only set priority if it differs from normal.
+  * Fixes: Several reference leaks in ModestFolderView's filter method.
+  * Fixes: Zoom keys behaviour in Modest.
+  * Fixes: A crash creating new messages.
+  * Fixes: NB#134194  "volume %x" shown when attempt to zoom.
+  * Fixes: NB#140276  Only remove mail notifications for each account, when we
+  *    see mails or folders from that account.
+  * Fixes: NB#142363  Use non-localized reply and forward prefixes.
+  * Fixes: NB#144441  "unable to zoom" shown in email inbox while mediaplayer
+  *    is active.
+  * Fixes: NB#146213  Show progress information when saving attachments.
+  * Fixes: NB#147995  Show the signature in SecondaryTextColor for HTML emails.
+  * Fixes: NB#150401  Usage of zoom keys should be revised in email.
+  * Fixes: NB#152559  New show toolbar button in editor.
+  * Fixes: NB#153338  Fixed a typo in a logical id.
+  * Fixes: NB#153599  Fixes a crash when saving attachments fails.
+
+ -- Jose Dapena Paz <jdapena@igalia.com>  Sun, 24 Jan 2010 12:17:34 +0100
+
 modest (3.90.3) unstable; urgency=low
 
   * Add applications .desktop file for gtk
