@@ -588,7 +588,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	}
 
 	/* Show toolbar always */
-	if (MODEST_MSG_EDIT_WINDOW (window)) {
+	if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
 		gboolean show_toolbar;
 		show_toolbar = modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, NULL);
 		modest_window_show_toolbar (window, show_toolbar);
