@@ -1,3 +1,14 @@
+modest (3.2.11) unstable; urgency=low
+
+  * Week 04, 2010 - first release candidate
+  *  
+  * Fixes: NB#146213 Progress indicator not displayed while saving attachments.
+  * Fixes: NB#152559 Message settings dialog: check box "Show formatting toolbar" is missing
+  * Fixes: NB#153931 Inserting the SIM, Email application closes due to internal error and 
+  * 	email client is not usable 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 25 Jan 2010 11:44:01 +0200
+
 modest (3.2.10-1) unstable; urgency=low
 
   * Week 03, 2010 - second release candidate
