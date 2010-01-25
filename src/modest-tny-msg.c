@@ -58,6 +58,8 @@ static void add_images (TnyMsg *msg, GList *attachments_list, GError **err);
 static char * get_content_type(const gchar *s);
 static gboolean is_ascii(const gchar *s);
 
+static TnyMimePart* modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_html);
+static TnyMimePart* modest_tny_msg_find_calendar_from_mime_part  (TnyMimePart *msg);
 
 TnyMsg*
 modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
@@ -457,14 +459,14 @@ modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_ht
 {
 	TnyList *parts;
 	TnyIterator *iter;
-	TnyMimePart *part = NULL;
+	TnyMimePart *part = NULL, *related = NULL;
 	TnyMimePart *first_part = NULL;
 	const gchar *desired_mime_type = want_html ? "text/html" : "text/plain";
 
 	parts = TNY_LIST (tny_simple_list_new());
 	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
 
-	for (iter  = tny_list_create_iterator(parts); 
+	for (iter  = tny_list_create_iterator(parts);
 	     !tny_iterator_is_done (iter);
 	     tny_iterator_next (iter)) {
 		gchar *content_type;
@@ -483,6 +485,16 @@ modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_ht
 		if (is_body)
 			break;
 
+		/* Makes no sense to look for related MIME parts if we
+		   only want the plain text parts */
+		if (want_html && g_str_has_prefix (content_type, "multipart/related")) {
+			/* In an alternative the last part is supposed
+			   to be the richest */
+			if (related)
+				g_object_unref (related);
+			related = g_object_ref (part);
+		}
+
 		g_object_unref (part);
 		part = NULL;
 
@@ -491,14 +503,26 @@ modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_ht
 	g_object_unref (parts);
 
 	if (part == NULL) {
-		return first_part;
+		if (related) {
+			TnyMimePart *retval;
+			if (first_part)
+				g_object_unref (first_part);
+			retval = modest_tny_msg_find_body_part_from_mime_part (related, want_html);
+			g_object_unref (related);
+			return retval;
+		} else {
+			return first_part;
+		}
 	} else {
-		if (first_part) g_object_unref (first_part);
+		if (first_part)
+			g_object_unref (first_part);
+		if (related)
+			g_object_unref (related);
 		return part;
 	}
 }
 
-TnyMimePart*
+static TnyMimePart*
 modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_html)
 {
 	TnyMimePart *part = NULL;
@@ -506,7 +530,7 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	TnyIterator *iter = NULL;
 	gchar *header_content_type;
 	gchar *header_content_type_lower = NULL;
-	
+
 	if (!msg)
 		return NULL;
 
