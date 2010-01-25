@@ -2829,8 +2829,7 @@ set_calendar (ModestGtkhtmlMsgView *self, TnyHeader *header, TnyMsg *msg)
 		gtk_widget_hide_all (priv->calendar_box);
 		gtk_widget_hide (priv->calendar_actions_container);
 		gtk_widget_hide_all (priv->calendar_actions_container);
-		gtk_widget_hide (priv->calendar_actions_box);
+		if (priv->calendar_actions_box)
+			gtk_widget_hide (priv->calendar_actions_box);
 	}
-	
-
 }
