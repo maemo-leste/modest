@@ -31,6 +31,7 @@ static const ModestDimmingEntry modest_msg_edit_window_toolbar_dimming_entries [
 	{ "/ToolBar/ToolbarSend", G_CALLBACK(modest_ui_dimming_rules_on_send) },
 	{ "/ToolBar/ActionsBold", G_CALLBACK(modest_ui_dimming_rules_on_set_style) },
 	{ "/ToolBar/ActionsItalics", G_CALLBACK(modest_ui_dimming_rules_on_set_style) },
+	{ "/ToolBar/ActionsInsertImage", G_CALLBACK(modest_ui_dimming_rules_on_insert_image) },
 };
 
 G_END_DECLS

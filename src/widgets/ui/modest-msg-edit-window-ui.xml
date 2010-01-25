@@ -82,6 +82,7 @@
     <toolitem action="ActionsBold"/>
     <toolitem action="ActionsItalics"/>
     <placeholder name="FontColor" />
+    <toolitem action="ActionsInsertImage"/>
   </toolbar>
 
   <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>

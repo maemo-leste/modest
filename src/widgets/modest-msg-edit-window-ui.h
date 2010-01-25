@@ -103,11 +103,13 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "CloseWindowShortcut", NULL, NULL, "Escape", NULL, NULL },
 
 	/* TOOLBAR ACTIONS */
+	{ "ActionsInsertImage", MODEST_TOOLBAR_ICON_INSERT_IMAGES, NULL,  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_insert_image) },
 #ifndef MODEST_TOOLKIT_HILDON2
 	{ "ToolbarSend", MODEST_TOOLBAR_ICON_MAIL_SEND, N_("mcen_me_editor_send"),  "<Control>Return", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
 #endif
 #ifdef MODEST_TOOLKIT_GTK
 	{ "ToolbarAttach", "stock_attach", N_("mcen_me_editor_attachfile"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_attach_file) },
+
 #endif
 };
 
