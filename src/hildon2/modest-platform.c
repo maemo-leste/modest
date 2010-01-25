@@ -1748,11 +1748,13 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals, const gcha
         }
 
 	/* Save the ids */
-	modest_account_mgr_set_list (modest_runtime_get_account_mgr (), acc_name,
-				     MODEST_ACCOUNT_NOTIFICATION_IDS,
-				     notif_list, MODEST_CONF_VALUE_INT, FALSE);
+	if (notif_list) {
+		modest_account_mgr_set_list (modest_runtime_get_account_mgr (), acc_name,
+					     MODEST_ACCOUNT_NOTIFICATION_IDS,
+					     notif_list, MODEST_CONF_VALUE_INT, FALSE);
 
-	g_slist_free (notif_list);
+		g_slist_free (notif_list);
+	}
 
 #endif /* MODEST_HAVE_HILDON_NOTIFY */
 }
