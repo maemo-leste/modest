@@ -109,6 +109,7 @@ struct _ModestHeaderWindowPrivate {
 	/* weak refs */
 	GtkTreeModel *model_weak_ref;
 
+	gboolean limit_headers;
 	GtkWidget   *isearch_toolbar;
 };
 #define MODEST_HEADER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -278,6 +279,7 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->x_coord = 0;
 	priv->y_coord = 0;
 	priv->notify_model = 0;
+	priv->limit_headers = FALSE;
 
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
@@ -662,24 +664,23 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	ModestHeaderWindowPrivate *priv;
 	TnyAccount *account;
 	ModestProtocolType protocol_type;
-	gboolean limit_headers;
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
 
 	account = modest_tny_folder_get_account (folder);
-	limit_headers = FALSE;
+	priv->limit_headers = FALSE;
 	if (account) {
 		protocol_type = modest_tny_account_get_protocol_type (account);
 		if (modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
 								    protocol_type,
 								    MODEST_PROTOCOL_REGISTRY_STORE_LIMIT_HEADER_WINDOW)) {
-			limit_headers = TRUE;
+			priv->limit_headers = TRUE;
 		}
 		g_object_unref (account);
 	}
-	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), limit_headers?SHOW_LATEST_SIZE:0);
+	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), priv->limit_headers?SHOW_LATEST_SIZE:0);
 
 	priv->notify_model = g_signal_connect ((GObject*) header_view, "notify::model",
 					       G_CALLBACK (on_header_view_model_changed), self);
@@ -1674,7 +1675,9 @@ isearch_toolbar_close (GtkWidget *widget,
 	/* Hide toolbar */
 	gtk_widget_hide (priv->isearch_toolbar);
 
+	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view), priv->limit_headers?SHOW_LATEST_SIZE:0);
 	modest_header_view_set_filter_string (MODEST_HEADER_VIEW (priv->header_view), NULL);
+	update_view (obj, NULL);
 }
 
 static void
@@ -1694,5 +1697,11 @@ isearch_toolbar_search (GtkWidget *widget,
 	/* TODO: set filter */
 	modest_header_view_set_filter_string (MODEST_HEADER_VIEW (priv->header_view), 
 					      current_search);
+	if (current_search == NULL) {
+		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view), priv->limit_headers?SHOW_LATEST_SIZE:0);
+	} else {
+		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view), 0);
+	}
 	g_free (current_search);
+	update_view (obj, NULL);
 }
