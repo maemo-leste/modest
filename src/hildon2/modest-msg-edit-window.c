@@ -1612,6 +1612,9 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
+	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsInsertImage");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 
 	/* Explicitelly show all the toolbar (a normal gtk_widget_show
 	   will not show the tool items added to the placeholders) */
@@ -1619,7 +1622,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 	/* Set the no show all *after* showing all items. We do not
 	   want the toolbar to be shown with a show all because it
-	   could go agains the gconf setting regarding showing or not
+	   could go against the gconf setting regarding showing or not
 	   the toolbar of the editor window */
 	gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 }
@@ -4447,9 +4450,6 @@ setup_menu (ModestMsgEditWindow *self)
 	gtk_button_set_alignment (GTK_BUTTON (priv->bcc_button), 0.5, 0.5);
 	gtk_button_set_alignment (GTK_BUTTON (priv->bcc_button), 0.5, 0.5);
 
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_insert_image),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_set_style));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_add_attachment"), NULL,
 					   APP_MENU_CALLBACK (modest_msg_edit_window_add_attachment_clicked),
 					   NULL);

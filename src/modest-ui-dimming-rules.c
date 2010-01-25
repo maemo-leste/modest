@@ -3141,10 +3141,7 @@ modest_ui_dimming_rules_on_insert_image (ModestWindow *win,
 {
 	g_return_val_if_fail (MODEST_MSG_EDIT_WINDOW (win), FALSE);
 
-	ModestMsgEditFormat format =
-	  modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW (win));
-
-	return (format != MODEST_MSG_EDIT_FORMAT_HTML);
+	return modest_ui_dimming_rules_on_set_style (win, user_data);
 }
 
 static gboolean 
