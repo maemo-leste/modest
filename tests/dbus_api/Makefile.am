@@ -24,6 +24,7 @@ noinst_PROGRAMS = \
 	test_mail_to \
 	test_open_message   \
 	test_search         \
+	test_get_unread_msgs  \
 	test_delete_message \
 	test_compose_mail \
 	test_open_default_inbox \
@@ -45,6 +46,9 @@ test_compose_mail_LDADD = $(objects)
 
 test_search_SOURCES = test_search.c
 test_search_LDADD = $(objects)
+
+test_get_unread_msgs_SOURCES = test_get_unread_msgs.c
+test_get_unread_msgs_LDADD = $(objects)
 
 test_delete_message_SOURCES = test_delete_message.c
 test_delete_message_LDADD = $(objects)
