@@ -34,6 +34,7 @@
 #include "widgets/modest-window.h"
 #include "widgets/modest-folder-view.h"
 #include "widgets/modest-sort-criterium-view.h"
+#include <dbus/dbus.h>
 #ifndef MODEST_TOOLKIT_GTK
 #include <libosso.h>
 #endif
@@ -560,6 +561,10 @@ GtkWidget* modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 						  GtkWidget **folder_view);
 
 TnyList* modest_platform_get_list_to_move (ModestWindow *window);
+
+DBusConnection* modest_platform_get_dbus_connection (void);
+
+void modest_platform_emit_folder_updated_signal (const gchar *account_id, const gchar *folder_id);
 
 G_END_DECLS
 

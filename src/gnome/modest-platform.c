@@ -652,3 +652,15 @@ modest_platform_get_list_to_move (ModestWindow *window)
 
 	return list;
 }
+
+DBusConnection*
+modest_platform_get_dbus_connection (void)
+{
+	return NULL;
+}
+
+void
+modest_platform_emit_folder_updated_signal (const gchar *account_id, const gchar *folder_id)
+{
+	return;
+}

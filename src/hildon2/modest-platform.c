@@ -3162,3 +3162,27 @@ modest_platform_get_list_to_move (ModestWindow *window)
 
 	return list;
 }
+
+DBusConnection*
+modest_platform_get_dbus_connection (void)
+{
+	osso_context_t *osso_context;
+	DBusConnection *con;
+
+	osso_context = modest_maemo_utils_get_osso_context();
+
+	con = osso_get_dbus_connection (osso_context);
+
+	return con;
+}
+
+void
+modest_platform_emit_folder_updated_signal (const gchar *account_id, const gchar *folder_id)
+{
+	DBusConnection *con;
+
+	con = modest_platform_get_dbus_connection ();
+	if (!con) return;
+
+	modest_dbus_emit_folder_updated_signal (con, account_id, folder_id);
+}
