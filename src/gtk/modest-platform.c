@@ -2366,3 +2366,9 @@ modest_platform_get_list_to_move (ModestWindow *window)
 
 	return list;
 }
+
+void
+modest_platform_emit_folder_updated_signal (const gchar *account_id, const gch
+{
+       return;
+}

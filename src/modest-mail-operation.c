@@ -1710,6 +1710,9 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	new_headers_array = g_ptr_array_new ();
 	if (info->inbox_observer) {
 		new_headers_iter = tny_list_create_iterator (((InternalFolderObserver *) info->inbox_observer)->new_headers);
+		if (!tny_iterator_is_done (new_headers_iter)) {
+			modest_platform_emit_folder_updated_signal (info->account_name, tny_folder_get_id (TNY_FOLDER (inbox)));
+		}
 		while (!tny_iterator_is_done (new_headers_iter)) {
 			TnyHeader *header = NULL;
 
