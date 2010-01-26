@@ -44,4 +44,10 @@ void modest_osso_cb_hw_state_handler(osso_hw_state_t *state, gpointer data);
 DBusHandlerResult modest_dbus_req_filter (DBusConnection *con,
 			DBusMessage    *message,
 			void           *user_data);
+
+gboolean modest_dbus_emit_account_created_signal (DBusConnection *con, const gchar *account_id);
+gboolean modest_dbus_emit_account_removed_signal (DBusConnection *con, const gchar *account_id);
+gboolean modest_dbus_emit_folder_updated_signal (DBusConnection *con, const gchar *account_id, const gchar *folder_path);
+gboolean modest_dbus_emit_msg_read_changed_signal (DBusConnection *con, const gchar *msg_uid, gboolean is_read);
+
 #endif /* __MODEST_DBUS_CALLBACKS_H__ */

@@ -2262,3 +2262,115 @@ notify_error_in_dbus_callback (gpointer user_data)
 
 	return FALSE;
 }
+
+gboolean
+modest_dbus_emit_account_created_signal (DBusConnection *con, 
+					 const gchar *account_id)
+{
+	DBusMessage *signal;
+	dbus_bool_t result;
+
+	signal = dbus_message_new_signal (MODEST_DBUS_OBJECT, MODEST_DBUS_IFACE,
+					  MODEST_DBUS_SIGNAL_ACCOUNT_CREATED);
+
+	if (signal == NULL)
+		return FALSE;
+
+	if (!dbus_message_append_args  (signal,
+					DBUS_TYPE_STRING, &account_id,
+					DBUS_TYPE_INVALID)) {
+		dbus_message_unref (signal);
+		return FALSE;
+	}
+
+	result = dbus_connection_send (con, signal, NULL);
+
+	dbus_message_unref (signal);
+
+	return result?TRUE:FALSE;
+}
+
+gboolean
+modest_dbus_emit_account_removed_signal (DBusConnection *con,
+					 const gchar *account_id)
+{
+	DBusMessage *signal;
+	dbus_bool_t result;
+
+	signal = dbus_message_new_signal (MODEST_DBUS_OBJECT, MODEST_DBUS_IFACE,
+					  MODEST_DBUS_SIGNAL_ACCOUNT_REMOVED);
+
+	if (signal == NULL)
+		return FALSE;
+
+	if (!dbus_message_append_args  (signal,
+					DBUS_TYPE_STRING, &account_id,
+					DBUS_TYPE_INVALID)) {
+		dbus_message_unref (signal);
+		return FALSE;
+	}
+
+	result = dbus_connection_send (con, signal, NULL);
+
+	dbus_message_unref (signal);
+
+	return result?TRUE:FALSE;
+}
+
+gboolean
+modest_dbus_emit_folder_updated_signal (DBusConnection *con, 
+					const gchar *account_id,
+					const gchar *folder_path)
+{
+	DBusMessage *signal;
+	dbus_bool_t result;
+
+	signal = dbus_message_new_signal (MODEST_DBUS_OBJECT, MODEST_DBUS_IFACE,
+					  MODEST_DBUS_SIGNAL_FOLDER_UPDATED);
+
+	if (signal == NULL)
+		return FALSE;
+
+	if (!dbus_message_append_args  (signal,
+					DBUS_TYPE_STRING, &account_id,
+					DBUS_TYPE_STRING, &folder_path,
+					DBUS_TYPE_INVALID)) {
+		dbus_message_unref (signal);
+		return FALSE;
+	}
+
+	result = dbus_connection_send (con, signal, NULL);
+
+	dbus_message_unref (signal);
+
+	return result?TRUE:FALSE;
+}
+
+gboolean
+modest_dbus_emit_msg_read_changed_signal (DBusConnection *con,
+					  const gchar *uid,
+					  gboolean is_read)
+{
+	DBusMessage *signal;
+	dbus_bool_t result;
+
+	signal = dbus_message_new_signal (MODEST_DBUS_OBJECT, MODEST_DBUS_IFACE,
+					  MODEST_DBUS_SIGNAL_MSG_READ_CHANGED);
+
+	if (signal == NULL)
+		return FALSE;
+
+	if (!dbus_message_append_args  (signal,
+					DBUS_TYPE_STRING, &uid,
+					DBUS_TYPE_BOOLEAN, &is_read,
+					DBUS_TYPE_INVALID)) {
+		dbus_message_unref (signal);
+		return FALSE;
+	}
+
+	result = dbus_connection_send (con, signal, NULL);
+
+	dbus_message_unref (signal);
+
+	return result?TRUE:FALSE;
+}
