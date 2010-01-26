@@ -67,6 +67,8 @@
 
 #include <modest-text-utils.h>
 
+#define DISABLE_GET_UNREAD_MSGS_FOR_MULTI_MAILBOX 1
+
 typedef struct 
 {
 	gchar *to;
@@ -1630,6 +1632,21 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	DBUS_TYPE_INT64_AS_STRING /* timestamp */ \
 	DBUS_STRUCT_END_CHAR_AS_STRING
 
+#define ACCOUNT_HIT_DBUS_TYPE \
+	DBUS_STRUCT_BEGIN_CHAR_AS_STRING \
+	DBUS_TYPE_INT64_AS_STRING /* timestamp */ \
+	DBUS_TYPE_STRING_AS_STRING /* subject */ \
+	DBUS_STRUCT_END_CHAR_AS_STRING
+
+
+#define ACCOUNTS_HIT_DBUS_TYPE \
+	DBUS_STRUCT_BEGIN_CHAR_AS_STRING \
+	DBUS_TYPE_STRING_AS_STRING \
+	DBUS_TYPE_STRING_AS_STRING \
+	DBUS_TYPE_ARRAY_AS_STRING \
+	ACCOUNT_HIT_DBUS_TYPE \
+	DBUS_STRUCT_END_CHAR_AS_STRING
+
 static DBusMessage *
 search_result_to_message (DBusMessage *reply,
 			   GList       *hits)
@@ -1860,6 +1877,371 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 
 	/* Search asynchronously */
 	modest_search_all_accounts (search, search_all_cb, helper);
+}
+
+static gint
+headers_cmp (TnyHeader *a, TnyHeader *b)
+{
+	time_t date_a, date_b;
+	date_a = tny_header_get_date_received (a);
+	date_b = tny_header_get_date_received (b);
+
+	return date_a - date_b;
+}
+
+typedef struct {
+	TnyList *accounts_list;
+	TnyList *inboxes_list;
+	gint unread_msgs_count;
+	DBusConnection *con;
+	DBusMessage *message;
+	GList *account_hits_list;
+} GetUnreadMessagesHelper;
+
+typedef struct {
+	gchar *account_id;
+	gchar *account_name;
+	gchar *mailbox_id;
+	GList *header_list;
+} AccountHits;
+
+static void return_results (GetUnreadMessagesHelper *helper)
+{
+	DBusMessage *reply;
+
+	reply = dbus_message_new_method_return (helper->message);
+	if (reply) {
+		dbus_uint32_t serial = 0;
+		GList *node;
+		DBusMessageIter iter;
+		DBusMessageIter array_iter;
+
+		dbus_message_iter_init_append (reply, &iter);
+		dbus_message_iter_open_container (&iter,
+						  DBUS_TYPE_ARRAY,
+						  ACCOUNTS_HIT_DBUS_TYPE,
+						  &array_iter);
+		for (node = helper->account_hits_list; node != NULL; node = g_list_next (node)) {
+			AccountHits *ah = (AccountHits *) node->data;
+			const char *account_id;
+			const char *account_name;
+			DBusMessageIter ah_struct_iter;
+			DBusMessageIter sh_array_iter;
+			GList *result_node;
+
+			dbus_message_iter_open_container (&array_iter,
+							  DBUS_TYPE_STRUCT,
+							  NULL,
+							  &ah_struct_iter);
+			account_id = ah->account_id;
+			account_name = ah->account_name;
+			dbus_message_iter_append_basic (&ah_struct_iter,
+							DBUS_TYPE_STRING,
+							&account_id);
+			dbus_message_iter_append_basic (&ah_struct_iter,
+							DBUS_TYPE_STRING,
+							&account_name);
+
+			dbus_message_iter_open_container (&ah_struct_iter,
+							  DBUS_TYPE_ARRAY,
+							  ACCOUNT_HIT_DBUS_TYPE,
+							  &sh_array_iter);
+			for (result_node = ah->header_list; result_node != NULL; result_node = g_list_next (result_node)) {
+				TnyHeader *header = (TnyHeader *) result_node->data;
+				DBusMessageIter sh_struct_iter;
+				gint64 ts = MIN (tny_header_get_date_received (header), tny_header_get_date_sent (header));
+				gchar *subject = tny_header_dup_subject (header);
+
+				dbus_message_iter_open_container (&sh_array_iter,
+								  DBUS_TYPE_STRUCT,
+								  NULL,
+								  &sh_struct_iter);
+				dbus_message_iter_append_basic (&sh_struct_iter,
+								DBUS_TYPE_INT64,
+								&ts);
+				dbus_message_iter_append_basic (&sh_struct_iter,
+								DBUS_TYPE_STRING,
+								(const gchar **) &subject); 
+
+				dbus_message_iter_close_container (&sh_array_iter,
+							   &sh_struct_iter); 
+				g_object_unref (header);
+			}
+			dbus_message_iter_close_container (&ah_struct_iter,
+							   &sh_array_iter); 
+
+			dbus_message_iter_close_container (&array_iter,
+							   &ah_struct_iter); 
+			g_free (ah->account_id);
+			g_free (ah->account_name);
+			g_list_free (ah->header_list);
+		}
+
+		dbus_message_iter_close_container (&iter,
+						   &array_iter); 
+		dbus_connection_send (helper->con, reply, &serial);
+		dbus_connection_flush (helper->con);
+		dbus_message_unref (reply);
+
+	}
+	g_list_free (helper->account_hits_list);
+	dbus_message_unref (helper->message);
+	g_object_unref (helper->accounts_list);
+	g_slice_free (GetUnreadMessagesHelper, helper);
+}
+
+static void get_unread_messages_get_account (GetUnreadMessagesHelper *helper);
+static void get_unread_messages_get_headers (GetUnreadMessagesHelper *helper);
+
+
+static void get_unread_messages_get_headers_cb (TnyFolder *self,
+						gboolean cancelled, 
+						TnyList *headers,
+						GError *err, 
+						GetUnreadMessagesHelper *helper)
+{
+	TnyIterator *acc_iterator;
+	TnyAccount *account;
+	TnyIterator *headers_iterator;
+	GList *result_list = NULL;
+	gint members_count = 0;
+	AccountHits *account_hits;
+	const gchar *folder_id;
+	const gchar *bar;
+
+	acc_iterator = tny_list_create_iterator (helper->accounts_list);
+	account = TNY_ACCOUNT (tny_iterator_get_current (acc_iterator));
+
+	headers_iterator = tny_list_create_iterator (headers);
+	while (!tny_iterator_is_done (headers_iterator)) {
+		TnyHeader *header;
+		TnyHeaderFlags flags;
+
+		header = TNY_HEADER (tny_iterator_get_current (headers_iterator));
+		flags = tny_header_get_flags (header);
+		if (!(flags & TNY_HEADER_FLAG_SEEN)) {
+		  result_list = g_list_insert_sorted (result_list, g_object_ref (header), (GCompareFunc) headers_cmp);
+			if (members_count == helper->unread_msgs_count) {
+				g_object_unref (result_list->data);
+				result_list = g_list_delete_link (result_list, result_list);
+			} else {
+				members_count++;
+			}
+		}
+
+		g_object_unref (header);
+		tny_iterator_next (headers_iterator);
+	}
+	g_object_unref (headers_iterator);
+
+	account_hits = g_slice_new (AccountHits);
+	account_hits->account_id = g_strdup (tny_account_get_id (account));
+	account_hits->account_name = g_strdup (tny_account_get_name (account));
+	account_hits->header_list = result_list;
+	account_hits->mailbox_id = NULL;
+
+	folder_id = tny_folder_get_id (self);
+	bar = g_strstr_len (folder_id, -1, "/");
+	if (bar) {
+		gchar *prefix;
+		prefix = g_strndup (folder_id, bar - folder_id);
+		if (g_strstr_len (prefix, -1, "@")) {
+			account_hits->mailbox_id = g_strdup (prefix);
+		}
+		g_free (prefix);
+	}
+
+	helper->account_hits_list = g_list_prepend (helper->account_hits_list, account_hits);
+
+	get_unread_messages_get_headers (helper);
+
+}
+
+static TnyFolder *
+find_inbox (TnyFolderStore *fs)
+{
+	TnyList *folders;
+	GError *err = NULL;
+	TnyFolder *folder = NULL;
+	folders = TNY_LIST (tny_simple_list_new ());
+
+	tny_folder_store_get_folders (fs, folders, NULL, FALSE, &err);
+	if (err == NULL) {
+		TnyIterator *iterator;
+
+		for (iterator = tny_list_create_iterator (folders);
+		     !tny_iterator_is_done (iterator);
+		     tny_iterator_next (iterator)) {
+			TnyFolder *current;
+
+			current = TNY_FOLDER (tny_iterator_get_current (iterator));
+			if (tny_folder_get_folder_type (current) == TNY_FOLDER_TYPE_INBOX) {
+				folder = current;
+				break;
+			}
+			g_object_unref (current);
+		}
+		g_object_unref (iterator);
+	}
+	g_object_unref (folders);
+
+	return folder;
+}
+
+static TnyList *
+get_inboxes (TnyAccount *account)
+{
+	ModestProtocolType store_protocol;
+	TnyList *result;
+	gboolean mailboxes_protocol;
+
+	result= TNY_LIST (tny_simple_list_new ());
+	store_protocol = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+								tny_account_get_id (account));
+	mailboxes_protocol = 
+		modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+								store_protocol,
+								MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS);
+	if (mailboxes_protocol) {
+		/* Currently we disable the support for obtaining the results of multimailbox accounts */
+#ifndef DISABLE_GET_UNREAD_MSGS_FOR_MULTI_MAILBOX
+		TnyList *mailboxes;
+		GError *err = NULL;
+		mailboxes = TNY_LIST (tny_simple_list_new ());
+
+		tny_folder_store_get_folders (TNY_FOLDER_STORE (account), mailboxes, NULL, FALSE, &err);
+		if (err == NULL) {
+			TnyIterator *iterator;
+
+			for (iterator = tny_list_create_iterator (mailboxes);
+			     !tny_iterator_is_done (iterator);
+			     tny_iterator_next (iterator)) {
+				TnyFolder *mailbox;
+				TnyFolder *inbox;
+
+				mailbox = TNY_FOLDER (tny_iterator_get_current (iterator));
+				inbox = find_inbox (TNY_FOLDER_STORE (mailbox));
+				if (inbox) {
+					tny_list_prepend (result, G_OBJECT (inbox));
+					g_object_unref (inbox);
+				}
+				g_object_unref (mailbox);
+			}
+			g_object_unref (iterator);
+		}
+		g_object_unref (mailboxes);
+#endif
+	} else {
+		TnyFolder *inbox;
+		inbox = find_inbox (TNY_FOLDER_STORE (account));
+		if (inbox) {
+			tny_list_prepend (result, G_OBJECT (inbox));
+			g_object_unref (inbox);
+		}
+	}
+
+	return result;
+}
+
+static void
+get_unread_messages_get_headers (GetUnreadMessagesHelper *helper)
+{
+	TnyIterator *iterator;
+
+	iterator = tny_list_create_iterator (helper->inboxes_list);
+	if (tny_iterator_is_done (iterator)) {
+		TnyIterator *accounts_iter;
+		TnyAccount *account;
+		g_object_unref (helper->inboxes_list);
+		helper->inboxes_list = NULL;
+
+		accounts_iter = tny_list_create_iterator (helper->accounts_list);
+		account = TNY_ACCOUNT (tny_iterator_get_current (accounts_iter));
+		g_object_unref (accounts_iter);
+
+		tny_list_remove (helper->accounts_list, (GObject *) account);
+		g_object_unref (account);
+		get_unread_messages_get_account (helper);
+	} else {
+		TnyFolder *folder;
+
+		folder = TNY_FOLDER (tny_iterator_get_current (iterator));
+		if (folder) {
+			TnyList *headers_list;
+
+			headers_list = TNY_LIST (tny_simple_list_new ());
+			tny_folder_get_headers_async (folder, headers_list, FALSE, (TnyGetHeadersCallback) get_unread_messages_get_headers_cb, NULL, helper);
+			g_object_unref (headers_list);
+			tny_list_remove (helper->inboxes_list, G_OBJECT (folder));
+			g_object_unref (folder);
+		}
+	}
+	g_object_unref (iterator);
+}
+
+static void
+get_unread_messages_get_account (GetUnreadMessagesHelper *helper)
+{
+	TnyIterator *iterator;
+
+	/* Search through all accounts */
+	iterator = tny_list_create_iterator (helper->accounts_list);
+	if (tny_iterator_is_done (iterator)) {
+		/* all results, then finish */
+		return_results (helper);
+	} else {
+		TnyAccount *account = NULL;
+
+		account = TNY_ACCOUNT (tny_iterator_get_current (iterator));
+		helper->inboxes_list = get_inboxes (account);
+		get_unread_messages_get_headers (helper);
+		g_object_unref (account);
+
+	}
+	g_object_unref (iterator);
+
+}
+
+static gboolean
+on_idle_get_unread_messages (GetUnreadMessagesHelper *helper)
+{
+	ModestTnyAccountStore *astore;
+	astore = modest_runtime_get_account_store ();
+
+	tny_account_store_get_accounts (TNY_ACCOUNT_STORE (astore),
+					helper->accounts_list,
+					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+
+	get_unread_messages_get_account (helper);
+
+	return FALSE;
+}
+
+static void
+on_dbus_method_get_unread_messages (DBusConnection *con, DBusMessage *message)
+{
+	dbus_bool_t  res;
+	dbus_int64_t unread_msgs_count_v;
+	DBusError error;
+	GetUnreadMessagesHelper *helper;
+
+	dbus_error_init (&error);
+
+	res = dbus_message_get_args (message,
+				     &error,
+				     DBUS_TYPE_INT32, &unread_msgs_count_v,
+				     DBUS_TYPE_INVALID);
+
+	helper = g_slice_new (GetUnreadMessagesHelper);
+	helper->unread_msgs_count = unread_msgs_count_v;
+	dbus_message_ref (message);
+	helper->message = message;
+	helper->con = con;
+	helper->account_hits_list = NULL;
+	helper->inboxes_list = NULL;
+	helper->accounts_list = TNY_LIST (tny_simple_list_new ());
+
+	g_idle_add ((GSourceFunc) on_idle_get_unread_messages, helper);
 }
 
 
@@ -2209,6 +2591,22 @@ modest_dbus_req_filter (DBusConnection *con,
 
 		} else {
 			on_dbus_method_search (con, message);
+			handled = TRUE;
+		}
+			 	
+	} else if (dbus_message_is_method_call (message,
+					 MODEST_DBUS_IFACE,
+					 MODEST_DBUS_METHOD_GET_UNREAD_MESSAGES)) {
+		
+	/* don't try to get unread messages when there not enough mem */
+		if (modest_platform_check_memory_low (NULL, TRUE)) {
+			g_warning ("%s: not enough memory for searching",
+				   __FUNCTION__);
+			reply_empty_results (con, message);
+			handled = TRUE;
+
+		} else {
+			on_dbus_method_get_unread_messages (con, message);
 			handled = TRUE;
 		}
 			 	
