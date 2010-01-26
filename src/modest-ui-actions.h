@@ -82,8 +82,6 @@ void     modest_ui_actions_on_open           (GtkAction *action, ModestWindow *w
 
 void     modest_ui_actions_on_reply         (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_reply_calendar (ModestWindow *win, TnyMsg *msg, TnyList *header_pairs);
-
 void     modest_ui_actions_on_forward       (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_sort          (GtkAction *action, ModestWindow *window);
