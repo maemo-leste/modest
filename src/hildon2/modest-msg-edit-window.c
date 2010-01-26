@@ -1009,15 +1009,14 @@ init_window (ModestMsgEditWindow *obj)
 	priv->find_toolbar = hildon_find_toolbar_new (NULL);
 	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
 
-/* 	g_signal_connect (G_OBJECT (obj), "key_pressed", G_CALLBACK (on_key_pressed), NULL) */
-
 	priv->pannable = hildon_pannable_area_new ();
 
 	g_object_set (G_OBJECT (priv->pannable), "hscrollbar-policy", GTK_POLICY_NEVER, NULL);
-	
+
 	main_vbox = gtk_vbox_new  (FALSE, DEFAULT_MAIN_VBOX_SPACING);
 	window_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (window_align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (window_align), MODEST_MARGIN_HALF, 0,
+				   MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->header_box, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 0);
@@ -1025,20 +1024,20 @@ init_window (ModestMsgEditWindow *obj)
 
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), window_align);
 	gtk_widget_show_all (GTK_WIDGET(priv->pannable));
-	
+
 	window_box = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER(obj), window_box);
 
 	gtk_box_pack_start (GTK_BOX (window_box), priv->pannable, TRUE, TRUE, 0);
 
 	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON, MODEST_ICON_SIZE_BIG); 
+	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON, MODEST_ICON_SIZE_BIG);
 	if (window_icon) {
 		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
 		g_object_unref (window_icon);
-	}	
+	}
 }
-	
+
 static void
 modest_msg_edit_window_disconnect_signals (ModestWindow *window)
 {
