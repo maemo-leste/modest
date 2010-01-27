@@ -2222,7 +2222,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 }
 
 void
-modest_ui_actions_reply_calendar (ModestWindow *win, TnyMsg *msg, TnyList *header_pairs)
+modest_ui_actions_reply_calendar (ModestWindow *win, TnyList *header_pairs)
 {
 	gchar *from;
 	gchar *recipient;
@@ -2235,6 +2235,7 @@ modest_ui_actions_reply_calendar (ModestWindow *win, TnyMsg *msg, TnyList *heade
 	const gchar *mailbox;
 	TnyHeader *msg_header;
 	ModestWindowMgr *mgr;
+	TnyMsg *msg;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win));
 
@@ -2252,6 +2253,9 @@ modest_ui_actions_reply_calendar (ModestWindow *win, TnyMsg *msg, TnyList *heade
 								     recipient, 
 								     &use_signature);
 	g_free (recipient);
+
+	msg = modest_msg_view_window_get_message(MODEST_MSG_VIEW_WINDOW(win));
+	g_return_if_fail(msg);
 
 	msg_header = tny_msg_get_header (msg);
 	new_msg =
