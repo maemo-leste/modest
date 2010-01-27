@@ -1,3 +1,15 @@
+modest (3.2.11-1) unstable; urgency=low
+  
+  * Week 04, 2010 - second release candidate
+  * 
+  * Fixes: NB#134053 Inline image lost in a message sent from Thunderbird  	
+  * Fixes: NB#147992 Search message lists in Email 	
+  * Fixes: NB#153926 Editor view toolbar: Icon for attaching inline images command is missing
+  * Fixes: NB#154396 Top margin missing from "New message" email view (easy fix)
+  * Fixes: NB#154519 Viewer view toolbar is missing after disabling 'Show formatting toolbar' option 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 27 Jan 2010 14:50:39 +0200
+
 modest (3.2.11) unstable; urgency=low
 
   * Week 04, 2010 - first release candidate
@@ -20,7 +32,6 @@ modest (3.2.10-1) unstable; urgency=low
   * Fixes: NB#150401 Usage of HW zoom keys should be revised in Email
   * Fixes: NB#152716 Application UI is getting hang for 10-20 seconds when device is trying 
   * 	to Connect to Nokia servers to check service availability. 
-  * Fixes: NB#138151 It needs a switch back and forth between views to update the Unread message count
   * Fixes: NB#144429 POP3 TCP connection is left open leading to locking issues 
   * Fixes: NB#153338 Logical string is shown for '10 minutes' in update interval dialog  
   
