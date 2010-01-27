@@ -346,6 +346,8 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *brand_icon;
 	GtkWidget   *brand_label;
 	GtkWidget   *brand_container;
+
+	TnyList     *custom_header_pairs;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -475,6 +477,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->references = NULL;
 	priv->in_reply_to = NULL;
 	priv->max_chars_banner = NULL;
+	priv->custom_header_pairs = TNY_LIST (tny_simple_list_new ());
 
 	if (!is_wp_text_buffer_started) {
 		is_wp_text_buffer_started = TRUE;
@@ -1113,6 +1116,8 @@ static void
 modest_msg_edit_window_finalize (GObject *obj)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (obj);
+
+	g_object_unref (priv->custom_header_pairs);
 
 	if (priv->max_chars_banner) {
 		g_object_weak_unref (G_OBJECT (priv->max_chars_banner), (GWeakNotify) max_chars_banner_unref, obj);
@@ -2035,6 +2040,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	g_object_unref (att_iter);
 	
 	data->priority_flags = priv->priority_flags;
+	data->custom_header_pairs = tny_list_copy (priv->custom_header_pairs);
 
 	return data;
 }
@@ -2067,6 +2073,8 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_free (data->account_name);
 	g_free (data->references);
 	g_free (data->in_reply_to);
+
+	g_object_unref (data->custom_header_pairs);
 	
 	if (data->draft_msg != NULL) {
 		g_object_unref (data->draft_msg);
@@ -4848,4 +4856,18 @@ modest_msg_edit_window_has_pending_addresses (ModestMsgEditWindow *self)
 		return FALSE;
 	else
 		return TRUE;
+}
+
+void
+modest_msg_edit_window_set_custom_header_pairs (ModestMsgEditWindow *self,
+						TnyList *header_pairs)
+{
+	ModestMsgEditWindowPrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
+	g_return_if_fail (TNY_IS_LIST (header_pairs));
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+	g_object_unref (priv->custom_header_pairs);
+	priv->custom_header_pairs = tny_list_copy (header_pairs);
 }
