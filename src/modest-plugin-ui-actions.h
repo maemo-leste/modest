@@ -68,14 +68,16 @@ modest_ui_actions_on_reload_message (const gchar *msg_id);
 /**
  * modest_ui_actions_reply_calendar:
  * @win: parent #ModestWindow
- * @msg: original #TnyMsg
  * @header_pairs: #TnyList of #TnyPair of header pairs
  *
  * this method opens the mail composer with a reply of a message with calendar
  * allowing to add @header_pairs with the result of the calendar request.
+ *
+ * @win should be a #ModestMsgViewWindow. We don't put the exact type to avoid
+ * exporting to plugins #ModestMsgViewWindow API
  */
 void
-modest_ui_actions_reply_calendar (ModestWindow *win, TnyMsg *msg, TnyList *header_pairs);
+modest_ui_actions_reply_calendar (ModestWindow *win, TnyList *header_pairs);
 
 
 G_END_DECLS
