@@ -2039,7 +2039,7 @@ static void get_unread_messages_get_headers_cb (TnyFolder *self,
 	g_object_unref (headers_iterator);
 
 	account_hits = g_slice_new (AccountHits);
-	account_hits->account_id = g_strdup (tny_account_get_id (account));
+	account_hits->account_id = g_strdup (modest_tny_account_get_parent_modest_account_name_for_server_account (account));
 	account_hits->account_name = g_strdup (tny_account_get_name (account));
 	account_hits->header_list = result_list;
 	account_hits->mailbox_id = NULL;
