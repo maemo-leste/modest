@@ -1081,12 +1081,6 @@ init_window (ModestMsgEditWindow *obj)
 
 	gtk_box_pack_start (GTK_BOX (window_box), priv->scrollable, TRUE, TRUE, 0);
 
-	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON, MODEST_ICON_SIZE_BIG);
-	if (window_icon) {
-		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
-		g_object_unref (window_icon);
-	}
 }
 
 static void
