@@ -126,7 +126,7 @@ PKG_CHECK_MODULES(LIBMODEST_DBUS_CLIENT,libmodest-dbus-client-1.0 >= 3.2.0)
 
 dnl # GLib/Gobject/Gtk/Gconf => mandatory
 
-PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-${gtk_html_version} libtinymail-1.0>=1.1.90 libtinymail-camel-1.0>=1.1.90 libtinymail-gnomevfs-1.0>=1.1.90 libtinymailui-1.0>=1.1.90 libtinymailui-gtk-1.0>=1.1.90)
+PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-${gtk_html_version} libtinymail-1.0 >= 1.1.90 libtinymail-camel-1.0 >= 1.1.90 libtinymail-gnomevfs-1.0 >= 1.1.90 libtinymailui-1.0 >= 1.1.90 libtinymailui-gtk-1.0 >= 1.1.90)
 AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
 
@@ -312,12 +312,12 @@ AC_SUBST(MODEST_TOOLKIT)
 AC_SUBST(MODEST_TOOLKIT_DIR)
 
 if test "x$with_platform" == "xgnome"; then
-      PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0>=1.1.90 glib-2.0 >= 2.8 libnotify)
+      PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 >= 1.1.90 glib-2.0 >= 2.8 libnotify)
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
 dnl     AC_MSG_ERROR([The GNOME Build is currently broken; please try the Maemo build instead])
 else
     have_dbusapi=true
-    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso dbus-1 libtinymail-maemo-1.0>=1.1.90 libebook-1.2 )
+    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso dbus-1 libtinymail-maemo-1.0 >= 1.1.90 libebook-1.2 )
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the MAEMO platform."])
 fi
 AM_CONDITIONAL(MODEST_HAVE_DBUS_API,test "x$have_dbusapi" == "xtrue")
@@ -444,7 +444,7 @@ if test "x$with_toolkit" != "xgtk"; then
    fi
 fi
 
-PKG_CHECK_MODULES(MODEST_MOZEMBED, libtinymailui-mozembed-1.0>=1.1.90, have_mozembed=true, have_mozembed=false)
+PKG_CHECK_MODULES(MODEST_MOZEMBED, libtinymailui-mozembed-1.0 >= 1.1.90, have_mozembed=true, have_mozembed=false)
 AC_ARG_ENABLE(mozembed,
 AC_HELP_STRING([--enable-mozembed],
 	[Build with GtkMozEmbed (yes, no)]),
