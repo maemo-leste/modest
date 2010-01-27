@@ -4,8 +4,8 @@ Priority: optional
 Maintainer: Moises Martinez <moises.martinez@nokia.com>
 Build-Depends: debhelper (>= 4.0.0), cdbs, libmodest-dbus-client-dev (>= 3.2.3), gnome-common, gtkhtml3.14-dev, libconic0-dev, libhildon1-dev, libdbus-1-dev,
  libdbus-glib-1-dev, libebook-dev, osso-af-settings, libedataserver-dev, libhildonnotify-dev, libgconf2-dev,
- libglib2.0-dev, libosso-abook-dev, libosso-gnomevfs2-dev, libhildonmime-dev, libprofile-dev, libtime-dev, libtinymail-1.0-0-dev, libtinymail-camel-1.0-0-dev,
- libtinymail-maemo-1.0-0-dev, libtinymailui-1.0-0-dev, libtinymail-gnomevfs-1.0-0-dev, libtinymailui-gtk-1.0-0-dev, wpeditor0,
+ libglib2.0-dev, libosso-abook-dev, libosso-gnomevfs2-dev, libhildonmime-dev, libprofile-dev, libtime-dev, libtinymail-1.0-0-dev(>= 1.1.19), libtinymail-camel-1.0-0-dev(>= 1.1.19),
+ libtinymail-maemo-1.0-0-dev(>= 1.1.19), libtinymailui-1.0-0-dev(>= 1.1.19), libtinymail-gnomevfs-1.0-0-dev(>= 1.1.19), libtinymailui-gtk-1.0-0-dev(>= 1.1.19), wpeditor0,
  wpeditor-dev, modest-providers-data, libalarm-dev, gtk-doc-tools, libnotify-dev, libhildonfm2-dev,
  microb-engine-dev, mce-dev, maemo-launcher-dev, profile-data-dev, libiphb-dev, calendar-ui-widgets-0-dev
 Standards-Version: 3.8.0
