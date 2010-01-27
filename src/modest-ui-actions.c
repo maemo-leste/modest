@@ -842,6 +842,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	GnomeVFSFileSize total_size, allowed_size;
 	guint64 available_disk, expected_size, parts_size;
 	guint parts_count;
+	TnyList *header_pairs;
 
 	/* we check for low-mem */
 	if (modest_platform_check_memory_low (win, TRUE))
@@ -915,8 +916,11 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	body = use_signature ? g_strconcat ((body_str) ? body_str : "", signature, NULL) :
 		g_strdup(body_str);
 
+	header_pairs = TNY_LIST (tny_simple_list_new ());
 	msg = modest_tny_msg_new_html_plain (to_str, from_str, cc_str, bcc_str, subject_str,
-					NULL, NULL, body, NULL, NULL, NULL, NULL, NULL);
+					     NULL, NULL, body, NULL, NULL, NULL, NULL, header_pairs, NULL);
+	g_object_unref (header_pairs);
+
 	if (!msg) {
 		g_printerr ("modest: failed to create new msg\n");
 		goto cleanup;
@@ -2230,7 +2234,6 @@ modest_ui_actions_reply_calendar (ModestWindow *win, TnyList *header_pairs)
 	gboolean use_signature;
 	TnyMsg *new_msg;
 	GtkWidget *msg_win;
-	gdouble parent_zoom;
 	const gchar *account_name;
 	const gchar *mailbox;
 	TnyHeader *msg_header;
@@ -2275,9 +2278,6 @@ modest_ui_actions_reply_calendar (ModestWindow *win, TnyList *header_pairs)
 	msg_win = (GtkWidget *) modest_msg_edit_window_new (new_msg, account_name, mailbox, FALSE);
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, MODEST_WINDOW (msg_win), (ModestWindow *) win);
-
-	parent_zoom = modest_window_get_zoom (MODEST_WINDOW (win));
-	modest_window_set_zoom (MODEST_WINDOW (msg_win), parent_zoom);
 
 	/* Show edit window */
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
@@ -3306,6 +3306,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      data->priority_flags,
 					      data->references,
 					      data->in_reply_to,
+					      data->custom_header_pairs,
 					      on_save_to_drafts_cb,
 					      g_object_ref(edit_window));
 
@@ -3467,7 +3468,8 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 					     data->images,
 					     data->references,
 					     data->in_reply_to,
-					     data->priority_flags);
+					     data->priority_flags,
+					     data->custom_header_pairs);
 
 	if (modest_mail_operation_get_status (mail_operation) == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
