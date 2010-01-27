@@ -285,6 +285,8 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *priority_icon;
 	GtkWidget   *subject_box;
 	GtkWidget   *send_button;
+	GtkWidget   *bottom_send_button;
+	GtkWidget   *bottom_send_button_container;
 
 	GtkWidget   *cc_caption;
 	GtkWidget   *bcc_caption;
@@ -745,9 +747,25 @@ body_size_request (GtkWidget *body,
 		   GtkRequisition *req,
 		   gpointer user_data)
 {
+	ModestMsgEditWindowPrivate *priv;
+	GtkAdjustment *vadj;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(user_data);
+
 	/* Make sure the body always get at least 70 pixels */
 	if (req->height < 70)
 		req->height = 70;
+
+	vadj = hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (priv->pannable));
+	if (priv->header_box->allocation.height + req->height > GTK_WIDGET (user_data)->allocation.height) {
+		if (!GTK_WIDGET_VISIBLE (priv->bottom_send_button_container)) {
+			gtk_widget_show (priv->bottom_send_button_container);
+		}
+	} else {
+		if (GTK_WIDGET_VISIBLE (priv->bottom_send_button_container)) {
+			gtk_widget_hide (priv->bottom_send_button_container);
+		}
+	}
 }
 
 static void
@@ -783,6 +801,9 @@ connect_signals (ModestMsgEditWindow *obj)
 				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
 
 	g_signal_connect (G_OBJECT (priv->send_button), "clicked",
+			  G_CALLBACK (modest_ui_actions_on_send), obj);
+
+	g_signal_connect (G_OBJECT (priv->bottom_send_button), "clicked",
 			  G_CALLBACK (modest_ui_actions_on_send), obj);
 
 	if (GTK_IS_COMBO_BOX (priv->from_field)) {
@@ -1001,6 +1022,16 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_add (GTK_CONTAINER (priv->send_button), send_icon);
 	gtk_widget_set_size_request (GTK_WIDGET (priv->send_button), 148, -1);
 
+	priv->bottom_send_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	send_icon = gtk_image_new_from_icon_name (MODEST_TOOLBAR_ICON_MAIL_SEND, HILDON_ICON_SIZE_FINGER);
+	gtk_container_add (GTK_CONTAINER (priv->bottom_send_button), send_icon);
+	gtk_widget_set_size_request (GTK_WIDGET (priv->bottom_send_button), 148, -1);
+
+	priv->bottom_send_button_container = gtk_hbox_new (FALSE, 0);
+	gtk_widget_show (priv->bottom_send_button_container);
+	gtk_box_pack_end (GTK_BOX (priv->bottom_send_button_container), priv->bottom_send_button, FALSE, FALSE, 0);
+	gtk_widget_show (priv->bottom_send_button_container);
+
 	g_object_unref (title_size_group);
 	g_object_unref (value_size_group);
 
@@ -1071,6 +1102,7 @@ init_window (ModestMsgEditWindow *obj)
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->header_box, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (main_vbox), priv->bottom_send_button_container, FALSE, FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (window_align), main_vbox);
 
 	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (priv->scrollable), window_align);
@@ -1874,6 +1906,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
 						    MODEST_WINDOW (obj));
 	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->send_button,
+						    G_CALLBACK (modest_ui_dimming_rules_on_send),
+						    MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->bottom_send_button,
 						    G_CALLBACK (modest_ui_dimming_rules_on_send),
 						    MODEST_WINDOW (obj));
 	/* Insert dimming rules group for this window */
