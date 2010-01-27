@@ -557,7 +557,6 @@ init_window (ModestMsgViewWindow *obj)
 		      "hovershoot-max", 0,
 		      NULL);
 	gtk_container_add (GTK_CONTAINER (priv->main_scroll), priv->msg_view);
-	g_object_ref (priv->msg_view);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_scroll, TRUE, TRUE, 0);
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
 
@@ -637,7 +636,6 @@ modest_msg_view_window_finalize (GObject *obj)
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_msg_view_window_disconnect_signals (MODEST_WINDOW (obj));
-	g_object_unref (priv->msg_view);
 
 	if (priv->fetch_image_redraw_handler > 0) {
 		g_source_remove (priv->fetch_image_redraw_handler);
