@@ -397,7 +397,8 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
 					       const GList *images_list,
 					       const gchar *references,
 					       const gchar *in_reply_to,
-					       TnyHeaderFlags priority_flags);
+					       TnyHeaderFlags priority_flags,
+					       TnyList *header_pairs);
 
 
 /**
@@ -438,6 +439,7 @@ void modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
 					     TnyHeaderFlags priority_flags,
 					     const gchar *references,
 					     const gchar *in_reply_to,
+					     TnyList *header_pairs,
 					     SaveToDraftstCallback callback,
 					     gpointer user_data);
 /**

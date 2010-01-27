@@ -61,12 +61,27 @@ static gboolean is_ascii(const gchar *s);
 static TnyMimePart* modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_html);
 static TnyMimePart* modest_tny_msg_find_calendar_from_mime_part  (TnyMimePart *msg);
 
+static void
+add_header_pairs (TnyMimePart *part, TnyList *header_pairs)
+{
+	TnyIterator *iterator;
+
+	iterator = tny_list_create_iterator (header_pairs);
+	while (!tny_iterator_is_done (iterator)) {
+		TnyPair *current = (TnyPair *) tny_iterator_get_current (iterator);
+		tny_mime_part_set_header_pair (part, tny_pair_get_name (current), tny_pair_get_value (current));
+		g_object_unref (current);
+		tny_iterator_next (iterator);
+	}
+	g_object_unref (iterator);
+}
+
 TnyMsg*
 modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		    const gchar *bcc, const gchar* subject,
 		    const gchar *references, const gchar *in_reply_to,
 		    const gchar *body,
-		    GList *attachments, gint *attached, GError **err)
+		    GList *attachments, gint *attached, TnyList *header_pairs, GError **err)
 {
 	TnyMsg *new_msg;
 	TnyHeader *header;
@@ -75,6 +90,7 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 
 	/* Create new msg */
 	new_msg = modest_formatter_create_message (NULL, TRUE, (attachments != NULL), FALSE);
+	add_header_pairs (TNY_MIME_PART (new_msg), header_pairs);
 	header  = tny_msg_get_header (new_msg);
 
 	if ((from != NULL) && (strlen(from) > 0)) {
@@ -130,7 +146,7 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 			       const gchar *bcc, const gchar* subject, 
 			       const gchar *references, const gchar *in_reply_to,
 			       const gchar *html_body, const gchar *plain_body,
-			       GList *attachments, GList *images, gint *attached, GError **err)
+			       GList *attachments, GList *images, gint *attached, TnyList *header_pairs, GError **err)
 {
 	TnyMsg *new_msg;
 	TnyHeader *header;
@@ -139,6 +155,7 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 	
 	/* Create new msg */
 	new_msg = modest_formatter_create_message (NULL, FALSE, (attachments != NULL), (images != NULL));
+	add_header_pairs (TNY_MIME_PART (new_msg), header_pairs);
 	header  = tny_msg_get_header (new_msg);
 	
 	if ((from != NULL) && (strlen(from) > 0)) {

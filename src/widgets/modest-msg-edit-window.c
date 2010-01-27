@@ -1402,6 +1402,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	TnyFolder *msg_folder;
 	gboolean is_html = FALSE;
 	gboolean field_view_set;
+	TnyList *orig_header_pairs;
 	
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	g_return_if_fail (TNY_IS_MSG (msg));
@@ -1536,6 +1537,11 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		}
 		g_object_unref (msg_folder);
 	}
+
+	orig_header_pairs = TNY_LIST (tny_simple_list_new ());
+	tny_mime_part_get_header_pairs (TNY_MIME_PART (msg), orig_header_pairs);
+	modest_msg_edit_window_set_custom_header_pairs (self, orig_header_pairs);
+	g_object_unref (orig_header_pairs);
 
 	g_free (to);
 	g_free (subject);
