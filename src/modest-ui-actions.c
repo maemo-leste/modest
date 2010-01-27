@@ -3501,6 +3501,59 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	return !had_error;
 }
 
+gboolean
+modest_ui_actions_on_send_msg (ModestWindow *window,
+			       TnyMsg *msg)
+{
+	TnyTransportAccount *transport_account = NULL;
+	gboolean had_error = FALSE;
+	ModestAccountMgr *account_mgr;
+	gchar *account_name;
+	ModestMailOperation *mail_operation;
+
+	account_mgr = modest_runtime_get_account_mgr();
+	account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(window)));
+
+	if (!account_name)
+		account_name = modest_account_mgr_get_default_account (account_mgr);
+
+	/* Get the currently-active transport account for this modest account: */
+	if (account_name && strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) != 0) {
+		transport_account =
+			TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
+					      (modest_runtime_get_account_store (),
+					       account_name, TNY_ACCOUNT_TYPE_TRANSPORT));
+	}
+
+	/* Create the mail operation */
+	mail_operation = modest_mail_operation_new_with_error_handling (NULL, modest_ui_actions_disk_operations_error_handler, NULL, NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
+
+	modest_mail_operation_send_mail (mail_operation,
+					 transport_account,
+					 msg);
+
+	if (modest_mail_operation_get_status (mail_operation) == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)
+		modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
+
+	if (modest_mail_operation_get_error (mail_operation) != NULL) {
+		const GError *error = modest_mail_operation_get_error (mail_operation);
+		if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
+		    error->code == MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED) {
+			g_warning ("%s failed: %s\n", __FUNCTION__, (modest_mail_operation_get_error (mail_operation))->message);
+			modest_platform_information_banner (NULL, NULL, _CS("sfil_ni_not_enough_memory"));
+			had_error = TRUE;
+		}
+	}
+
+	/* Free data: */
+	g_free (account_name);
+	g_object_unref (G_OBJECT (transport_account));
+	g_object_unref (G_OBJECT (mail_operation));
+
+	return !had_error;
+}
+
 void
 modest_ui_actions_on_toggle_bold (GtkToggleAction *action,
 				  ModestMsgEditWindow *window)

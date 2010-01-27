@@ -1103,6 +1103,56 @@ end:
 }
 
 void
+modest_mail_operation_send_mail (ModestMailOperation *self,
+				 TnyTransportAccount *transport_account,
+				 TnyMsg *msg)
+{
+	TnySendQueue *send_queue = NULL;
+	ModestMailOperationPrivate *priv = NULL;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	if (!msg) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		modest_mail_operation_notify_end (self);
+		return;
+	}
+
+	if (priv->error && priv->error->code != MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		modest_mail_operation_notify_end (self);
+		return;
+	}
+
+	/* Add message to send queue */
+	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account, TRUE));
+	if (!TNY_IS_SEND_QUEUE(send_queue)) {
+		if (priv->error) {
+			g_error_free (priv->error);
+			priv->error = NULL;
+		}
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     "modest: could not find send queue for account\n");
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		modest_mail_operation_notify_end (self);
+		return;
+	} else {
+		SendNewMailHelper *helper = g_slice_new (SendNewMailHelper);
+		helper->mail_op = g_object_ref (self);
+		helper->notify = TRUE;
+
+		/* Add the msg to the queue. The callback will free
+		   the helper */
+		modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
+								  FALSE);
+		tny_send_queue_add_async (send_queue, msg, send_mail_on_added_to_outbox, 
+					  NULL, helper);
+	}
+
+}
+
+void
 modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     TnyTransportAccount *transport_account,
 				     TnyMsg *draft_msg,

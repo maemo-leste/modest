@@ -400,6 +400,9 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
 					       TnyHeaderFlags priority_flags,
 					       TnyList *header_pairs);
 
+void modest_mail_operation_send_mail (ModestMailOperation *mail_operation,
+				      TnyTransportAccount *transport_account,
+				      TnyMsg *msg);
 
 /**
  * modest_mail_operation_save_to_drafts:
