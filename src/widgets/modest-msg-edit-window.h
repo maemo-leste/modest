@@ -103,6 +103,7 @@ typedef struct  {
 	TnyHeaderFlags priority_flags;
 	TnyMsg *draft_msg;
 	gchar *account_name;
+	TnyList *custom_header_pairs;
 } MsgData;
 
 typedef struct {
@@ -488,6 +489,18 @@ modest_msg_edit_window_get_child_widget (ModestMsgEditWindow *win,
  */
 const gchar *
 modest_msg_edit_window_get_clipboard_text (ModestMsgEditWindow *win);
+
+/**
+ * modest_msg_edit_window_set_custom_header_pairs:
+ * @win: a #ModestMsgEditWindow
+ * @header_pairs: a #TnyList of #TnyPair
+ *
+ * sets a list of custom header pairs that will be added to the created
+ * #TnyMsg.
+ */
+void
+modest_msg_edit_window_set_custom_header_pairs (ModestMsgEditWindow *self,
+						TnyList *header_pairs);
 
 G_END_DECLS
 
