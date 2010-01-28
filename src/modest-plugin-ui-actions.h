@@ -79,6 +79,19 @@ modest_ui_actions_on_reload_message (const gchar *msg_id);
 void
 modest_ui_actions_reply_calendar (ModestWindow *win, TnyList *header_pairs);
 
+/**
+ * modest_ui_actions_on_send_msg:
+ * @window: parent window requesting to send the message
+ * @msg: a #TnyMsg
+ *
+ * This method will send @msg without showing the message editor.
+ *
+ * Returns: %TRUE if succesful, %FALSE otherwise
+ */
+gboolean
+modest_ui_actions_on_send_msg (ModestWindow *window,
+			       TnyMsg *msg);
+
 
 G_END_DECLS
 #endif /* __MODEST_PLUGIN_UI_ACTIONS_H__ */
