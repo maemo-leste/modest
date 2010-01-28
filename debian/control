@@ -2,7 +2,7 @@ Source: modest
 Section: mail
 Priority: optional
 Maintainer: Moises Martinez <moises.martinez@nokia.com>
-Build-Depends: debhelper (>= 4.0.0), cdbs, libmodest-dbus-client-dev (>= 3.2.3), gnome-common, gtkhtml3.14-dev,
+Build-Depends: debhelper (>= 4.0.0), cdbs, libmodest-dbus-client-dev (>= 3.2.4), gnome-common, gtkhtml3.14-dev,
  libconic0-dev, libhildon1-dev, libdbus-1-dev,  libdbus-glib-1-dev, libebook-dev, osso-af-settings, libedataserver-dev,
  libhildonnotify-dev, libgconf2-dev, libglib2.0-dev, libosso-gnomevfs2-dev, libhildonmime-dev, libtinymail-1.0-0-dev,
  libtinymail-camel-1.0-0-dev, libtinymail-maemo-1.0-0-dev, libtinymailui-1.0-0-dev, libtinymail-gnomevfs-1.0-0-dev,

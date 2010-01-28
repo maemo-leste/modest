@@ -42,7 +42,7 @@ int main (int argc, char *argv[])
 		ModestAccountHits *hits = (ModestAccountHits *) iter->data;
 		GList *header_node;
 
-		g_print ("Account: id: %s name: %s\n", hits->account_id, hits->account_name);
+		g_print ("Account: id: %s name: %s protocol: %s\n", hits->account_id, hits->account_name, hits->store_protocol);
 		for (header_node = hits->hits; header_node != NULL; header_node = g_list_next (header_node)) {
 			ModestGetUnreadMessagesHit *hit = (ModestGetUnreadMessagesHit *) header_node->data;
 
