@@ -1,3 +1,14 @@
+modest (3.2.12) unstable; urgency=low
+
+  * Week 05, 2010 - first release candidate
+  * 
+  * Fixes: NB#153085 Send message button is missing in the editor view
+  * 
+  * Calendar invitation support related fixes.
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 29 Jan 2010 17:15:09 +0200
+
 modest (3.2.11-1) unstable; urgency=low
   
   * Week 04, 2010 - second release candidate
