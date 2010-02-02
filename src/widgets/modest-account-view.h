@@ -137,6 +137,22 @@ void modest_account_view_set_show_last_update (ModestAccountView *self, gboolean
  */
 gboolean modest_account_view_get_show_last_update (ModestAccountView *self);
 
+/**
+ * modest_account_view_get_model:
+ * @self: a #ModestAccountView
+ *
+ * obtains the inner tree model
+ */
+GtkTreeModel *modest_account_view_get_model (ModestAccountView *self);
+
+/**
+ * modest_account_view_get_model:
+ * @self: a #ModestAccountView
+ *
+ * obtains the filter of the tree view
+ */
+GtkTreeModel *modest_account_view_get_filter (ModestAccountView *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_VIEW_H__ */

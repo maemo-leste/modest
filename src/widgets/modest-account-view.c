@@ -95,6 +95,9 @@ struct _ModestAccountViewPrivate {
 	gboolean picker_mode;
 	gboolean show_last_updated;
 
+	GtkTreeModel *model;
+	GtkTreeModel *filter;
+
 	/* Signal handlers */
 	GSList *sig_handlers;
 };
@@ -235,11 +238,9 @@ static void
 update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 {
 	GSList *account_names, *cursor;
-	GtkListStore *model;
  	ModestAccountViewPrivate *priv;
 	
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(view);
-	model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(view)));
 
 	/* Get the ID of the currently-selected account,
 	 * so we can select it again after rebuilding the list.
@@ -247,7 +248,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	 */
 	gchar *selected_name = modest_account_view_get_selected_account (view);
 
-	gtk_list_store_clear (model);
+	gtk_list_store_clear (GTK_LIST_STORE (priv->model));
 
 	/* Note: We do not show disabled accounts.
 	 * Of course, this means that there is no UI to enable or disable
@@ -303,7 +304,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 				protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
 				proto_name = modest_protocol_get_name (protocol);
 				gtk_list_store_insert_with_values (
-					model, &iter, 0,
+					GTK_LIST_STORE (priv->model), &iter, 0,
 					MODEST_ACCOUNT_VIEW_NAME_COLUMN, account_name,
 					MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, 
 					modest_account_settings_get_display_name (settings),
@@ -349,16 +350,18 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
                         gboolean busy, 
                         ModestAccountView *self)
 {
-	GtkListStore *model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(self)));
 	GtkTreeIter iter;
 	gboolean found = FALSE;
+	ModestAccountViewPrivate *priv;
 
-	if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(model), &iter))
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+
+	if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(priv->model), &iter))
 		return;
 
 	do {
 		gchar* cur_name;
-		gtk_tree_model_get(GTK_TREE_MODEL(model), &iter, 
+		gtk_tree_model_get(GTK_TREE_MODEL(priv->model), &iter, 
 				   MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
 				   &cur_name, -1);
 
@@ -377,7 +380,7 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
 							    last_updated_string,
 							    NULL);
 #endif
-			gtk_list_store_set(model, &iter, 
+			gtk_list_store_set(GTK_LIST_STORE (priv->model), &iter, 
 #ifdef MODEST_TOOLKIT_HILDON2
 					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_hildon2,
 #else
@@ -393,7 +396,7 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
 		}
 		g_free (cur_name);
 
-	} while (!found && gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter));
+	} while (!found && gtk_tree_model_iter_next(priv->model, &iter));
 }
 
 static void
@@ -452,7 +455,6 @@ on_account_default_toggled (GtkCellRendererToggle *cell_renderer,
 			    ModestAccountView *self)
 {
 	ModestAccountViewPrivate *priv;
-	GtkTreeModel *model;
 	GtkTreeIter iter;
 	gchar *account_name = NULL;
 
@@ -464,14 +466,13 @@ on_account_default_toggled (GtkCellRendererToggle *cell_renderer,
 		return;
 
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
 
-	if (!gtk_tree_model_get_iter_from_string (model, &iter, path)) {
+	if (!gtk_tree_model_get_iter_from_string (priv->filter, &iter, path)) {
 		g_warning ("Got path of a not existing iter");
 		return;
 	}
 	
-	gtk_tree_model_get (model, &iter, 
+	gtk_tree_model_get (priv->filter, &iter, 
 			    MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
 			    &account_name, -1);
 
@@ -577,27 +578,29 @@ init_view (ModestAccountView *self)
 {
 	ModestAccountViewPrivate *priv;
 	GtkCellRenderer *toggle_renderer, *text_renderer;
-	GtkListStore *model;
 	GtkTreeViewColumn *column;
 	
 	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (self));
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
 		
-	model = gtk_list_store_new (6,
-				    G_TYPE_STRING,  /* account name */
-				    G_TYPE_STRING,  /* account display name */
-				    G_TYPE_BOOLEAN, /* is-enabled */
-				    G_TYPE_BOOLEAN, /* is-default */
-				    G_TYPE_STRING,  /* account proto (pop, imap,...) */
-				    G_TYPE_STRING   /* last updated (time_t) */
-		); 
+	priv->model = GTK_TREE_MODEL (gtk_list_store_new (6,
+							  G_TYPE_STRING,  /* account name */
+							  G_TYPE_STRING,  /* account display name */
+							  G_TYPE_BOOLEAN, /* is-enabled */
+							  G_TYPE_BOOLEAN, /* is-default */
+							  G_TYPE_STRING,  /* account proto (pop, imap,...) */
+							  G_TYPE_STRING   /* last updated (time_t) */
+					      )); 
 		
 	gtk_tree_sortable_set_sort_column_id (
-		GTK_TREE_SORTABLE (model), MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, 
+		GTK_TREE_SORTABLE (priv->model), MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, 
 		GTK_SORT_ASCENDING);
 
-	gtk_tree_view_set_model (GTK_TREE_VIEW(self), GTK_TREE_MODEL(model));
-	g_object_unref (G_OBJECT (model));
+	priv->filter = gtk_tree_model_filter_new (priv->model, NULL);
+
+	gtk_tree_view_set_model (GTK_TREE_VIEW(self), GTK_TREE_MODEL(priv->filter));
+	g_object_unref (G_OBJECT (priv->model));
+	g_object_unref (G_OBJECT (priv->filter));
 
 	toggle_renderer = gtk_cell_renderer_toggle_new ();
 	/* the is_default column */
@@ -964,4 +967,24 @@ modest_account_view_get_show_last_updated (ModestAccountView *self)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
 
 	return priv->show_last_updated;
+}
+
+GtkTreeModel *
+modest_account_view_get_model (ModestAccountView *self)
+{
+	ModestAccountViewPrivate *priv;
+
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
+
+	return priv->model;
+}
+
+GtkTreeModel *
+modest_account_view_get_filter (ModestAccountView *self)
+{
+	ModestAccountViewPrivate *priv;
+
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
+
+	return priv->filter;
 }
