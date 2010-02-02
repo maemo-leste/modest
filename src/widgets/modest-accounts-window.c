@@ -224,7 +224,7 @@ connect_signals (ModestAccountsWindow *self)
 					   "progress-list-changed",
 					   G_CALLBACK (on_progress_list_changed), self);
 
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->account_view));
+	model = modest_account_view_get_model (MODEST_ACCOUNT_VIEW (priv->account_view));
 
 	priv->sighandlers =
 		modest_signal_mgr_connect (priv->sighandlers,
@@ -608,7 +608,7 @@ row_count_changed (ModestAccountsWindow *self)
 	gint count;
 
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->account_view));
+	model = modest_account_view_get_model (MODEST_ACCOUNT_VIEW (priv->account_view));
 
 	count = gtk_tree_model_iter_n_children (model, NULL);
 
@@ -757,3 +757,4 @@ on_delete_event (GtkWidget *widget,
 	return FALSE;
 
 }
+
