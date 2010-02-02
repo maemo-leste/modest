@@ -35,7 +35,7 @@
 
 #include "modest-utils.h"
 #include "modest-country-picker.h"
-#include <hildon/hildon-touch-selector-entry.h>
+#include <hildon/hildon.h>
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -136,18 +136,9 @@ country_picker_print_func (HildonTouchSelector *selector, gpointer userdata)
 	   never from the entry */
 	model = hildon_touch_selector_get_model (selector, 0);
 	if (hildon_touch_selector_get_selected (selector, 0, &iter)) {
-		gint column;
-		GtkWidget *entry;
-		const gchar *entry_text;
 
-		column = hildon_touch_selector_entry_get_text_column (HILDON_TOUCH_SELECTOR_ENTRY (selector));
-		gtk_tree_model_get (model, &iter, column, &text, -1);
+		gtk_tree_model_get (model, &iter, 0, &text, -1);
 
-		entry = GTK_WIDGET (hildon_touch_selector_entry_get_entry (HILDON_TOUCH_SELECTOR_ENTRY (selector)));
-		entry_text = hildon_entry_get_text (HILDON_ENTRY (entry));
-		if (entry_text != NULL && text != NULL && strcmp (entry_text, text)) {
-			hildon_entry_set_text (HILDON_ENTRY (entry), text);
-		}
 	}
 	return text;
 }
@@ -174,23 +165,17 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 	renderer = gtk_cell_renderer_text_new ();
 	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 
-	selector = hildon_touch_selector_entry_new ();
+	selector = hildon_touch_selector_new ();
 	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), (HildonTouchSelectorPrintFunc) country_picker_print_func);
 
-	column = hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), model,
-						      renderer, "text", MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, NULL);
-	hildon_touch_selector_entry_set_text_column (HILDON_TOUCH_SELECTOR_ENTRY (selector),
-						     MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME);
 	modest_utils_fill_country_model (model, &(priv->locale_mcc));
 
 	/* Set this _after_ loading from file, it makes loading faster */
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector),
 					 0, model);
-	hildon_touch_selector_entry_set_input_mode (HILDON_TOUCH_SELECTOR_ENTRY (selector),
-						    HILDON_GTK_INPUT_MODE_ALPHA |
-						    HILDON_GTK_INPUT_MODE_SPECIAL |
-						    HILDON_GTK_INPUT_MODE_AUTOCAP);
-
+	column = hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), model,
+						      renderer, "text", MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, NULL);
+	hildon_touch_selector_column_set_text_column (column, MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME);
 
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
 
