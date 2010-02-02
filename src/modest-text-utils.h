@@ -697,4 +697,6 @@ gboolean modest_text_utils_no_recipient (GtkTextBuffer *buffer);
 
 gchar * modest_text_utils_create_colored_signature (const gchar *signature);
 
+gboolean modest_text_utils_live_search_find (const gchar *haystack, const gchar *needles);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */
