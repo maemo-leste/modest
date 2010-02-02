@@ -44,6 +44,7 @@
 #include <modest-ui-constants.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-defines.h>
+#include <hildon/hildon.h>
 #endif
 #ifdef MODEST_USE_LIBTIME
 #include <clockd/libtime.h>
@@ -901,3 +902,38 @@ modest_account_view_get_filter (ModestAccountView *self)
 
 	return priv->filter;
 }
+
+#ifdef MODEST_TOOLKIT_HILDON2
+static gboolean
+live_search_visible_func (GtkTreeModel *model,
+			  GtkTreeIter  *iter,
+			  gchar        *text,
+			  gpointer      data)
+{
+	gchar *display_name;
+	gboolean result;
+	gtk_tree_model_get(model, iter, 
+			   MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,
+			   &display_name, -1);
+
+	result = modest_text_utils_live_search_find (display_name, text);
+
+	g_free (display_name);
+
+	return result;
+}
+
+GtkWidget *
+modest_account_view_setup_live_search (ModestAccountView *self)
+{
+	GtkWidget *live_search;
+	live_search = hildon_live_search_new ();
+	hildon_live_search_set_filter (HILDON_LIVE_SEARCH (live_search),
+				       GTK_TREE_MODEL_FILTER (modest_account_view_get_filter (MODEST_ACCOUNT_VIEW (self))));
+	hildon_live_search_set_visible_func (HILDON_LIVE_SEARCH (live_search), live_search_visible_func, self, NULL);
+	hildon_live_search_set_text_column (HILDON_LIVE_SEARCH (live_search),
+					    MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN);
+
+	return live_search;
+}
+#endif
