@@ -45,10 +45,7 @@
 #include <modest-ui-actions.h>
 #include <modest-platform.h>
 #include <modest-text-utils.h>
-#include <hildon/hildon-button.h>
-#include <hildon/hildon-program.h>
-#include <hildon/hildon-banner.h>
-#include <hildon/hildon-find-toolbar.h>
+#include <hildon/hildon.h>
 #include <modest-ui-dimming-rules.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-account.h>
@@ -809,6 +806,9 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	GdkPixbuf *new_message_pixbuf;
 	GtkWidget *alignment;
 	gchar *account_display_name = NULL;
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *live_search;
+#endif
 
 	self  = MODEST_HEADER_WINDOW(g_object_new(MODEST_TYPE_HEADER_WINDOW, NULL));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
@@ -829,6 +829,10 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 				  self);
 
 	priv->header_view  = create_header_view (MODEST_WINDOW (self), folder);
+#ifdef MODEST_TOOLKIT_HILDON2
+	live_search = modest_header_view_setup_live_search (MODEST_HEADER_VIEW (priv->header_view));
+	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), priv->header_view);
+#endif
 	priv->empty_view = create_empty_view (MODEST_WINDOW (self));
 
 	/* Transform the floating reference in a "hard" reference. We
@@ -858,6 +862,9 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 
         priv->top_vbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (alignment), priv->contents_view);
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_box_pack_end (GTK_BOX (priv->top_vbox), live_search, FALSE, FALSE, 0);
+#endif
 	gtk_box_pack_end (GTK_BOX (priv->top_vbox), alignment, TRUE, TRUE, 0);
 
 	gtk_container_add (GTK_CONTAINER (self), priv->top_vbox);

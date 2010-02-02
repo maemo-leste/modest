@@ -52,6 +52,9 @@
 #include <modest-vbox-cell-renderer.h>
 #include <modest-datetime-formatter.h>
 #include <modest-ui-constants.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
 
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
@@ -153,6 +156,9 @@ struct _ModestHeaderViewPrivate {
 	guint   n_selected;
 	GtkTreeRowReference *autoselect_reference;
 	ModestHeaderViewFilter filter;
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *live_search;
+#endif
 
 	gint    sort_colid[2][TNY_FOLDER_TYPE_NUM];
 	gint    sort_type[2][TNY_FOLDER_TYPE_NUM];
@@ -636,6 +642,9 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
 	priv->filter = MODEST_HEADER_VIEW_FILTER_NONE;
+#ifdef MODEST_TOOLKIT_HILDON2
+	priv->live_search = NULL;
+#endif
 	priv->filter_string = NULL;
 	priv->filter_string_splitted = NULL;
 	priv->filter_date_range = FALSE;
@@ -2787,3 +2796,35 @@ modest_header_view_set_filter_string (ModestHeaderView *self,
 	}
 	modest_header_view_refilter (MODEST_HEADER_VIEW (self));
 }
+
+#ifdef MODEST_TOOLKIT_HILDON2
+static gboolean
+on_live_search_refilter (HildonLiveSearch *livesearch,
+			 ModestHeaderView *self)
+{
+	const gchar *needle;
+
+	needle = hildon_live_search_get_text (livesearch);
+	if (needle && needle[0] != '\0') {
+		modest_header_view_set_filter_string (MODEST_HEADER_VIEW (self), needle);
+	} else {
+		modest_header_view_set_filter_string (MODEST_HEADER_VIEW (self), NULL);
+	}
+	
+	return TRUE;
+}
+
+GtkWidget *
+modest_header_view_setup_live_search (ModestHeaderView *self)
+{
+	ModestHeaderViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (self), NULL);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+	priv->live_search = hildon_live_search_new ();
+
+	g_signal_connect (G_OBJECT (priv->live_search), "refilter", G_CALLBACK (on_live_search_refilter), self);
+
+	return priv->live_search;
+}
+#endif

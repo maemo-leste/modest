@@ -483,6 +483,10 @@ void modest_header_view_set_show_latest (ModestHeaderView *header_view,
 gint modest_header_view_get_show_latest (ModestHeaderView *header_view);
 gint modest_header_view_get_not_latest (ModestHeaderView *header_view);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+GtkWidget *modest_header_view_setup_live_search (ModestHeaderView *self);
+#endif
+
 G_END_DECLS
 
 
