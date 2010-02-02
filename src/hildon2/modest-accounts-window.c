@@ -338,25 +338,6 @@ modest_accounts_window_new_real (void)
 	return MODEST_WINDOW(self);
 }
 
-static gboolean
-live_search_visible_func (GtkTreeModel *model,
-			  GtkTreeIter  *iter,
-			  gchar        *text,
-			  gpointer      data)
-{
-	gchar *display_name;
-	gboolean result;
-	gtk_tree_model_get(model, iter, 
-			   1, 
-			   &display_name, -1);
-
-	result = modest_text_utils_live_search_find (display_name, text);
-
-	g_free (display_name);
-
-	return result;
-}
-
 
 ModestWindow *
 modest_accounts_window_new (void)
@@ -378,12 +359,7 @@ modest_accounts_window_new (void)
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
 	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
 #ifdef MODEST_TOOLKIT_HILDON2
-	live_search = hildon_live_search_new ();
-	hildon_live_search_set_filter (HILDON_LIVE_SEARCH (live_search),
-				       GTK_TREE_MODEL_FILTER (modest_account_view_get_filter (MODEST_ACCOUNT_VIEW (priv->account_view))));
-	hildon_live_search_set_visible_func (HILDON_LIVE_SEARCH (live_search), live_search_visible_func, self, NULL);
-	hildon_live_search_set_text_column (HILDON_LIVE_SEARCH (live_search),
-					    1);
+	live_search = modest_account_view_setup_live_search (MODEST_ACCOUNT_VIEW (priv->account_view));
 	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), priv->account_view);
 	gtk_box_pack_start (GTK_BOX (priv->box), live_search, FALSE, FALSE, 0);
 #endif

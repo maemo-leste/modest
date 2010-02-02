@@ -153,6 +153,18 @@ GtkTreeModel *modest_account_view_get_model (ModestAccountView *self);
  */
 GtkTreeModel *modest_account_view_get_filter (ModestAccountView *self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+/**
+ * modest_account_view_setup_live_search:
+ * @self: a #ModestAccountView
+ *
+ * obtains a properly set up #HildonLiveSearch for @self
+ *
+ * Returns: a #HildonLiveSearch
+ */
+GtkWidget *modest_account_view_setup_live_search (ModestAccountView *self);
+#endif
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_VIEW_H__ */
