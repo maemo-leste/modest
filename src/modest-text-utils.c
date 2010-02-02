@@ -2325,3 +2325,37 @@ modest_text_utils_create_colored_signature (const gchar *signature)
 
 	return retval;
 }
+
+gboolean
+modest_text_utils_live_search_find (const gchar *haystack, const gchar *needles)
+{
+	gchar *haystack_fold;
+	gchar *needles_fold;
+	gchar **needle, **current;
+	gboolean match;
+
+	match = FALSE;
+
+	haystack_fold = g_utf8_casefold (haystack, -1);
+	needles_fold = g_utf8_casefold (needles, -1);
+
+	needle = g_strsplit (needles_fold, " ", -1);
+
+	current = needle;
+	while (current && *current != NULL) {
+
+		if (g_strstr_len (haystack_fold, -1, *current) != NULL) {
+			match = TRUE;
+		} else {
+			match = FALSE;
+			break;
+		}
+		current++;
+	}
+
+	g_strfreev (needle);
+	g_free (needles_fold);
+	g_free (haystack_fold);
+	
+	return match;
+}
