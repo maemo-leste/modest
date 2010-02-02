@@ -477,6 +477,11 @@ TnyHeader* modest_header_view_get_header_at_pos (ModestHeaderView *header_view,
 						 gint initial_x,
 						 gint initial_y);
 
+
+#ifdef MODEST_TOOLKIT_HILDON2
+GtkWidget *modest_header_view_setup_live_search (ModestHeaderView *self);
+#endif
+
 G_END_DECLS
 
 

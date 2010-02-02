@@ -283,6 +283,9 @@ modest_mailboxes_window_new (const gchar *account)
 	GdkPixbuf *window_icon;
 	GtkWidget *scrollable;
 	GtkWidget *top_alignment;
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *live_search;
+#endif
 	
 	self  = MODEST_MAILBOXES_WINDOW(g_object_new(MODEST_TYPE_MAILBOXES_WINDOW, NULL));
 	priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE(self);
@@ -295,6 +298,10 @@ modest_mailboxes_window_new (const gchar *account)
 				  self);
 
 	priv->folder_view  = modest_platform_create_folder_view (NULL);
+#ifdef MODEST_TOOLKIT_HILDON2
+	live_search = modest_folder_view_setup_live_search (MODEST_FOLDER_VIEW (priv->folder_view));
+	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), priv->folder_view);
+#endif
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (priv->folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
@@ -328,6 +335,9 @@ modest_mailboxes_window_new (const gchar *account)
 
 	gtk_container_add (GTK_CONTAINER (scrollable), priv->folder_view);
 	gtk_box_pack_end (GTK_BOX (priv->top_vbox), scrollable, TRUE, TRUE, 0);
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_box_pack_end (GTK_BOX (priv->top_vbox), live_search, FALSE, FALSE, 0);
+#endif
 	gtk_container_add (GTK_CONTAINER (top_alignment), priv->top_vbox);
 	gtk_container_add (GTK_CONTAINER (self), top_alignment);
 
