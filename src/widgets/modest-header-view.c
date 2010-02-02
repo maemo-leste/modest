@@ -2803,10 +2803,15 @@ on_live_search_refilter (HildonLiveSearch *livesearch,
 			 ModestHeaderView *self)
 {
 	const gchar *needle;
+	ModestHeaderViewPrivate *priv;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
 
 	needle = hildon_live_search_get_text (livesearch);
 	if (needle && needle[0] != '\0') {
 		modest_header_view_set_filter_string (MODEST_HEADER_VIEW (self), needle);
+		if (priv->show_latest > 0)
+			modest_header_view_set_show_latest (MODEST_HEADER_VIEW (self), 0);
 	} else {
 		modest_header_view_set_filter_string (MODEST_HEADER_VIEW (self), NULL);
 	}
