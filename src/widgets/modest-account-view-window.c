@@ -47,6 +47,9 @@
 #include "widgets/modest-ui-constants.h"
 #include <modest-scrollable.h>
 #include <modest-toolkit-factory.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
@@ -182,7 +185,9 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 	ModestAccountViewWindowPrivate *priv;
 	GtkWidget *main_vbox, *scrollable;
 	GtkWidget *align;
-
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *live_search;
+#endif
 
 	/* Specify a default size */
 	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
@@ -208,9 +213,18 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	priv->acc_removed_handler = 0;
 	priv->account_view = modest_account_view_new (modest_runtime_get_account_mgr());
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	live_search = modest_account_view_setup_live_search (MODEST_ACCOUNT_VIEW (priv->account_view));
+	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), GTK_WIDGET (priv->account_view));
+#endif
+
 	modest_account_view_set_picker_mode (MODEST_ACCOUNT_VIEW (priv->account_view), TRUE);
 
 	main_vbox = GTK_DIALOG (self)->vbox;
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_box_pack_end (GTK_BOX (main_vbox), live_search, FALSE, FALSE, 0);
+#endif
 
 	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	gtk_widget_show (scrollable);
