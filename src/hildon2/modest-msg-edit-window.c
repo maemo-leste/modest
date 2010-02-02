@@ -1367,6 +1367,17 @@ update_next_cid (ModestMsgEditWindow *self, TnyList *attachments)
 	g_object_unref (iter);
 }
 
+static gboolean
+remove_non_calendar_headers (TnyList *list,
+			     GObject *item,
+			     gpointer match_data)
+{
+	if (g_str_has_prefix (tny_pair_get_name (TNY_PAIR (item)), "X-as"))
+		return FALSE;
+	else
+		return TRUE;
+}
+
 static void
 set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 {
@@ -1506,7 +1517,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 			TnyFolderType type = modest_tny_folder_get_local_or_mmc_folder_type (msg_folder);
 			if (type == TNY_FOLDER_TYPE_INVALID)
 				g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
-			
+
 			if (type == TNY_FOLDER_TYPE_DRAFTS) 
 				priv->draft_msg = g_object_ref(msg);
 			if (type == TNY_FOLDER_TYPE_OUTBOX)
@@ -1516,9 +1527,12 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		g_object_unref (msg_folder);
 	}
 
+	/* Copy orig headers used by ActiveSync calendar invitations */
 	orig_header_pairs = TNY_LIST (tny_simple_list_new ());
 	tny_mime_part_get_header_pairs (TNY_MIME_PART (msg), orig_header_pairs);
-	modest_msg_edit_window_set_custom_header_pairs (self, orig_header_pairs);
+	tny_list_remove_matches (orig_header_pairs, remove_non_calendar_headers, NULL);
+	if (tny_list_get_length (orig_header_pairs) > 0)
+		modest_msg_edit_window_set_custom_header_pairs (self, orig_header_pairs);
 	g_object_unref (orig_header_pairs);
 
 	g_free (to);
