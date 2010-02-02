@@ -63,6 +63,9 @@
 #include "modest-ui-constants.h"
 #include "widgets/modest-window.h"
 #include <modest-account-protocol.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
 
 /* Folder view drag types */
 const GtkTargetEntry folder_view_drag_types[] =
@@ -234,6 +237,9 @@ struct _ModestFolderViewPrivate {
 	gchar **hidding_ids;
 	guint n_selected;
 	ModestFolderViewFilter filter;
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *live_search;
+#endif
 
 	TnyFolderStoreQuery  *query;
 	gboolean              do_refresh;
@@ -567,6 +573,7 @@ format_compact_style (gchar **item_name,
 	TnyFolder *folder;
 	gboolean is_special;
 	TnyFolderType folder_type;
+	gboolean l_use_markup;
 
 	if (!TNY_IS_FOLDER (instance))
 		return;
@@ -623,10 +630,12 @@ format_compact_style (gchar **item_name,
 		g_object_unref (account);
 
 		*item_name = g_string_free (buffer, FALSE);
-		*use_markup = FALSE;
+		l_use_markup = FALSE;
 	} else {
-		*use_markup = FALSE;
+		l_use_markup = FALSE;
 	}
+	if (use_markup)
+		*use_markup = l_use_markup;
 }
 
 static void
@@ -1355,6 +1364,9 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->outbox_deleted_handler = 0;
 	priv->reexpand = TRUE;
 	priv->signal_handlers = 0;
+#ifdef MODEST_TOOLKIT_HILDON2
+	priv->live_search = NULL;
+#endif
 
 	/* Initialize the local account name */
 	conf = modest_runtime_get_conf();
@@ -2332,6 +2344,50 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 			retval = FALSE;
 		}
 	}
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (retval && (priv->live_search)) {
+		const gchar *needle;
+		needle = hildon_live_search_get_text (HILDON_LIVE_SEARCH (priv->live_search));
+		if (needle && needle[0] != '\0') {
+			gchar *haystack;
+			gboolean is_local;
+			
+			haystack = g_strdup (fname);
+			if (type != TNY_FOLDER_TYPE_ROOT) {
+				is_local = modest_tny_folder_is_local_folder (TNY_FOLDER (instance)) ||
+					modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance));
+				if (is_local) {
+					TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
+					type = modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (instance));
+					if (type != TNY_FOLDER_TYPE_UNKNOWN) {
+						g_free (haystack);
+						haystack = g_strdup (modest_local_folder_info_get_type_display_name (type));
+					}
+				} else {
+				}
+			} else {
+				if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (instance))) {
+					g_free (haystack);
+					haystack = g_strdup (priv->local_account_name);
+				} else if (modest_tny_account_is_memory_card_account (TNY_ACCOUNT (instance))) {
+					g_free (haystack);
+					haystack = g_strdup (tny_account_get_name (TNY_ACCOUNT (instance)));
+				}
+			}
+
+			if (type == TNY_FOLDER_TYPE_INBOX &&
+			    g_str_has_suffix (haystack, "Inbox")) {
+				g_free (haystack);
+				haystack = g_strdup (_("mcen_me_folder_inbox"));
+			}
+			format_compact_style (&haystack, instance, priv->mailbox, FALSE, 
+				      priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ALL, NULL);
+			retval = modest_text_utils_live_search_find (haystack, needle);
+			g_free (haystack);
+		}
+	}
+#endif
 
 	/* Free */
 	g_object_unref (instance);
@@ -4395,3 +4451,31 @@ modest_folder_view_get_model_tny_list (ModestFolderView *self)
 	return ret_value;
 
 }
+
+#ifdef MODEST_TOOLKIT_HILDON2
+static gboolean
+on_live_search_refilter (HildonLiveSearch *livesearch,
+			 ModestFolderView *self)
+{
+	GtkTreeModel *filter_model;
+
+	if (get_inner_models (self, &filter_model, NULL, NULL))
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
+
+	return TRUE;
+}
+
+GtkWidget *
+modest_folder_view_setup_live_search (ModestFolderView *self)
+{
+	ModestFolderViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), NULL);
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+	priv->live_search = hildon_live_search_new ();
+
+	g_signal_connect (G_OBJECT (priv->live_search), "refilter", G_CALLBACK (on_live_search_refilter), self);
+
+	return priv->live_search;
+}
+#endif

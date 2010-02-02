@@ -41,9 +41,7 @@
 #include <modest-defs.h>
 #include <modest-ui-actions.h>
 #include <modest-window.h>
-#include <hildon/hildon-program.h>
-#include <hildon/hildon-banner.h>
-#include <hildon/hildon-button.h>
+#include <hildon/hildon.h>
 #include <tny-account-store-view.h>
 #include <tny-gtk-folder-list-store.h>
 #include <modest-header-window.h>
@@ -327,6 +325,9 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	GdkModifierType accel_mods;
 	GtkAccelGroup *accel_group;
 	GtkWidget *top_alignment;
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *live_search;
+#endif
 	
 	self  = MODEST_FOLDER_WINDOW(g_object_new(MODEST_TYPE_FOLDER_WINDOW, NULL));
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
@@ -340,6 +341,10 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 				  self);
 
 	priv->folder_view  = modest_platform_create_folder_view (query);
+#ifdef MODEST_TOOLKIT_HILDON2
+	live_search = modest_folder_view_setup_live_search (MODEST_FOLDER_VIEW (priv->folder_view));
+	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), priv->folder_view);
+#endif
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (priv->folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
@@ -374,6 +379,9 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 
 	gtk_container_add (GTK_CONTAINER (pannable), priv->folder_view);
 	gtk_container_add (GTK_CONTAINER (top_alignment), pannable);
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_box_pack_end (GTK_BOX (priv->top_vbox), live_search, FALSE, FALSE, 0);
+#endif
 	gtk_box_pack_end (GTK_BOX (priv->top_vbox), top_alignment, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (self), priv->top_vbox);
 
