@@ -381,6 +381,19 @@ gboolean modest_folder_view_get_activity (ModestFolderView *self);
  */
 TnyList *modest_folder_view_get_model_tny_list (ModestFolderView *self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+/**
+ * modest_folder_view_setup_live_search:
+ * @self: a #ModestAccountView
+ *
+ * obtains a properly set up #HildonLiveSearch for @self
+ *
+ * Returns: a #HildonLiveSearch
+ */
+GtkWidget *modest_folder_view_setup_live_search (ModestFolderView *self);
+#endif
+
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */
