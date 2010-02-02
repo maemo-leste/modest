@@ -185,13 +185,15 @@ static gboolean on_key_press(GtkWidget *widget,
 					gpointer user_data);
 #endif
 
-static void  show_isearch_toolbar   (GtkWidget *obj, gpointer data);
 static void  isearch_toolbar_close  (GtkWidget *widget,
 				     ModestHeaderWindow *obj);
 static void  isearch_toolbar_search (GtkWidget *widget,
 				     ModestHeaderWindow *obj);
+#ifndef MODEST_TOOLKIT_HILDON2
+static void  show_isearch_toolbar   (GtkWidget *obj, gpointer data);
 static void  toggle_isearch_toolbar (GtkWidget *obj,
 				     gpointer data);
+#endif
 
 
 /* globals */
@@ -995,8 +997,10 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_cancel_send),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
+#ifndef MODEST_TOOLKIT_HILDON2
 	modest_window_add_to_menu (MODEST_WINDOW (self), _HL("wdgt_bd_search"), "<Control>f",
 				   MODEST_WINDOW_MENU_CALLBACK (toggle_isearch_toolbar), NULL);
+#endif
 }
 
 static void 
@@ -1517,6 +1521,7 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 }
 #endif
 
+#ifndef MODEST_TOOLKIT_HILDON2
 /* Used for the Ctrl+F accelerator */
 static void
 toggle_isearch_toolbar (GtkWidget *obj,
@@ -1543,6 +1548,7 @@ show_isearch_toolbar (GtkWidget *obj,
 	gtk_widget_show (priv->isearch_toolbar);
 	modest_isearch_toolbar_highlight_entry (MODEST_ISEARCH_TOOLBAR (priv->isearch_toolbar), TRUE);
 }
+#endif
 
 /* Handler for click on the "X" close button in isearch toolbar */
 static void
