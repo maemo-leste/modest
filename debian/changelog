@@ -1,3 +1,16 @@
+modest (3.2.12-1) unstable; urgency=low
+
+  * Week 05, 2010 - second release candidate
+  *
+  * Fixes: NB#155231 Attachments and Inline images are lost upon sending a message from 
+  * 	Gmail to other accounts.
+  * Fixes: NB#155238 New message format is changed to plain text when a message is saved 
+  * 	with Inline image/attachment
+  * Fixes: NB#155310 A copy of message body content is added as embedded attachment when 
+  * 	replied to a message with attachment
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 03 Feb 2010 11:10:01 +0200
+
 modest (3.2.12) unstable; urgency=low
 
   * Week 05, 2010 - first release candidate
