@@ -1644,6 +1644,7 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	DBUS_TYPE_STRING_AS_STRING \
 	DBUS_TYPE_STRING_AS_STRING \
 	DBUS_TYPE_STRING_AS_STRING \
+	DBUS_TYPE_INT64_AS_STRING \
 	DBUS_TYPE_ARRAY_AS_STRING \
 	ACCOUNT_HIT_DBUS_TYPE \
 	DBUS_STRUCT_END_CHAR_AS_STRING
@@ -1905,6 +1906,7 @@ typedef struct {
 	gchar *account_name;
 	gchar *store_protocol;
 	gchar *mailbox_id;
+	gint unread_count;
 	GList *header_list;
 } AccountHits;
 
@@ -1929,6 +1931,7 @@ static void return_results (GetUnreadMessagesHelper *helper)
 			const char *account_id;
 			const char *account_name;
 			const char *store_protocol;
+			gint64 unread_count;
 			DBusMessageIter ah_struct_iter;
 			DBusMessageIter sh_array_iter;
 			GList *result_node;
@@ -1940,6 +1943,7 @@ static void return_results (GetUnreadMessagesHelper *helper)
 			account_id = ah->account_id;
 			account_name = ah->account_name;
 			store_protocol = ah->store_protocol;
+			unread_count = ah->unread_count;
 			dbus_message_iter_append_basic (&ah_struct_iter,
 							DBUS_TYPE_STRING,
 							&account_id);
@@ -1949,6 +1953,9 @@ static void return_results (GetUnreadMessagesHelper *helper)
 			dbus_message_iter_append_basic (&ah_struct_iter,
 							DBUS_TYPE_STRING,
 							&store_protocol);
+			dbus_message_iter_append_basic (&ah_struct_iter,
+							DBUS_TYPE_INT64,
+							&unread_count);
 
 			dbus_message_iter_open_container (&ah_struct_iter,
 							  DBUS_TYPE_ARRAY,
@@ -2022,11 +2029,13 @@ static void get_unread_messages_get_headers_cb (TnyFolder *self,
 	const gchar *bar;
 	ModestProtocolType store_protocol_type;
 	ModestProtocol *store_protocol;
+	gint unread_count;
 
 	acc_iterator = tny_list_create_iterator (helper->accounts_list);
 	account = TNY_ACCOUNT (tny_iterator_get_current (acc_iterator));
 
 	headers_iterator = tny_list_create_iterator (headers);
+	unread_count = 0;
 	while (!tny_iterator_is_done (headers_iterator)) {
 		TnyHeader *header;
 		TnyHeaderFlags flags;
@@ -2034,7 +2043,8 @@ static void get_unread_messages_get_headers_cb (TnyFolder *self,
 		header = TNY_HEADER (tny_iterator_get_current (headers_iterator));
 		flags = tny_header_get_flags (header);
 		if (!(flags & TNY_HEADER_FLAG_SEEN)) {
-		  result_list = g_list_insert_sorted (result_list, g_object_ref (header), (GCompareFunc) headers_cmp);
+			unread_count++;
+			result_list = g_list_insert_sorted (result_list, g_object_ref (header), (GCompareFunc) headers_cmp);
 			if (members_count == helper->unread_msgs_count) {
 				g_object_unref (result_list->data);
 				result_list = g_list_delete_link (result_list, result_list);
@@ -2057,6 +2067,7 @@ static void get_unread_messages_get_headers_cb (TnyFolder *self,
 	account_hits->store_protocol = g_strdup (modest_protocol_get_name (store_protocol));
 	account_hits->header_list = result_list;
 	account_hits->mailbox_id = NULL;
+	account_hits->unread_count = unread_count;
 
 	folder_id = tny_folder_get_id (self);
 	bar = g_strstr_len (folder_id, -1, "/");
