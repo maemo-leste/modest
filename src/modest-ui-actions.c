@@ -3383,11 +3383,10 @@ gboolean
 modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
 	TnyTransportAccount *transport_account = NULL;
-	gboolean had_error = FALSE, add_to_contacts;
+	gboolean result = TRUE, add_to_contacts;
 	MsgData *data;
 	ModestAccountMgr *account_mgr;
 	gchar *account_name;
-	ModestMailOperation *mail_operation;
 	gchar *recipients;
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), TRUE);
@@ -3449,6 +3448,90 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 			return TRUE;
 	}
 
+	result = modest_ui_actions_send_msg_with_transport (transport_account,
+							    data->draft_msg,
+							    data->from,
+							    data->to,
+							    data->cc,
+							    data->bcc,
+							    data->subject,
+							    data->plain_body,
+							    data->html_body,
+							    data->attachments,
+							    data->images,
+							    data->references,
+							    data->in_reply_to,
+							    data->priority_flags,
+							    data->custom_header_pairs);
+
+
+	/* Free data: */
+	g_free (account_name);
+	g_object_unref (G_OBJECT (transport_account));
+
+	modest_msg_edit_window_free_msg_data (edit_window, data);
+
+	if (result) {
+		modest_msg_edit_window_set_sent (edit_window, TRUE);
+
+		/* Save settings and close the window: */
+		modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (edit_window));
+	}
+
+	return result;
+}
+
+/* For instance, when clicking the Send toolbar button when editing a message: */
+gboolean
+modest_ui_actions_on_send_custom_msg (const gchar *account_name, 
+				      const gchar *from, const gchar *to, const gchar *cc, const gchar *bcc,
+				      const gchar *subject,
+				      const gchar *plain_body, const gchar *html_body,
+				      const GList *attachments_list, const GList *images_list,
+				      const gchar *references, const gchar *in_reply_to,
+				      TnyHeaderFlags priority_flags, TnyList *header_pairs)
+{
+	TnyTransportAccount *transport_account = NULL;
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (account_name, FALSE);
+
+	transport_account =
+	  TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
+				(modest_runtime_get_account_store (),
+				 account_name, TNY_ACCOUNT_TYPE_TRANSPORT));
+
+	g_return_val_if_fail (transport_account, FALSE);
+
+	result = modest_ui_actions_send_msg_with_transport (transport_account,
+							    NULL /*draft msg*/,
+							    from, to, cc, bcc,
+							    subject,
+							    plain_body, html_body,
+							    attachments_list, images_list,
+							    references, in_reply_to,
+							    priority_flags, header_pairs);
+
+	/* Free data: */
+	g_object_unref (G_OBJECT (transport_account));
+
+	return result;
+}
+
+gboolean
+modest_ui_actions_send_msg_with_transport (TnyTransportAccount *transport_account, 
+					   TnyMsg *draft_msg,
+					   const gchar *from, const gchar *to, const gchar *cc, const gchar *bcc,
+					   const gchar *subject,
+					   const gchar *plain_body, const gchar *html_body,
+					   const GList *attachments_list, const GList *images_list,
+					   const gchar *references, const gchar *in_reply_to,
+					   TnyHeaderFlags priority_flags, TnyList *header_pairs)
+{
+	gboolean had_error = FALSE;
+	ModestMailOperation *mail_operation;
+
+	g_return_val_if_fail (transport_account, FALSE);
 
 	/* Create the mail operation */
 	mail_operation = modest_mail_operation_new_with_error_handling (NULL, modest_ui_actions_disk_operations_error_handler, NULL, NULL);
@@ -3456,20 +3539,20 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 
 	modest_mail_operation_send_new_mail (mail_operation,
 					     transport_account,
-					     data->draft_msg,
-					     data->from,
-					     data->to,
-					     data->cc,
-					     data->bcc,
-					     data->subject,
-					     data->plain_body,
-					     data->html_body,
-					     data->attachments,
-					     data->images,
-					     data->references,
-					     data->in_reply_to,
-					     data->priority_flags,
-					     data->custom_header_pairs);
+					     draft_msg,
+					     from,
+					     to,
+					     cc,
+					     bcc,
+					     subject,
+					     plain_body,
+					     html_body,
+					     attachments_list,
+					     images_list,
+					     references,
+					     in_reply_to,
+					     priority_flags,
+					     header_pairs);
 
 	if (modest_mail_operation_get_status (mail_operation) == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
@@ -3485,18 +3568,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	}
 
 	/* Free data: */
-	g_free (account_name);
-	g_object_unref (G_OBJECT (transport_account));
 	g_object_unref (G_OBJECT (mail_operation));
-
-	modest_msg_edit_window_free_msg_data (edit_window, data);
-
-	if (!had_error) {
-		modest_msg_edit_window_set_sent (edit_window, TRUE);
-
-		/* Save settings and close the window: */
-		modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (edit_window));
-	}
 
 	return !had_error;
 }
