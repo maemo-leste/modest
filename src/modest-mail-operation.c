@@ -3343,6 +3343,23 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 	if (!remove_headers)
 		remove_headers = g_object_ref (headers);
 
+	/* Notify messages are "read" */
+	iter = tny_list_create_iterator (remove_headers);
+	while (!tny_iterator_is_done (iter)) {
+		gchar *msg_uid;
+		TnyHeader *header;
+
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		msg_uid =  modest_tny_folder_get_header_unique_id (header);
+		if (msg_uid) {
+			modest_platform_emit_msg_read_changed_signal (msg_uid, TRUE);
+			g_free (msg_uid);
+		}
+		g_object_unref (header);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
 	/* remove message from folder */
 	modest_mail_operation_notify_start (self);
 	tny_folder_remove_msgs_async (folder, remove_headers, remove_msgs_async_cb, 
