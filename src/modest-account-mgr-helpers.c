@@ -36,6 +36,7 @@
 #include <strings.h>
 #include <modest-account-protocol.h>
 #include <modest-utils.h>
+#include <modest-platform.h>
 
 static const gchar * null_means_empty (const gchar * str);
 
@@ -49,7 +50,16 @@ gboolean
 modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* name,
 					gboolean enabled)
 {
-	return modest_account_mgr_set_bool (self, name, MODEST_ACCOUNT_ENABLED, enabled,FALSE);
+	gboolean result;
+	result = modest_account_mgr_set_bool (self, name, MODEST_ACCOUNT_ENABLED, enabled,FALSE);
+	if (result) {
+		if (enabled) {
+			modest_platform_emit_account_created_signal (name);
+		} else {
+			modest_platform_emit_account_removed_signal (name);
+		}
+	}
+	return result;
 }
 
 
@@ -790,7 +800,7 @@ modest_account_mgr_save_account_settings (ModestAccountMgr *mgr,
 		modest_account_mgr_save_server_settings (mgr, transport_settings);
 		g_object_unref (transport_settings);
 	}
-	modest_account_mgr_set_enabled (mgr, account_name, TRUE);
+	modest_account_mgr_set_bool (mgr, account_name, MODEST_ACCOUNT_ENABLED, TRUE,FALSE);
 }
 
 
