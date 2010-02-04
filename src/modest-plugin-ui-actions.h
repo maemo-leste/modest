@@ -92,6 +92,57 @@ gboolean
 modest_ui_actions_on_send_msg (ModestWindow *window,
 			       TnyMsg *msg);
 
+/**
+ * modest_ui_actions_on_send_custom_msg:
+ * @account_name: the account name to use for sending
+ * @from: a string
+ * @to: a string
+ * @cc: a string
+ * @bcc: a string
+ * @plain_body: a string with body of the message in plain text
+ * @html_body: a string with body of the message in html (or %NULL if message is only in plain text)
+ * @attachments_list: a #GList of attachments to add (#TnyMimePart)
+ * @images_list: a #GList of embedded images to add (#TnyMimePart)
+ * @references: list of messages this new message refers to
+ * @in_reply_to: a string with new in-reply-to header
+ * @priority_flags: the priority of the message as #TnyHeaderFlag mask
+ * @header_pairs: a #TnyList of #TnyPair with custom headers to add
+ */
+gboolean
+modest_ui_actions_on_send_custom_msg (const gchar *account_name, 
+				      const gchar *from, const gchar *to, const gchar *cc, const gchar *bcc,
+				      const gchar *subject,
+				      const gchar *plain_body, const gchar *html_body,
+				      const GList *attachments_list, const GList *images_list,
+				      const gchar *references, const gchar *in_reply_to,
+				      TnyHeaderFlags priority_flags, TnyList *header_pairs);
+
+/**
+ * modest_ui_actions_on_send_custom_msg:
+ * @transport_account: a #TnyTransportAccount
+ * @draft_msg: original draft message to delete on sending
+ * @from: a string
+ * @to: a string
+ * @cc: a string
+ * @bcc: a string
+ * @plain_body: a string with body of the message in plain text
+ * @html_body: a string with body of the message in html (or %NULL if message is only in plain text)
+ * @attachments_list: a #GList of attachments to add (#TnyMimePart)
+ * @images_list: a #GList of embedded images to add (#TnyMimePart)
+ * @references: list of messages this new message refers to
+ * @in_reply_to: a string with new in-reply-to header
+ * @priority_flags: the priority of the message as #TnyHeaderFlag mask
+ * @header_pairs: a #TnyList of #TnyPair with custom headers to add
+ */
+gboolean
+modest_ui_actions_send_msg_with_transport (TnyTransportAccount *transport_account, 
+					   TnyMsg *draft_msg,
+					   const gchar *from, const gchar *to, const gchar *cc, const gchar *bcc,
+					   const gchar *subject,
+					   const gchar *plain_body, const gchar *html_body,
+					   const GList *attachments_list, const GList *images_list,
+					   const gchar *references, const gchar *in_reply_to,
+					   TnyHeaderFlags priority_flags, TnyList *header_pairs);
 
 G_END_DECLS
 #endif /* __MODEST_PLUGIN_UI_ACTIONS_H__ */
