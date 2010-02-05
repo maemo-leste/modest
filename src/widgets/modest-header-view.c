@@ -2172,15 +2172,15 @@ header_match_string (TnyHeader *header, gchar **words)
 	to = tny_header_dup_to (header);
 	from = tny_header_dup_from (header);
 
-	subject_fold = g_utf8_casefold (subject, -1);
+	subject_fold = subject?g_utf8_casefold (subject, -1):NULL;
 	g_free (subject);
-	bcc_fold = g_utf8_casefold (bcc, -1);
+	bcc_fold = bcc?g_utf8_casefold (bcc, -1):NULL;
 	g_free (bcc);
-	cc_fold = g_utf8_casefold (cc, -1);
+	cc_fold = cc?g_utf8_casefold (cc, -1):NULL;
 	g_free (cc);
-	to_fold = g_utf8_casefold (to, -1);
+	to_fold = to?g_utf8_casefold (to, -1):NULL;
 	g_free (to);
-	from_fold = g_utf8_casefold (from, -1);
+	from_fold = from?g_utf8_casefold (from, -1):NULL;
 	g_free (from);
 
 	found = TRUE;
