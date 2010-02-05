@@ -1,3 +1,13 @@
+modest (3.2.12-3) unstable; urgency=low
+
+  *  Week 06, 2010 - second release candidate
+  * 
+  * Fixes: NB#153716 UI to use live search in all of the list views
+  * Fixes: NB#155849 Perform search only after user has finished writing/deleting
+  * Fixes: NB#155862 Modest is hanged when Inbox view is still refreshing and start live search for messages
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 05 Feb 2010 18:19:52 +0200
+
 modest (3.2.12-2) unstable; urgency=low
 
   * Week 06, 2010 - first release candidate
