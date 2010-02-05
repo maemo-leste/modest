@@ -1,3 +1,16 @@
+modest (3.2.12-2) unstable; urgency=low
+
+  * Week 06, 2010 - first release candidate
+  * 
+  * More calendar and home applet support 
+  * 
+  * Now GetUnreadMessages reports the whole number of unread messages.
+  * Add method for sending a message directly from calendar request
+  * Emit msg read signal on deleting messages
+  * Emit account removed/created on set_enabled call.
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 05 Feb 2010 11:26:46 +0200
+
 modest (3.2.12-1) unstable; urgency=low
 
   * Week 05, 2010 - second release candidate
