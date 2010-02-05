@@ -292,7 +292,7 @@ modest_mailboxes_window_new (const gchar *account)
 	priv->folder_view  = modest_platform_create_folder_view (NULL);
 #ifdef MODEST_TOOLKIT_HILDON2
 	live_search = modest_folder_view_setup_live_search (MODEST_FOLDER_VIEW (priv->folder_view));
-	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), priv->folder_view);
+	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), GTK_TREE_VIEW (priv->folder_view));
 #endif
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (priv->folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);

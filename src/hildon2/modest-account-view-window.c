@@ -233,7 +233,7 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	live_search = modest_account_view_setup_live_search (MODEST_ACCOUNT_VIEW (priv->account_view));
-	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), GTK_WIDGET (priv->account_view));
+	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), GTK_TREE_VIEW (priv->account_view));
 #endif
 
 	modest_account_view_set_picker_mode (MODEST_ACCOUNT_VIEW (priv->account_view), TRUE);

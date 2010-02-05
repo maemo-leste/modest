@@ -232,7 +232,7 @@ connect_signals (ModestAccountsWindow *self)
 					   "row-deleted",
 					   G_CALLBACK (on_row_deleted), self);
 
-	priv->sighandlers = 
+	priv->sighandlers =
 		modest_signal_mgr_connect (priv->sighandlers,
 					   G_OBJECT (priv->new_message_button),
 					   "clicked",
@@ -360,7 +360,7 @@ modest_accounts_window_new (void)
 	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
 #ifdef MODEST_TOOLKIT_HILDON2
 	live_search = modest_account_view_setup_live_search (MODEST_ACCOUNT_VIEW (priv->account_view));
-	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), priv->account_view);
+	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), GTK_TREE_VIEW (priv->account_view));
 	gtk_box_pack_start (GTK_BOX (priv->box), live_search, FALSE, FALSE, 0);
 #endif
 
