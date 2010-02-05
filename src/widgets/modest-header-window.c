@@ -792,7 +792,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	priv->header_view  = create_header_view (MODEST_WINDOW (self), folder);
 #ifdef MODEST_TOOLKIT_HILDON2
 	live_search = modest_header_view_setup_live_search (MODEST_HEADER_VIEW (priv->header_view));
-	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), GTK_TREE_VIEW (priv->header_view));
+	hildon_live_search_widget_hook (HILDON_LIVE_SEARCH (live_search), GTK_WIDGET (self), priv->header_view);
 #endif
 	priv->empty_view = create_empty_view (MODEST_WINDOW (self));
 
