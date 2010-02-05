@@ -158,6 +158,7 @@ struct _ModestHeaderViewPrivate {
 	ModestHeaderViewFilter filter;
 #ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *live_search;
+	guint live_search_timeout;
 #endif
 
 	gint    sort_colid[2][TNY_FOLDER_TYPE_NUM];
@@ -644,6 +645,7 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->filter = MODEST_HEADER_VIEW_FILTER_NONE;
 #ifdef MODEST_TOOLKIT_HILDON2
 	priv->live_search = NULL;
+	priv->live_search_timeout = 0;
 #endif
 	priv->filter_string = NULL;
 	priv->filter_string_splitted = NULL;
@@ -675,6 +677,13 @@ modest_header_view_dispose (GObject *obj)
 
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (priv->live_search_timeout > 0) {
+		g_source_remove (priv->live_search_timeout);
+		priv->live_search_timeout = 0;
+	}
+#endif
 
 	if (priv->datetime_formatter) {
 		g_object_unref (priv->datetime_formatter);
@@ -2798,16 +2807,16 @@ modest_header_view_set_filter_string (ModestHeaderView *self,
 }
 
 #ifdef MODEST_TOOLKIT_HILDON2
+
 static gboolean
-on_live_search_refilter (HildonLiveSearch *livesearch,
-			 ModestHeaderView *self)
+on_live_search_timeout (ModestHeaderView *self)
 {
 	const gchar *needle;
 	ModestHeaderViewPrivate *priv;
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
 
-	needle = hildon_live_search_get_text (livesearch);
+	needle = hildon_live_search_get_text (HILDON_LIVE_SEARCH (priv->live_search));
 	if (needle && needle[0] != '\0') {
 		modest_header_view_set_filter_string (MODEST_HEADER_VIEW (self), needle);
 		if (priv->show_latest > 0)
@@ -2815,7 +2824,41 @@ on_live_search_refilter (HildonLiveSearch *livesearch,
 	} else {
 		modest_header_view_set_filter_string (MODEST_HEADER_VIEW (self), NULL);
 	}
-	
+
+	priv->live_search_timeout = 0;
+
+	return FALSE;
+}
+
+static gboolean
+on_live_search_refilter (HildonLiveSearch *livesearch,
+			 ModestHeaderView *self)
+{
+	ModestHeaderViewPrivate *priv;
+	GtkTreeModel *model, *sortable, *filter;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+
+	if (priv->live_search_timeout > 0) {
+		g_source_remove (priv->live_search_timeout);
+		priv->live_search_timeout = 0;
+	}
+
+	model = NULL;
+	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
+		filter = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
+		if (GTK_IS_TREE_MODEL_FILTER (filter)) {
+			model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+		}
+	}
+
+	if (model && tny_list_get_length (TNY_LIST (model)) > 250) {
+		priv->live_search_timeout = g_timeout_add (1000, (GSourceFunc) on_live_search_timeout, self);
+	} else {
+		on_live_search_timeout (self);
+	}
+
 	return TRUE;
 }
 
