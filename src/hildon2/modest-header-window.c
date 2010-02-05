@@ -88,7 +88,6 @@ struct _ModestHeaderWindowPrivate {
 	/* signals */
 	GSList *sighandlers;
 	gulong queue_change_handler;
-	gulong sort_column_handler;
 	gulong notify_model;
 
 	/* progress hint */
@@ -263,7 +262,6 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->autoscroll = TRUE;
 	priv->progress_hint = FALSE;
 	priv->queue_change_handler = 0;
-	priv->sort_column_handler = 0;
 	priv->model_weak_ref = NULL;
 	priv->current_store_account = NULL;
 	priv->new_message_button = NULL;
@@ -306,11 +304,6 @@ modest_header_window_finalize (GObject *obj)
 		g_object_weak_unref ((GObject *) priv->model_weak_ref,
 				     on_header_view_model_destroyed,
 				     obj);
-		if (g_signal_handler_is_connected (G_OBJECT (priv->model_weak_ref),
-						   priv->sort_column_handler)) {
-			g_signal_handler_disconnect (G_OBJECT (priv->model_weak_ref),
-						     priv->sort_column_handler);
-		}
 		on_header_view_model_destroyed (obj, (GObject *) priv->model_weak_ref);
 	}
 
@@ -353,20 +346,6 @@ modest_header_window_disconnect_signals (ModestWindow *self)
 		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
 					     priv->queue_change_handler);
 		priv->queue_change_handler = 0;
-	}
-
-	if (priv->header_view) {
-		GtkTreeModel *sortable;
-
-		sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view));
-		if (sortable) {
-			if (g_signal_handler_is_connected (G_OBJECT (sortable),
-							   priv->sort_column_handler)) {
-				g_signal_handler_disconnect (G_OBJECT (sortable),
-							     priv->sort_column_handler);
-				priv->sort_column_handler = 0;
-			}
-		}
 	}
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
@@ -620,7 +599,6 @@ on_header_view_model_destroyed (gpointer user_data,
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 	priv->model_weak_ref = NULL;
 
-	priv->sort_column_handler = 0;
 }
 
 static void
@@ -636,11 +614,6 @@ on_header_view_model_changed (GObject *gobject,
 		g_object_weak_unref ((GObject *) priv->model_weak_ref,
 				     on_header_view_model_destroyed,
 				     self);
-		if (g_signal_handler_is_connected (G_OBJECT (priv->model_weak_ref),
-						   priv->sort_column_handler)) {
-			g_signal_handler_disconnect (G_OBJECT (priv->model_weak_ref),
-						     priv->sort_column_handler);
-		}
 		on_header_view_model_destroyed (self, (GObject *) priv->model_weak_ref);
 	}
 
