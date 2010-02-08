@@ -80,6 +80,21 @@ void
 modest_ui_actions_reply_calendar (ModestWindow *win, TnyList *header_pairs);
 
 /**
+ * modest_ui_actions_reply_calendar_with_subject:
+ * @win: parent #ModestWindow
+ * @subject: a string, or %NULL to use default reply subject
+ * @header_pairs: #TnyList of #TnyPair of header pairs
+ *
+ * this method opens the mail composer with a reply of a message with calendar
+ * allowing to add @header_pairs with the result of the calendar request.
+ *
+ * @win should be a #ModestMsgViewWindow. We don't put the exact type to avoid
+ * exporting to plugins #ModestMsgViewWindow API
+ */
+void
+modest_ui_actions_reply_calendar_with_subject (ModestWindow *win, const gchar *custom_subject, TnyList *header_pairs);
+
+/**
  * modest_ui_actions_on_send_msg:
  * @window: parent window requesting to send the message
  * @msg: a #TnyMsg
