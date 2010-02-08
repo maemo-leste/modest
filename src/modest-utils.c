@@ -548,6 +548,7 @@ launch_sort_headers_dialog (ModestWindow *parent_window,
 	gint attachments_sort_id;
 	gint priority_sort_id;
 	GtkTreeSortable *sortable;
+	GtkTreeModel *filter;
 
 	/* Get header window */
 	if (MODEST_IS_HEADER_WINDOW (parent_window)) {
@@ -613,7 +614,8 @@ launch_sort_headers_dialog (ModestWindow *parent_window,
 	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY_MASK;
 	priority_sort_id = sort_key;
 	
-	sortable = GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)));
+	filter = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter)));
 	/* Launch dialogs */
 	if (!gtk_tree_sortable_get_sort_column_id (sortable,
 						   &current_sort_colid, &current_sort_type)) {
