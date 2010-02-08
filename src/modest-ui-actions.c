@@ -2228,6 +2228,12 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 void
 modest_ui_actions_reply_calendar (ModestWindow *win, TnyList *header_pairs)
 {
+	modest_ui_actions_reply_calendar_with_subject (win, NULL, header_pairs);
+}
+
+void
+modest_ui_actions_reply_calendar_with_subject (ModestWindow *win, const gchar *custom_subject, TnyList *header_pairs)
+{
 	gchar *from;
 	gchar *recipient;
 	gchar *signature;
@@ -2273,6 +2279,14 @@ modest_ui_actions_reply_calendar (ModestWindow *win, TnyList *header_pairs)
 	if (!new_msg) {
 		g_warning ("%s: failed to create message\n", __FUNCTION__);
 		goto cleanup;
+	}
+
+	if (custom_subject) {
+		TnyHeader *new_msg_header;
+
+		new_msg_header = tny_msg_get_header (new_msg);
+		tny_header_set_subject (new_msg_header, custom_subject);
+		g_object_unref (new_msg_header);
 	}
 
 	msg_win = (GtkWidget *) modest_msg_edit_window_new (new_msg, account_name, mailbox, FALSE);
