@@ -4737,11 +4737,13 @@ create_move_to_dialog (GtkWindow *win,
 		ModestAccountMgr *mgr = NULL;
 		ModestAccountSettings *settings = NULL;
 		ModestServerAccountSettings *store_settings = NULL;
+		ModestWindow *modest_window;
 
 		modest_folder_view_set_style (MODEST_FOLDER_VIEW (tree_view),
 					      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 
-		active_account_name = modest_window_get_active_account (MODEST_WINDOW (win));
+		modest_window = modest_shell_peek_window (MODEST_SHELL (win));
+		active_account_name = modest_window_get_active_account (modest_window);
 		mgr = modest_runtime_get_account_mgr ();
 		settings = modest_account_mgr_load_account_settings (mgr, active_account_name);
 
