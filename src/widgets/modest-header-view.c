@@ -373,7 +373,7 @@ remove_all_columns (ModestHeaderView *obj)
 gboolean
 modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, TnyFolderType type)
 {
-	GtkTreeModel *sortable;
+	GtkTreeModel *sortable, *filter_model;
 	GtkTreeViewColumn *column=NULL;
 	GtkTreeSelection *selection = NULL;
 	GtkCellRenderer *renderer_header,
@@ -477,7 +477,11 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
-	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	sortable = NULL;
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (GTK_IS_TREE_MODEL_FILTER (filter_model)) {
+		sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
+	}
 
 	/* Add new columns */
 	for (cursor = columns; cursor; cursor = g_list_next(cursor)) {
@@ -1192,18 +1196,18 @@ modest_header_view_set_folder_intern (ModestHeaderView *self,
 					      set_folder_intern_get_headers_async_cb,
 					      NULL, self);
 
-	/* Create a tree model filter to hide and show rows for cut operations  */
-	filter_model = gtk_tree_model_filter_new (GTK_TREE_MODEL (headers), NULL);
-	gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
-						filter_row, self, NULL);
-	g_object_unref (headers);
-
 	/* Init filter_row function to examine empty status */
 	priv->status  = HEADER_VIEW_INIT;
 
 	/* Create sortable model */
-	sortable = gtk_tree_model_sort_new_with_model (filter_model);
-	g_object_unref (filter_model);
+	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL (headers));
+	g_object_unref (headers);
+
+	/* Create a tree model filter to hide and show rows for cut operations  */
+	filter_model = gtk_tree_model_filter_new (GTK_TREE_MODEL (sortable), NULL);
+	gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
+						filter_row, self, NULL);
+	g_object_unref (sortable);
 
 	/* install our special sorting functions */
 	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
@@ -1230,9 +1234,9 @@ modest_header_view_set_folder_intern (ModestHeaderView *self,
 	}
 
 	/* Set new model */
-	gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
+	gtk_tree_view_set_model (GTK_TREE_VIEW (self), filter_model);
 	modest_header_view_notify_observers (self, sortable, tny_folder_get_id (folder));
-	g_object_unref (sortable);
+	g_object_unref (filter_model);
 
 	/* Free */
 	g_list_free (cols);
@@ -1244,7 +1248,7 @@ modest_header_view_sort_by_column_id (ModestHeaderView *self,
 				      GtkSortType sort_type)
 {
 	ModestHeaderViewPrivate *priv = NULL;
-	GtkTreeModel *sortable = NULL;
+	GtkTreeModel *sortable = NULL, *filter_model = NULL;
 	TnyFolderType type;
 
 	g_return_if_fail (self && MODEST_IS_HEADER_VIEW(self));
@@ -1252,7 +1256,10 @@ modest_header_view_sort_by_column_id (ModestHeaderView *self,
 
 	/* Get model and private data */
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
-	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (GTK_IS_TREE_MODEL_FILTER (filter_model)) {
+		sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
+	}
 
 	/* Sort tree model */
 	type  = modest_tny_folder_guess_folder_type (priv->folder);
@@ -2337,20 +2344,17 @@ _clear_hidding_filter (ModestHeaderView *header_view)
 void
 modest_header_view_refilter (ModestHeaderView *header_view)
 {
-	GtkTreeModel *model, *sortable = NULL;
+	GtkTreeModel *filter_model = NULL;
 	ModestHeaderViewPrivate *priv = NULL;
 
 	g_return_if_fail (header_view && MODEST_IS_HEADER_VIEW (header_view));
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
 
 	/* Hide cut headers */
-	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
-		model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
-		if (GTK_IS_TREE_MODEL_FILTER (model)) {
-			priv->status = HEADER_VIEW_INIT;
-			gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
-		}
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_FILTER (filter_model)) {
+		priv->status = HEADER_VIEW_INIT;
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
 	}
 }
 
@@ -2694,11 +2698,11 @@ modest_header_view_set_show_latest (ModestHeaderView *header_view,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
 	priv->show_latest = show_latest;
 
-	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
-		filter = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
-		if (GTK_IS_TREE_MODEL_FILTER (filter)) {
-			model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+	filter = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_FILTER (filter)) {
+		sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+		if (GTK_IS_TREE_MODEL_SORT (sortable)) {
+			model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
 			if (model) {
 				tny_gtk_header_list_model_set_show_latest (TNY_GTK_HEADER_LIST_MODEL (model), priv->show_latest);
 			}
@@ -2716,11 +2720,11 @@ modest_header_view_get_show_latest (ModestHeaderView *header_view)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
 
 	result = priv->show_latest;
-	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
-		filter = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
-		if (GTK_IS_TREE_MODEL_FILTER (filter)) {
-			model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+	filter = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_FILTER (filter)) {
+		sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+		if (GTK_IS_TREE_MODEL_SORT (sortable)) {
+			model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
 			if (model) {
 				result = tny_gtk_header_list_model_get_show_latest (TNY_GTK_HEADER_LIST_MODEL (model));
 			}
@@ -2742,11 +2746,11 @@ modest_header_view_get_not_latest (ModestHeaderView *header_view)
 	if (priv->show_latest == 0)
 		return 0;
 
-	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
-		filter = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
-		if (GTK_IS_TREE_MODEL_FILTER (filter)) {
-			model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+	filter = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_FILTER (filter)) {
+		sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+		if (GTK_IS_TREE_MODEL_SORT (sortable)) {
+			model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
 			if (model) {
 				not_latest = MAX (0, tny_list_get_length (TNY_LIST (model)) - priv->show_latest);
 			}
@@ -2845,11 +2849,11 @@ on_live_search_refilter (HildonLiveSearch *livesearch,
 	}
 
 	model = NULL;
-	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
-		filter = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
-		if (GTK_IS_TREE_MODEL_FILTER (filter)) {
-			model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+	filter = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (GTK_IS_TREE_MODEL_FILTER (filter)) {
+		sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+		if (GTK_IS_TREE_MODEL_SORT (sortable)) {
+			model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
 		}
 	}
 
