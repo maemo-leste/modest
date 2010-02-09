@@ -52,7 +52,7 @@
 #include <gtk/gtkentry.h>
 #include <modest-maemo-utils.h>
 #ifdef MODEST_PLATFORM_MAEMO
-#include <dbus_api/asdbus.h>
+#include <asdbus.h>
 #endif
 
 static OssoABookContactModel *contact_model =  NULL;
