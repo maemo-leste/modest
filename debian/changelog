@@ -1,3 +1,12 @@
+modest (3.2.12-4) unstable; urgency=low
+
+  * Week 06, 2010 - third release candidate
+  * 
+  * Fixes: NB#155972 Email hangs always when deleting the searched text in the headers view
+  * New calendar method added - modest_ui_actions_reply_calendar_with_subject
+ 
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 09 Feb 2010 10:21:35 +0200
+
 modest (3.2.12-3) unstable; urgency=low
 
   *  Week 06, 2010 - second release candidate
