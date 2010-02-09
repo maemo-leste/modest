@@ -1075,6 +1075,13 @@ modest_account_mgr_set_bool (ModestAccountMgr * self, const gchar * name,
 		g_printerr ("modest: error setting bool '%s': %s\n", keyname, err->message);
 		g_error_free (err);
 		retval = FALSE;
+	} else {
+		/* check whether this field is one of those interesting for the 
+		 * "account-updated" signal */
+		if (strcmp (key, MODEST_ACCOUNT_HAS_NEW_MAILS) == 0) {
+			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATED_SIGNAL], 
+					0, name);
+		}
 	}
 
 	return retval;

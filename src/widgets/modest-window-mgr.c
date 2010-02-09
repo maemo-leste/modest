@@ -556,6 +556,7 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 		   application is closed */
 		modest_runtime_set_allow_shutdown (TRUE);
 	}
+
 	return retval;
 }
 

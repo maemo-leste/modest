@@ -75,6 +75,7 @@ static void on_account_updated (ModestAccountMgr* mgr, gchar* account_name,
                     gpointer user_data);
 static void update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view);
 static void on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
+static void update_style (ModestAccountView *self);
 static void update_display_mode (ModestAccountView *self);
 
 typedef enum {
@@ -84,6 +85,7 @@ typedef enum {
 	MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
 	MODEST_ACCOUNT_VIEW_PROTO_COLUMN,
 	MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,
+	MODEST_ACCOUNT_VIEW_HAS_NEW_MAILS_COLUMN,
 
 	MODEST_ACCOUNT_VIEW_COLUMN_NUM
 } AccountViewColumns;
@@ -101,6 +103,9 @@ struct _ModestAccountViewPrivate {
 
 	/* Signal handlers */
 	GSList *sig_handlers;
+
+	GtkTreeViewColumn *account_name_column;
+	GtkCellRenderer *account_name_renderer;
 };
 #define MODEST_ACCOUNT_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_ACCOUNT_VIEW, \
@@ -283,6 +288,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 
 			/* don't free */
 			const gchar *last_updated_string = get_last_updated_string(view, account_mgr, settings);
+			gboolean has_new_mails = modest_account_mgr_get_has_new_mails (account_mgr, account_name);
 			
 			if (modest_account_settings_get_enabled (settings)) {
 				ModestProtocolType protocol_type;
@@ -319,6 +325,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 #else
 					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
 #endif
+					MODEST_ACCOUNT_VIEW_HAS_NEW_MAILS_COLUMN, has_new_mails,
 					-1);
 #ifdef MODEST_TOOLKIT_HILDON2
 				g_free (last_updated_hildon2);
@@ -509,8 +516,9 @@ bold_if_default_account_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer 
 	PangoAttrList *attr_list = NULL;
 	GtkWidget *widget;
 
-	gtk_tree_model_get (tree_model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
-			    &is_default, -1);
+	gtk_tree_model_get (tree_model, iter,
+			    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, &is_default,
+			    -1);
 
 /* 	widget = gtk_tree_view_column_get_tree_view (column); */
 	widget = GTK_WIDGET (user_data);
@@ -584,13 +592,15 @@ init_view (ModestAccountView *self)
 	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (self));
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
 		
-	priv->model = GTK_TREE_MODEL (gtk_list_store_new (6,
+	priv->model = GTK_TREE_MODEL (gtk_list_store_new (8,
 							  G_TYPE_STRING,  /* account name */
 							  G_TYPE_STRING,  /* account display name */
 							  G_TYPE_BOOLEAN, /* is-enabled */
 							  G_TYPE_BOOLEAN, /* is-default */
 							  G_TYPE_STRING,  /* account proto (pop, imap,...) */
-							  G_TYPE_STRING   /* last updated (time_t) */
+							  G_TYPE_STRING,   /* last updated (time_t) */
+							  G_TYPE_BOOLEAN, /* has_new_mails has_color */
+							  G_TYPE_POINTER /* has_new_mails color */
 					      )); 
 		
 	gtk_tree_sortable_set_sort_column_id (
@@ -631,19 +641,21 @@ init_view (ModestAccountView *self)
 					   self);
 	
 	/* account name */
-	text_renderer = gtk_cell_renderer_text_new ();
-	g_object_set (G_OBJECT (text_renderer), 
+	priv->account_name_renderer = gtk_cell_renderer_text_new ();
+	g_object_set (G_OBJECT (priv->account_name_renderer), 
 		      "ellipsize", PANGO_ELLIPSIZE_END, "ellipsize-set", TRUE, 
 #ifdef MODEST_TOOLKIT_HILDON2
 		      "xpad", HILDON_MARGIN_DOUBLE,
 #endif
 		      NULL);
 
-	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_account"), text_renderer, "text",
-							    MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);
-	gtk_tree_view_column_set_expand (column, TRUE);
-	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_account_cell_data,
+	priv->account_name_column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_account"), priv->account_name_renderer,
+									       "text", MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,
+									       NULL);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(self), priv->account_name_column);
+	gtk_tree_view_column_set_expand (priv->account_name_column, TRUE);
+	gtk_tree_view_column_set_cell_data_func(priv->account_name_column, priv->account_name_renderer, 
+						bold_if_default_account_cell_data,
 						self, NULL);
 
 	/* last update for this account */
@@ -893,6 +905,7 @@ static void
 on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
 {
 	if (strcmp ("style", spec->name) == 0) {
+		update_style (MODEST_ACCOUNT_VIEW (obj));
 		gtk_widget_queue_draw (GTK_WIDGET (obj));
 	} 
 }
@@ -1024,3 +1037,34 @@ modest_account_view_setup_live_search (ModestAccountView *self)
 	return live_search;
 }
 #endif
+
+static void
+update_style (ModestAccountView *self)
+{
+	ModestAccountViewPrivate *priv;
+	GdkColor style_active_color;
+
+	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (self));
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
+
+	if (gtk_style_lookup_color (GTK_WIDGET (self)->style, "ActiveTextColor", &style_active_color)) {
+		g_object_set (G_OBJECT (priv->account_name_renderer),
+			      "foreground-gdk", &style_active_color,
+			      NULL);
+		gtk_tree_view_column_set_attributes (priv->account_name_column, priv->account_name_renderer,
+						     "text", MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,
+						     "foreground-set", MODEST_ACCOUNT_VIEW_HAS_NEW_MAILS_COLUMN,
+						     NULL);
+	} else {
+		g_object_set (G_OBJECT (priv->account_name_renderer),
+			      "foreground-set", FALSE,
+			      "foreground-gdk", NULL,
+			      NULL);
+		gtk_tree_view_column_set_attributes (priv->account_name_column, priv->account_name_renderer,
+						     "text", MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,
+						     NULL);
+	}
+
+	update_account_view (priv->account_mgr, self);
+}
+

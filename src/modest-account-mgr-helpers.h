@@ -426,6 +426,13 @@ void  modest_account_mgr_set_last_updated (ModestAccountMgr *self,
 					   const gchar* account_name,
 					   gint time);
 
+gboolean  modest_account_mgr_get_has_new_mails (ModestAccountMgr *self, 
+						const gchar* account_name);
+
+void  modest_account_mgr_set_has_new_mails (ModestAccountMgr *self, 
+					    const gchar* account_name,
+					    gboolean has_new_mails);
+
 gint  modest_account_mgr_get_retrieve_limit (ModestAccountMgr *self, 
 					     const gchar* account_name);
 
