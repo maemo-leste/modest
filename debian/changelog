@@ -1,3 +1,35 @@
+modest (3.90.5) unstable; urgency=low
+
+  * Add find toolbar to headers window.
+  * Also filter date ranges in headers list filter.
+  * Use live search in hildon.
+  * Misc build fixes.
+  * Misc runtime fixes.
+  * Properly detect the body in multipart/related messages.
+  * Added new dbus methods to emit signals account_created, account_removed,
+  *    msg_read_changed and folder_updated.
+  * New method to fetch unread messages with dbus.
+  * Wrap into a mail operation the get unread messages dbus method. Also make
+  *    get folders operation asynchronous.
+  * Move the reply calendar method from ui actions to plugin ui actions.
+  * API for reply calendar doesn't need now the msg, as the method internally
+  *    can get the original msg.
+  * Add methods to get and retrieve list of custom header pairs in editor.
+  * Preserve headers of messages in drafts and sending messages.
+  * New method to send a mail without ui.
+  * Move modest_ui_actions_on_send_msg to plugin API.
+  * Add new ui actions method to send a custom message without editor.
+  * New method modest_ui_actions_reply_calendar_with_subject.
+  * Fixes: NB#134053  inline images lost with email sent from Thunderbird.
+  * Fixes: NB#153926  "insert image" button moved from app menu to toolbar.
+  * Fixes: NB#154396  Set a MODEST_MARGIN_HALF margin in the top of the editor
+  *    window.
+  * Fixes: NB#155972  Move again models in header view. Now sort model is
+  *    again inside filter model as we want to avoid resorting on changing the
+  *    live search filter condition.
+
+ -- Jose Dapena Paz <jdapena@igalia.com>  Tue, 09 Feb 2010 08:15:19 +0100
+
 modest (3.90.4) unstable; urgency=low
 
   * Misc build fixes.
