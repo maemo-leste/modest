@@ -51,6 +51,9 @@
 #include <gtk/gtktreeselection.h>
 #include <gtk/gtkentry.h>
 #include <modest-maemo-utils.h>
+#ifdef MODEST_PLATFORM_MAEMO
+#include <dbus_api/asdbus.h>
+#endif
 
 static OssoABookContactModel *contact_model =  NULL;
 static EBook *book = NULL;
@@ -149,6 +152,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor,
 									    _AB("addr_ti_dia_select_contacts"),
 									    OSSO_ABOOK_CAPS_EMAIL, 
 									    OSSO_ABOOK_CONTACT_ORDER_NAME);
+
 	/* Enable multiselection */
 	osso_abook_contact_chooser_set_maximum_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_chooser),
 							  G_MAXUINT);
@@ -944,7 +948,7 @@ set_contact_from_display_name (EContact *contact, const gchar *disp_name)
 }
 
 static GList *
-select_contacts_for_name_dialog (const gchar *name)
+select_contacts_for_name_dialog (const gchar *name, GList *external_contacts)
 {
 	EBookQuery *book_query = NULL;
 	EBookView *book_view = NULL;
@@ -981,6 +985,38 @@ select_contacts_for_name_dialog (const gchar *name)
 										   _AB("addr_ti_dia_select_contacts"),
 										   OSSO_ABOOK_CAPS_ALL,
 										   OSSO_ABOOK_CONTACT_ORDER_NAME);
+
+#ifdef MODEST_PLATFORM_MAEMO
+		if (external_contacts) {
+
+			GList *row_list = NULL;
+			while (external_contacts) {
+
+				AsDbusRecipient *recipient = (AsDbusRecipient*)external_contacts->data;
+				external_contacts = g_list_next (external_contacts);
+				if (!recipient)
+					continue;
+
+				char *uid = osso_abook_create_temporary_uid ();
+				OssoABookContact *contact = osso_abook_contact_new ();
+				osso_abook_contact_set_uid (contact, uid);
+				e_contact_set (E_CONTACT (contact), E_CONTACT_FULL_NAME, recipient->display_name);
+				osso_abook_contact_set_value (E_CONTACT (contact), EVC_EMAIL, recipient->email_address);
+
+				OssoABookListStoreRow *row = osso_abook_list_store_row_new (contact);
+				row_list = g_list_prepend (row_list, row);
+				/* FIXME: unref row? */
+
+				g_free (uid);
+			}
+
+			if (row_list) {
+				osso_abook_list_store_merge_rows (OSSO_ABOOK_LIST_STORE (contact_model), row_list);
+				g_list_free (row_list);
+			}
+		}
+#endif
+
 		/* Enable multiselection */
 		osso_abook_contact_chooser_set_maximum_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),
 								  G_MAXUINT);
@@ -1057,7 +1093,7 @@ resolve_address (const gchar *address,
 		 gboolean *canceled)
 {
 	GList *resolved_contacts;
-	CheckNamesInfo *info;;
+	CheckNamesInfo *info;
 	OssoABookRoster *roster;
 
 	g_return_val_if_fail (canceled, FALSE);
@@ -1084,21 +1120,117 @@ resolve_address (const gchar *address,
 		osso_abook_aggregator_find_contacts_full ((OssoABookAggregator *) roster,
 							  contact_name_or_email_starts_with,
 							  (gpointer) address);
+#ifdef MODEST_PLATFORM_MAEMO
+	GList *external_contacts = asdbus_resolve_recipients (address);
+#else
+	GList *external_contacts = NULL;
+#endif
 	hide_check_names_banner (info);
 
-	if (resolved_contacts == NULL) {
+	if (resolved_contacts == NULL && NULL == external_contacts) {
 		/* no matching contacts for the search string */
 		modest_platform_run_information_dialog (NULL, _("mcen_nc_no_matching_contacts"), FALSE);
 		clean_check_names_banner (info);
 		return FALSE;
 	}
 
-	if (g_list_length (resolved_contacts) > 1) {
+#ifdef MODEST_PLATFORM_MAEMO
+	/* check for duplicate emails and remove from external_contacts if any */
+	if (resolved_contacts && external_contacts) {
+
+		GList *node, *ex_node;
+
+		for (ex_node = external_contacts; ex_node != NULL; ex_node = g_list_next (ex_node)) {
+
+			AsDbusRecipient *recipient = (AsDbusRecipient*)ex_node->data;
+			if (!recipient)
+				continue;
+
+			for (node = resolved_contacts; node != NULL; node = g_list_next (node)) {
+
+				EContact *contact = (EContact*)node->data;
+				GList *emails = e_contact_get (contact, E_CONTACT_EMAIL);
+				if (!emails)
+					continue;
+
+				if (g_list_find_custom (emails, recipient->email_address, (GCompareFunc) compare_addresses)) {
+
+					g_free (recipient->display_name);
+					g_free (recipient->email_address);
+					g_free (recipient);
+					recipient = NULL;
+					ex_node->data = NULL;
+				}
+
+				g_list_foreach (emails, (GFunc) g_free, NULL);
+				g_list_free (emails);
+
+				if (!recipient)
+					break;
+			}
+		}
+	}
+#endif
+
+	if (g_list_length (resolved_contacts) + g_list_length (external_contacts) > 1) {
 		/* show a dialog to select the contact from the resolved ones */
 		g_list_free (resolved_contacts);
 
-		resolved_contacts = select_contacts_for_name_dialog (address);
+		resolved_contacts = select_contacts_for_name_dialog (address, external_contacts);
+
+#ifdef MODEST_PLATFORM_MAEMO
+		if (external_contacts) {
+
+			GList *node;
+			for (node = external_contacts; node != NULL; node = g_list_next (node)) {
+
+				AsDbusRecipient *recipient = (AsDbusRecipient*)node->data;
+				if (!recipient)
+					continue;
+
+				g_free (recipient->display_name);
+				g_free (recipient->email_address);
+				g_free (recipient);
+			}
+
+			g_list_free (external_contacts);
+			external_contacts = NULL;
+		}
+#endif
 	}
+
+#ifdef MODEST_PLATFORM_MAEMO
+	if (external_contacts) {
+
+		gboolean found = FALSE;
+		GList *node;
+		for (node = external_contacts; node != NULL; node = g_list_next (node)) {
+
+			AsDbusRecipient *recipient = (AsDbusRecipient*)node->data;
+			if (!recipient)
+				continue;
+
+			GString *formatted_recipient = g_string_new (NULL);
+			g_string_printf (formatted_recipient, "\"%s\" <%s>", recipient->display_name, recipient->email_address);
+
+			/* FIXME: why we have to have list of lists? */
+			GSList *formattedlist = g_slist_append(NULL, formatted_recipient->str);
+			*resolved_addresses = g_slist_append (*resolved_addresses, formattedlist);
+			/* FIXME: how important is an UID? */
+			*contact_ids = g_slist_append (*contact_ids, g_strdup ("temp-uid"));
+			found = TRUE;
+
+			g_string_free (formatted_recipient, FALSE); /* character data segment is NOT freed */
+			g_free (recipient->display_name);
+			g_free (recipient->email_address);
+			g_free (recipient);
+		}
+
+		g_list_free (external_contacts);
+		external_contacts = NULL;
+		return found;
+        }
+#endif
 
 	/* get the resolved contacts (can be no contact) */
 	if (resolved_contacts) {
