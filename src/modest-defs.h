@@ -205,6 +205,7 @@ const gchar *modest_defs_namespace (const gchar *string);
 #define MODEST_ACCOUNT_ENABLED		 "enabled"	     /* boolean */
 #define MODEST_ACCOUNT_TYPE		 "type"	             /* string */
 #define MODEST_ACCOUNT_LAST_UPDATED      "last_updated"      /* int */
+#define MODEST_ACCOUNT_HAS_NEW_MAILS     "has_new_mails"     /* boolean */
 
 #define MODEST_ACCOUNT_LEAVE_ON_SERVER   "leave_on_server"   /* boolean */
 #define MODEST_ACCOUNT_PREFERRED_CNX     "preferred_cnx"     /* string */

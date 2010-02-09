@@ -50,6 +50,7 @@
 #include "modest-tny-msg.h"
 #include "modest-tny-account.h"
 #include <tny-merge-folder.h>
+#include <modest-account-mgr-helpers.h>
 
 /* 'private'/'protected' functions */
 static void modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass);
@@ -584,6 +585,9 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 
 		if (acc_name) {
 			modest_platform_remove_new_mail_notifications (FALSE, acc_name);
+			modest_account_mgr_set_has_new_mails (modest_runtime_get_account_mgr (),
+							      acc_name,
+							      FALSE);
 		}
 	}
 

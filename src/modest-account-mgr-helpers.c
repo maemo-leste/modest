@@ -1047,6 +1047,30 @@ modest_account_mgr_set_last_updated (ModestAccountMgr *self,
 	/* TODO: notify about changes */
 }
 
+gboolean
+modest_account_mgr_get_has_new_mails (ModestAccountMgr *self, 
+				      const gchar* account_name)
+{
+	return modest_account_mgr_get_bool (modest_runtime_get_account_mgr (), 
+					    account_name, 
+					    MODEST_ACCOUNT_HAS_NEW_MAILS, 
+					    FALSE);
+}
+
+void 
+modest_account_mgr_set_has_new_mails (ModestAccountMgr *self, 
+				      const gchar* account_name,
+				      gboolean has_new_mails)
+{
+	modest_account_mgr_set_bool (self, 
+				     account_name, 
+				     MODEST_ACCOUNT_HAS_NEW_MAILS, 
+				     has_new_mails, 
+				     FALSE);
+
+	/* TODO: notify about changes */
+}
+
 gint  
 modest_account_mgr_get_retrieve_limit (ModestAccountMgr *self, 
 				       const gchar* account_name)
