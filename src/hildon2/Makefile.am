@@ -85,7 +85,13 @@ if MODEST_USE_DUMMY_ADDRESS_BOOK
 #	 nothing 
 else
 libmodest_ui_la_SOURCES += modest-address-book.c
+
+if MODEST_BUILD_ASDBUS
+libmodest_ui_la_SOURCES+= \
+	asdbus.h asdbus.c asdbus-bindings.h
+endif
 endif 
+
 
 
 libmodest_ui_la_LIBADD = \
