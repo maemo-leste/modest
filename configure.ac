@@ -200,6 +200,8 @@ elif test "$with_platform" = "gnome"; then
 	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_GNOME -DMODEST_API_VERSION=${MODEST_API_VERSION}"
 fi
 AC_SUBST(MODEST_PLUGIN_DEFINES)
+AM_CONDITIONAL(MODEST_BUILD_ASDBUS,test "x$with_platform" == "xmaemo")
+
 
 dnl ---------- PLATFORM: *DBUS API* -----------
 if test "x$with_platform" == "xgnome"; then

@@ -50,6 +50,11 @@ libmodest_dbus_api_la_SOURCES=              \
 	modest-dbus-callbacks.h modest-dbus-callbacks.c \
 	modest-dbus-api.h
 
+if MODEST_BUILD_ASDBUS
+libmodest_dbus_api_la_SOURCES+= \
+	asdbus.h asdbus.c asdbus-bindings.h
+endif
+
 LDADD = \
 	$(LIBMODEST_DBUS_CLIENT_LIBS)
 	$(MODEST_GSTUFF_LIBS) \
