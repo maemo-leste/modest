@@ -1531,8 +1531,17 @@ on_idle_show_memory_low (gpointer user_data)
 static gboolean
 on_idle_present_modal (gpointer user_data)
 {
+	GtkWindow *current, *transient;
 	gdk_threads_enter ();
-	gtk_window_present (user_data);
+	current = (GtkWindow *) user_data;
+	while (GTK_IS_DIALOG (current)) {
+		transient = gtk_window_get_transient_for (GTK_WINDOW (current));
+		if (transient == NULL)
+			break;
+		else
+			current = transient;
+	}
+	gtk_window_present (current);
 	gdk_threads_leave ();
 
 	return FALSE;
