@@ -1,3 +1,13 @@
+modest (3.2.12-6) unstable; urgency=low
+
+  * Week 06, 2010 - fifth release candidate
+  * 
+  * Fixes: NB#155972 Email hangs always when deleting the searched text in the headers view
+  * Fixes: NB#156458 Email applet should be launch, when email account is minimized for some dialog
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 10 Feb 2010 20:22:07 +0200
+
 modest (3.2.12-5) unstable; urgency=low
 
   * Week 06, 2010 - fourth release candidate
