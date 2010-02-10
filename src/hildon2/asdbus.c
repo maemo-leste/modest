@@ -2,7 +2,6 @@
 #include "asdbus-bindings.h"
 
 #include <glib-object.h>
-#include <asconfig.h>
 
 
 static
