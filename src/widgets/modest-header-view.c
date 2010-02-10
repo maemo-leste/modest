@@ -206,6 +206,12 @@ struct _HeadersCountChangedHelper {
 
 #define MODEST_HEADER_VIEW_PTR "modest-header-view"
 
+#define _HEADER_VIEW_SUBJECT_FOLD "_subject_modest_header_view"
+#define _HEADER_VIEW_FROM_FOLD "_from_modest_header_view"
+#define _HEADER_VIEW_TO_FOLD "_to_modest_header_view"
+#define _HEADER_VIEW_CC_FOLD "_cc_modest_header_view"
+#define _HEADER_VIEW_BCC_FOLD "_bcc_modest_header_view"
+
 enum {
 	HEADER_SELECTED_SIGNAL,
 	HEADER_ACTIVATED_SIGNAL,
@@ -2159,11 +2165,6 @@ current_folder_needs_filtering (ModestHeaderViewPrivate *priv)
 static gboolean
 header_match_string (TnyHeader *header, gchar **words)
 {
-	gchar *subject;
-	gchar *cc;
-	gchar *bcc;
-	gchar *to;
-	gchar *from;
 	gchar *subject_fold;
 	gchar *cc_fold;
 	gchar *bcc_fold;
@@ -2173,44 +2174,81 @@ header_match_string (TnyHeader *header, gchar **words)
 	gchar **current_word;
 	gboolean found;
 
-	subject = tny_header_dup_subject (header);
-	cc = tny_header_dup_cc (header);
-	bcc = tny_header_dup_bcc (header);
-	to = tny_header_dup_to (header);
-	from = tny_header_dup_from (header);
+	subject_fold = g_object_get_data (G_OBJECT (header), _HEADER_VIEW_SUBJECT_FOLD);
+	if (subject_fold == NULL) {
+		gchar *subject;
+		subject = tny_header_dup_subject (header);
+		if (subject != NULL) {
+			subject_fold = subject?g_utf8_casefold (subject, -1):NULL;
+			g_object_set_data_full (G_OBJECT (header), _HEADER_VIEW_SUBJECT_FOLD,
+						subject_fold, (GDestroyNotify) g_free);
+		}
+		g_free (subject);
+	}
 
-	subject_fold = subject?g_utf8_casefold (subject, -1):NULL;
-	g_free (subject);
-	bcc_fold = bcc?g_utf8_casefold (bcc, -1):NULL;
-	g_free (bcc);
-	cc_fold = cc?g_utf8_casefold (cc, -1):NULL;
-	g_free (cc);
-	to_fold = to?g_utf8_casefold (to, -1):NULL;
-	g_free (to);
-	from_fold = from?g_utf8_casefold (from, -1):NULL;
-	g_free (from);
+	from_fold = g_object_get_data (G_OBJECT (header), _HEADER_VIEW_FROM_FOLD);
+	if (from_fold == NULL) {
+		gchar *from;
+		from = tny_header_dup_from (header);
+		if (from != NULL) {
+			from_fold = from?g_utf8_casefold (from, -1):NULL;
+			g_object_set_data_full (G_OBJECT (header), _HEADER_VIEW_FROM_FOLD,
+						from_fold, (GDestroyNotify) g_free);
+		}
+		g_free (from);
+	}
+
+	to_fold = g_object_get_data (G_OBJECT (header), _HEADER_VIEW_TO_FOLD);
+	if (to_fold == NULL) {
+		gchar *to;
+		to = tny_header_dup_to (header);
+		if (to != NULL) {
+			to_fold = to?g_utf8_casefold (to, -1):NULL;
+			g_object_set_data_full (G_OBJECT (header), _HEADER_VIEW_TO_FOLD,
+						to_fold, (GDestroyNotify) g_free);
+		}
+		g_free (to);
+	}
+
+	cc_fold = g_object_get_data (G_OBJECT (header), _HEADER_VIEW_CC_FOLD);
+	if (cc_fold == NULL) {
+		gchar *cc;
+		cc = tny_header_dup_cc (header);
+		if (cc != NULL) {
+			cc_fold = cc?g_utf8_casefold (cc, -1):NULL;
+			g_object_set_data_full (G_OBJECT (header), _HEADER_VIEW_CC_FOLD,
+						cc_fold, (GDestroyNotify) g_free);
+		}
+		g_free (cc);
+	}
+
+	bcc_fold = g_object_get_data (G_OBJECT (header), _HEADER_VIEW_BCC_FOLD);
+	if (bcc_fold == NULL) {
+		gchar *bcc;
+		bcc = tny_header_dup_bcc (header);
+		if (bcc != NULL) {
+			bcc_fold = bcc?g_utf8_casefold (bcc, -1):NULL;
+			g_object_set_data_full (G_OBJECT (header), _HEADER_VIEW_BCC_FOLD,
+						bcc_fold, (GDestroyNotify) g_free);
+		}
+		g_free (bcc);
+	}
 
 	found = TRUE;
 
 	for (current_word = words; *current_word != NULL; current_word++) {
 
-		if ((subject && g_strstr_len (subject_fold, -1, *current_word))
-		    || (cc && g_strstr_len (cc_fold, -1, *current_word))
-		    || (bcc && g_strstr_len (bcc_fold, -1, *current_word))
-		    || (to && g_strstr_len (to_fold, -1, *current_word))
-		    || (from && g_strstr_len (from_fold, -1, *current_word))) {
+		if ((subject_fold && g_strstr_len (subject_fold, -1, *current_word))
+		    || (cc_fold && g_strstr_len (cc_fold, -1, *current_word))
+		    || (bcc_fold && g_strstr_len (bcc_fold, -1, *current_word))
+		    || (to_fold && g_strstr_len (to_fold, -1, *current_word))
+		    || (from_fold && g_strstr_len (from_fold, -1, *current_word))) {
 			found = TRUE;
 		} else {
 			found = FALSE;
 			break;
 		}
 	}
-
-	g_free (subject_fold);
-	g_free (cc_fold);
-	g_free (bcc_fold);
-	g_free (to_fold);
-	g_free (from_fold);
 
 	return found;
 }
