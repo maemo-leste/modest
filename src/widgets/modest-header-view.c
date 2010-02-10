@@ -2272,12 +2272,10 @@ filter_row (GtkTreeModel *model,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (user_data);
 
 	/* Get header from model */
-	gtk_tree_model_get_value (model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &value);
-	flags = (TnyHeaderFlags) g_value_get_int (&value);
-	g_value_unset (&value);
 	gtk_tree_model_get_value (model, iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &value);
 	header = (TnyHeader *) g_value_get_object (&value);
 	g_value_unset (&value);
+	flags = tny_header_get_flags (header);
 
 	/* Get message id from header (ensure is a valid id) */
 	if (!header) {
