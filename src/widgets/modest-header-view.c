@@ -1169,6 +1169,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	headers = TNY_LIST (tny_gtk_header_list_model_new ());
+	tny_gtk_header_list_model_set_update_in_batches (TNY_GTK_HEADER_LIST_MODEL (headers), 300);
 
 	/* Start the monitor in the callback of the
 	   tny_gtk_header_list_model_set_folder call. It's crucial to
