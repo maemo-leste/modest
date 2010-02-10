@@ -1,3 +1,13 @@
+modest (3.2.12-5) unstable; urgency=low
+
+  * Week 06, 2010 - fourth release candidate
+  * 
+  * Fixes: NB#149525 [PATCH] Global Address book look-up for MfE
+  * Fixes: NB#155455 The accounts list should show with different color those accounts that 
+  * 	contain unread emails
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 10 Feb 2010 16:02:25 +0200
+
 modest (3.2.12-4) unstable; urgency=low
 
   * Week 06, 2010 - third release candidate
