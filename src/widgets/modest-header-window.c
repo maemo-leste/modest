@@ -447,54 +447,6 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	update_view (MODEST_HEADER_WINDOW (user_data), NULL);
 }
 
-#ifdef MAEMO_CHANGES
-static gboolean
-tap_and_hold_query_cb (GtkWidget *header_view,
-		       GdkEvent *event,
-		       gpointer user_data)
-{
-	ModestHeaderWindow *self;
-	ModestHeaderWindowPrivate *priv;
-
-	self = (ModestHeaderWindow *) user_data;
-	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
-
-	if (event->type == GDK_BUTTON_PRESS) {
-		TnyHeader *header;
-
-		priv->x_coord = ((GdkEventButton*)event)->x;
-		priv->y_coord = ((GdkEventButton*)event)->y;
-
-		/* Enable/Disable mark as (un)read */
-		header = modest_header_view_get_header_at_pos ((ModestHeaderView *) header_view,
-							       priv->x_coord, priv->y_coord);
-		if (header) {
-			GList *children;
-			GtkWidget *mark_read_item, *mark_unread_item;
-
-			/* Show "mark as read" or "mark as unread" */
-			children = gtk_container_get_children (GTK_CONTAINER (priv->csm_menu));
-			mark_read_item = (GtkWidget *) g_list_nth_data (children, 1);
-			mark_unread_item = (GtkWidget *) g_list_nth_data (children, 2);
-
-			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN) {
-				gtk_widget_show (mark_unread_item);
-				gtk_widget_hide (mark_read_item);
-			} else {
-				gtk_widget_show (mark_read_item);
-				gtk_widget_hide (mark_unread_item);
-			}
-			g_object_unref (header);
-		} else {
-			/* Do not show the CSM if there is no header below */
-			return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-#endif
-
 static void
 delete_header (GtkWindow *parent,
 	       TnyHeader *header)
@@ -544,7 +496,8 @@ on_delete_csm_activated (GtkMenuItem *item,
 	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view,
 						       priv->x_coord, priv->y_coord);
 	if (header) {
-		delete_header ((GtkWindow *) self, header);
+		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) self);
+		delete_header ((GTK_WIDGET_TOPLEVEL (toplevel)) ? toplevel : NULL, header);
 		g_object_unref (header);
 	}
 }
@@ -637,6 +590,81 @@ on_header_view_model_changed (GObject *gobject,
 	g_object_weak_ref ((GObject *) model, on_header_view_model_destroyed, self);
 }
 
+/* Returns TRUE if the user clicked over a valid TnyHeader instance */
+static gboolean
+show_context_menu (ModestHeaderWindow *self,
+		   GdkEventButton     *event)
+{
+	ModestHeaderWindowPrivate *priv;
+	TnyHeader *header;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	priv->x_coord = event->x;
+	priv->y_coord = event->y;
+
+	/* Enable/Disable mark as (un)read */
+	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view,
+						       priv->x_coord, priv->y_coord);
+	if (header) {
+		GList *children;
+		GtkWidget *mark_read_item, *mark_unread_item;
+
+		/* Show "mark as read" or "mark as unread" */
+		children = gtk_container_get_children (GTK_CONTAINER (priv->csm_menu));
+		mark_read_item = (GtkWidget *) g_list_nth_data (children, 1);
+		mark_unread_item = (GtkWidget *) g_list_nth_data (children, 2);
+
+		if (tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN) {
+			gtk_widget_show (mark_unread_item);
+			gtk_widget_hide (mark_read_item);
+		} else {
+			gtk_widget_show (mark_read_item);
+			gtk_widget_hide (mark_unread_item);
+		}
+		g_object_unref (header);
+	} else {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
+#ifdef MAEMO_CHANGES
+static gboolean
+tap_and_hold_query_cb (GtkWidget *header_view,
+		       GdkEvent *event,
+		       gpointer user_data)
+{
+	/* Ignore other clicks but right button single clicks */
+	if (!GDK_IS_EVENT_BUTTON (event) || (event->type != GDK_BUTTON_PRESS))
+		return FALSE;
+
+	return !show_context_menu ((ModestHeaderWindow *) user_data,
+				   (GdkEventButton *) event);
+}
+#else
+static gboolean
+on_button_press_cb (GtkWidget      *widget,
+		    GdkEventButton *event,
+		    gpointer        user_data)
+{
+	/* Ignore other clicks but right button single clicks */
+	if (event->type != GDK_BUTTON_PRESS || event->button != 3)
+		return FALSE;
+
+	if (show_context_menu ((ModestHeaderWindow *) user_data, event)) {
+		ModestHeaderWindowPrivate *priv;
+
+		priv = MODEST_HEADER_WINDOW_GET_PRIVATE (user_data);
+		gtk_menu_popup ((GtkMenu *) priv->csm_menu, NULL, NULL,
+				NULL, NULL, event->button, event->time);
+	}
+
+	return FALSE;
+}
+#endif
+
 static GtkWidget *
 create_header_view (ModestWindow *self, TnyFolder *folder)
 {
@@ -675,6 +703,9 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 #ifdef MAEMO_CHANGES
 	g_signal_connect ((GObject *) header_view, "tap-and-hold-query",
 			  G_CALLBACK (tap_and_hold_query_cb), self);
+#else
+	g_signal_connect ((GObject *) header_view, "button-press-event",
+			  G_CALLBACK (on_button_press_cb), self);
 #endif
 	g_signal_connect ((GObject *) delete_item, "activate",
 			  G_CALLBACK (on_delete_csm_activated), self);
