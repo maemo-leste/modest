@@ -157,6 +157,7 @@ struct _ModestHeaderViewPrivate {
 	ModestHeaderViewFilter filter;
 #ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *live_search;
+	guint live_search_timeout;
 #endif
 
 	gint    sort_colid[2][TNY_FOLDER_TYPE_NUM];
@@ -2762,12 +2763,14 @@ modest_header_view_set_filter_string (ModestHeaderView *self,
 
 #ifdef MODEST_TOOLKIT_HILDON2
 static gboolean
-on_live_search_refilter (HildonLiveSearch *livesearch,
-			 ModestHeaderView *self)
+on_live_search_timeout (ModestHeaderView *self)
 {
 	const gchar *needle;
+	ModestHeaderViewPrivate *priv;
 
-	needle = hildon_live_search_get_text (livesearch);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+
+	needle = hildon_live_search_get_text ((HildonLiveSearch *) priv->live_search);
 	if (needle && needle[0] != '\0') {
 		modest_header_view_set_filter_string (MODEST_HEADER_VIEW (self), needle);
 	} else {

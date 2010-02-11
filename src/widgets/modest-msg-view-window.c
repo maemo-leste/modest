@@ -2777,7 +2777,7 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
 
 			msg = tny_camel_msg_new ();
-			tny_camel_msg_parse (TNY_CAMEL_MSG (msg), file_stream);
+			tny_camel_msg_parse (msg, file_stream);
 
 			if (priv->top_msg)
 				top_msg = g_object_ref (priv->top_msg);
