@@ -883,9 +883,11 @@ unquote_line (GString * l, const gchar *quote_symbol)
 	quote_len = strlen (quote_symbol);
 	while (p[0]) {
 		if (g_str_has_prefix (p, quote_symbol)) {
-			if (p[quote_len] == ' ') {
-				p += quote_len;
+			p+=quote_len;
+			while (p[0] && p[0] == ' ') {
+				p++;
 			}
+			continue;
 		} else {
 			break;
 		}
