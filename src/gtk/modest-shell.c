@@ -34,6 +34,10 @@
 #include <modest-ui-actions.h>
 #include <modest-gtk-window-mgr.h>
 #include <modest-runtime.h>
+#include <X11/Xutil.h>
+
+#define SCN_WIDTH  1024
+#define SCN_HEIGHT 600
 
 /* 'private'/'protected' functions */
 static void modest_shell_class_init (ModestShellClass *klass);
@@ -118,6 +122,26 @@ modest_shell_class_init (ModestShellClass *klass)
 
 	g_type_class_add_private (gobject_class, sizeof(ModestShellPrivate));
 
+}
+
+static void
+set_screen_size (GtkWindow *self)
+{
+	/* Get screen dimensions */
+	Screen *screen = XDefaultScreenOfDisplay(XOpenDisplay(NULL));
+	int scn_width = XWidthOfScreen(screen);
+	int scn_height = XHeightOfScreen(screen);
+
+	/* if screensize is larger than netbook size, show in window, else fullscreen */
+	if (scn_width > SCN_WIDTH || scn_height > SCN_HEIGHT) {
+		scn_width = SCN_WIDTH;
+		scn_height = SCN_HEIGHT;
+		gtk_window_resize (self, scn_width, scn_height);
+	} else {
+		gtk_window_fullscreen (self);
+		/* Very important for Moblin */
+		gtk_window_set_decorated (self, FALSE);
+	}
 }
 
 static void
@@ -237,10 +261,7 @@ modest_shell_instance_init (ModestShell *obj)
 			  "key-press-event", 
 			  G_CALLBACK (on_key_pressed), obj);
 
-	gtk_window_set_default_size (GTK_WINDOW (obj), 
-				     640, 480);
-
-
+	set_screen_size ((GtkWindow *) obj);
 }
 
 static void
