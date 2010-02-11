@@ -919,6 +919,20 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 	gtk_window_set_modal (window, TRUE);
 	gtk_window_set_transient_for (window, parent);
 	gtk_window_set_destroy_with_parent (window, TRUE);
+
+	if (!gtk_window_has_toplevel_focus (window)) {
+		GList *toplevels, *node;
+
+		toplevels = gtk_window_list_toplevels ();
+		for (node = toplevels; node != NULL; node = g_list_next (node)) {
+			if (gtk_window_has_toplevel_focus (GTK_WINDOW (node->data))) {
+				if (GTK_IS_DIALOG (node->data)) {					
+					gtk_window_set_transient_for (window, GTK_WINDOW (node->data));
+				}
+				break;
+			}
+		}
+	}
 }
 
 static void
