@@ -36,6 +36,9 @@
 
 #include <gtk/gtk.h>
 #include <glib.h>
+#include <widgets/modest-window.h>
+#include <tny-list.h>
+#include <tny-header.h>
 
 G_BEGIN_DECLS
 
