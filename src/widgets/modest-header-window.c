@@ -197,7 +197,7 @@ static void  toggle_isearch_toolbar (GtkWidget *obj,
 
 
 /* globals */
-static GtkWindowClass *parent_class = NULL;
+static ModestWindowParentClass *parent_class = NULL;
 
 #define EMPTYVIEW_XALIGN 0.5
 #define EMPTYVIEW_YALIGN 0.5

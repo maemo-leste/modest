@@ -140,7 +140,7 @@ struct _ModestFolderWindowPrivate {
 									  ModestFolderWindowPrivate))
 
 /* globals */
-static GtkWindowClass *parent_class = NULL;
+static ModestWindowParentClass *parent_class = NULL;
 
 /************************************************************************/
 

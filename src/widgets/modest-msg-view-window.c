@@ -283,7 +283,7 @@ static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
                                                     MODEST_TYPE_MSG_VIEW_WINDOW, \
                                                     ModestMsgViewWindowPrivate))
 /* globals */
-static GtkWindowClass *parent_class = NULL;
+static ModestWindowParentClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
 static guint signals[LAST_SIGNAL] = {0};

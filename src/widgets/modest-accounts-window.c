@@ -112,7 +112,7 @@ struct _ModestAccountsWindowPrivate {
 									    ModestAccountsWindowPrivate))
 
 /* globals */
-static GtkWindowClass *parent_class = NULL;
+static ModestWindowParentClass *parent_class = NULL;
 static GtkWidget *pre_created_accounts_window = NULL;
 
 /************************************************************************/
