@@ -4747,41 +4747,54 @@ emit_open_addressbook (GtkButton *button,
 }
 
 static GtkWidget *
-_create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group,
-			 const gchar *label, GtkWidget *control)
+_create_addressbook_box (GtkSizeGroup *title_size_group,
+			 GtkSizeGroup *value_size_group,
+			 const gchar *label,
+			 GtkWidget *control)
 {
 	GtkWidget *abook_button;
 	GtkWidget *align;
 	GtkWidget *box;
-	GtkWidget *label_widget;
+ 	GtkWidget *label_widget;
 
 	box = gtk_hbox_new (FALSE, 0);
 
-	align = gtk_alignment_new (0.0, 0.0, 1.0, 0.0);
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+#ifndef MODEST_TOOLKIT_HILDON2
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+#else
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, 0, MODEST_MARGIN_DEFAULT);
+#endif
 
 #ifdef MODEST_TOOLKIT_HILDON2
-	abook_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
+        abook_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
 #else
-	abook_button = gtk_button_new ();
+        abook_button = gtk_button_new ();
 #endif
 	label_widget = gtk_label_new (label);
 	gtk_misc_set_alignment (GTK_MISC (label_widget), 0.0, 0.5);
-	gtk_container_add (GTK_CONTAINER (abook_button), label_widget);
 
-	gtk_container_add (GTK_CONTAINER (align), abook_button);
-	gtk_widget_set_size_request (label_widget, 148 - MODEST_MARGIN_DOUBLE, -1);
+        gtk_container_add (GTK_CONTAINER (abook_button), label_widget);
+
+        gtk_container_add (GTK_CONTAINER (align), abook_button);
+#ifdef MODEST_TOOLKIT_HILDON2
+        gtk_widget_set_size_request (label_widget, 148 - MODEST_MARGIN_DOUBLE, -1);
+#endif
 	gtk_box_pack_start (GTK_BOX (box), align, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, 0);
 	if (title_size_group)
+#ifdef MODEST_TOOLKIT_HILDON2
 		gtk_size_group_add_widget (title_size_group, label_widget);
+#else
+		gtk_size_group_add_widget (title_size_group, abook_button);
+#endif
 	if (value_size_group)
 		gtk_size_group_add_widget (value_size_group, control);
 
-	g_signal_connect (G_OBJECT (abook_button), "clicked",
-			  G_CALLBACK (emit_open_addressbook), control);
-  
-	return box;  
+        g_signal_connect (G_OBJECT (abook_button), "clicked",
+                          G_CALLBACK (emit_open_addressbook), control);
+
+	return box;
 }
 
 static void 
