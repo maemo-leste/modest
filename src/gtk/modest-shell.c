@@ -136,12 +136,11 @@ set_screen_size (GtkWindow *self)
 	if (scn_width > SCN_WIDTH || scn_height > SCN_HEIGHT) {
 		scn_width = SCN_WIDTH;
 		scn_height = SCN_HEIGHT;
-		gtk_window_resize (self, scn_width, scn_height);
 	} else {
-		gtk_window_fullscreen (self);
 		/* Very important for Moblin */
 		gtk_window_set_decorated (self, FALSE);
 	}
+	gtk_window_resize (self, scn_width, scn_height);
 }
 
 static void
