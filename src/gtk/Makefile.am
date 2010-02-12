@@ -56,4 +56,4 @@ libmodest_ui_la_LIBADD = \
 desktopentry_DATA   = modest.desktop
 
 EXTRA_DIST=\
-	*(desktopentry_DATA)
+	$(desktopentry_DATA)
