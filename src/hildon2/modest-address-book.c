@@ -70,6 +70,19 @@ static gboolean resolve_address (const gchar *address, GSList **resolved_address
 static gchar *unquote_string (const gchar *str);
 static void set_contact_from_display_name (EContact *contact, const gchar *display_name);
 
+static void
+on_roster_notify (GObject    *gobject,
+		  GParamSpec *pspec,
+		  gpointer    user_data)
+{
+	if ((g_strcmp0 (g_param_spec_get_name (pspec), "book") == 0) ||
+	    (g_strcmp0 (g_param_spec_get_name (pspec), "book-view") == 0)) {
+		OssoABookRoster *roster = OSSO_ABOOK_ROSTER (gobject);
+		book = osso_abook_roster_get_book (roster);
+		book_view = osso_abook_roster_get_book_view (roster);
+	}
+}
+
 static gboolean
 open_addressbook ()
 {
@@ -101,6 +114,8 @@ open_addressbook ()
 
 	book = osso_abook_roster_get_book (roster);
 	book_view = osso_abook_roster_get_book_view (roster);
+
+	g_signal_connect (G_OBJECT (roster), "notify", G_CALLBACK (on_roster_notify), NULL);
 
 	return TRUE;
  error:
