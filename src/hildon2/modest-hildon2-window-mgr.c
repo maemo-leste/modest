@@ -422,6 +422,25 @@ modest_hildon2_window_mgr_get_window_list (ModestWindowMgr *self)
 	return g_list_copy (priv->window_list);
 }
 
+static gint window_precedence (GtkWindow *window)
+{
+	if (MODEST_IS_ACCOUNTS_WINDOW (window)) {
+		return 10;
+	} else if (MODEST_IS_MAILBOXES_WINDOW (window)) {
+		return 20;
+	} else if (MODEST_IS_FOLDER_WINDOW (window)) {
+		return 30;
+	} else if (MODEST_IS_HEADER_WINDOW (window)) {
+		return 40;
+	} else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		return 50;
+	} else if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
+		return 60;
+	} else {
+		return 100;
+	}
+}
+
 static gboolean
 modest_hildon2_window_mgr_register_window (ModestWindowMgr *self, 
 					   ModestWindow *window,
@@ -433,7 +452,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	HildonWindowStack *stack;
 	gboolean nested_msg = FALSE;
 	ModestWindow *current_top;
-	const gchar *acc_name;
+	const gchar *acc_name, *toplevel_acc_name;
 
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
 	g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
@@ -492,38 +511,48 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 			g_object_unref (header);
 	}
 
-	/* Do not go backwards */
-	if ((MODEST_IS_MSG_VIEW_WINDOW (current_top) ||
-	     MODEST_IS_MSG_EDIT_WINDOW (current_top) ||
-	     MODEST_IS_HEADER_WINDOW (current_top)) &&
-	    (MODEST_IS_FOLDER_WINDOW (window) ||
-	     MODEST_IS_ACCOUNTS_WINDOW (window) ||
-	     MODEST_IS_MAILBOXES_WINDOW (window))) {
+	/* Rules
+	 *  * toplevel = msg edit -> no action
+	 *  * same account -> no action
+	 *  * window = accounts -> no action
+	 *  * window = folders, mailboxes, headers: close all up to accounts window
+	 */
+
+	if (MODEST_IS_MSG_EDIT_WINDOW (current_top) || 
+	    (current_top && MODEST_IS_ACCOUNTS_WINDOW (window))) {
 		gtk_window_present (GTK_WINDOW (current_top));
 		return FALSE;
 	}
 
-	if (MODEST_IS_FOLDER_WINDOW (current_top) && MODEST_IS_FOLDER_WINDOW (window)) {
-		gboolean retval;
+	acc_name = modest_window_get_active_account (window);
 
-		g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
+	if (MODEST_IS_MSG_VIEW_WINDOW (current_top) ||
+	    MODEST_IS_HEADER_WINDOW (current_top) ||
+	    MODEST_IS_FOLDER_WINDOW (current_top) ||
+	    MODEST_IS_MAILBOXES_WINDOW (current_top)) {
+		toplevel_acc_name = modest_window_get_active_account (current_top);
 
-		if (retval) {
-			gtk_window_present (GTK_WINDOW (current_top));
-			return FALSE;
+		if (acc_name != NULL && g_strcmp0 (toplevel_acc_name, acc_name) == 0) {
+			/* Same account, no action */
+
+			if (window_precedence (GTK_WINDOW (current_top)) >= window_precedence (GTK_WINDOW (window))) {
+				if (!(MODEST_IS_MSG_VIEW_WINDOW (current_top) && MODEST_IS_MSG_VIEW_WINDOW (window))) {
+					gtk_window_present (GTK_WINDOW (current_top));
+					return FALSE;
+				}
+			}
+		} else {
+			while (current_top && !MODEST_IS_ACCOUNTS_WINDOW (current_top)) {
+				gboolean retval;
+				g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
+
+				if (retval) {
+					gtk_window_present (GTK_WINDOW (current_top));
+					return FALSE;
+				}
+				current_top = (ModestWindow *) hildon_window_stack_peek (stack);
+			}
 		}
-		current_top = (ModestWindow *) hildon_window_stack_peek (stack);
-	}
-
-	if (MODEST_IS_MAILBOXES_WINDOW (current_top) && MODEST_IS_MAILBOXES_WINDOW (window)) {
-		gtk_window_present (GTK_WINDOW (current_top));
-		return FALSE;
-	}
-
-	/* Mailboxes window can not replace folder windows */
-	if (MODEST_IS_FOLDER_WINDOW (current_top) && MODEST_IS_MAILBOXES_WINDOW (window)) {
-		gtk_window_present (GTK_WINDOW (current_top));
-		return FALSE;
 	}
 
 	/* Trying to open a folders window and a mailboxes window at
