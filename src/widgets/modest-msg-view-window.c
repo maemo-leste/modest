@@ -2228,10 +2228,10 @@ view_msg_cb (ModestMailOperation *mail_op,
 	modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (), header);
 
 	row_reference = (GtkTreeRowReference *) user_data;
-	if (canceled) {
+	self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
+	if (canceled || !self || MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self)->msg_view == NULL ) {
 		if (row_reference)
 			gtk_tree_row_reference_free (row_reference);
-		self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
 		if (self) {
 			/* Restore window title */
 			update_window_title (self);
@@ -2245,7 +2245,6 @@ view_msg_cb (ModestMailOperation *mail_op,
 	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
 		if (row_reference)
 			gtk_tree_row_reference_free (row_reference);
-		self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
 		if (self) {
 			priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 			/* First we check if the parent is a folder window */
@@ -2309,7 +2308,6 @@ view_msg_cb (ModestMailOperation *mail_op,
 	}
 
 	/* Get the window */ 
-	self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
