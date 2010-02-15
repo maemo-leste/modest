@@ -512,13 +512,21 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	}
 
 	/* Rules
-	 *  * toplevel = msg edit -> no action
+	 *  * toplevel = msg edit -> if not modified, close, if modified, stay
 	 *  * same account -> no action
 	 *  * window = accounts -> no action
 	 *  * window = folders, mailboxes, headers: close all up to accounts window
 	 */
 
-	if (MODEST_IS_MSG_EDIT_WINDOW (current_top) || 
+	if (MODEST_IS_MSG_EDIT_WINDOW (current_top) && 
+	    !modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (current_top))) {
+		gboolean retval;
+
+		g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
+		current_top = (ModestWindow *) hildon_window_stack_peek (stack);
+	}
+
+	if (MODEST_IS_MSG_EDIT_WINDOW (current_top) ||
 	    (current_top && MODEST_IS_ACCOUNTS_WINDOW (window))) {
 		gtk_window_present (GTK_WINDOW (current_top));
 		return FALSE;
