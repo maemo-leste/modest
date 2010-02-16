@@ -71,8 +71,6 @@
 	<menuitem name="MessagePriorityNormalMenu" action="MessagePriorityNormal"/>
 	<menuitem name="MessagePriorityLowMenu" action="MessagePriorityLow"/>
       </menu>
-      <separator/>
-      <menuitem name="FindInMessageMenu" action="FindInMessage"/>
     </menu>
 
   </menubar>
