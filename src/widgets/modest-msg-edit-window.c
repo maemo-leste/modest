@@ -4682,16 +4682,6 @@ setup_menu (ModestMsgEditWindow *self)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	/* Settings menu buttons */
-	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_checknames"), NULL,
-				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_check_names),
-				   NULL);
-	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_viewer_addtocontacts"), NULL,
-				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_add_to_contacts),
-				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts));
-	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_undo"), "<Ctrl>z",
-				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_undo),
-				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_undo));
-
 	priv->cc_button = modest_toolkit_factory_create_check_menu (modest_runtime_get_toolkit_factory (),
 								    _("mcen_me_editor_showcc"));
 	modest_togglable_set_active (priv->cc_button,
@@ -4711,22 +4701,6 @@ setup_menu (ModestMsgEditWindow *self)
 	g_signal_connect (G_OBJECT (priv->bcc_button), "toggled",
 			  G_CALLBACK (on_bcc_button_toggled), (gpointer) self);
 
-	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
-				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_insert_image),
-				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_set_style));
-	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_add_attachment"), NULL,
-				   MODEST_WINDOW_MENU_CALLBACK (modest_msg_edit_window_add_attachment_clicked),
-				   NULL);
-	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_remove_attachments"), NULL,
-				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_remove_attachments),
-				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment));
-	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_message_settings"), NULL,
-				   MODEST_WINDOW_MENU_CALLBACK (on_message_settings),
-				   NULL);
-	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_viewer_find"), "<Ctrl>f",
-				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_toggle_find_in_page),
-				   NULL);
-
 	priv->show_toolbar_button = modest_toolkit_factory_create_check_menu (modest_runtime_get_toolkit_factory (),
 									      _("mcen_bd_show_toolbar"));
 	modest_togglable_set_active (priv->show_toolbar_button,
@@ -4736,6 +4710,29 @@ setup_menu (ModestMsgEditWindow *self)
 	gtk_widget_show (priv->show_toolbar_button);
 	g_signal_connect (G_OBJECT (priv->show_toolbar_button), "toggled",
 			  G_CALLBACK (on_show_toolbar_button_toggled), (gpointer) self);
+
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_message_settings"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (on_message_settings),
+				   NULL);
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_checknames"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_check_names),
+				   NULL);
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_insert_image),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_set_style));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_add_attachment"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_msg_edit_window_add_attachment_clicked),
+				   NULL);
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_remove_attachments"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_remove_attachments),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_viewer_addtocontacts"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_add_to_contacts),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts));
+
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_viewer_find"), "<Ctrl>f",
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_toggle_find_in_page),
+				   NULL);
 
 }
 
