@@ -731,10 +731,10 @@ init_default_settings (ModestConf *conf)
 		modest_conf_set_bool (conf, MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR_FULLSCREEN, TRUE, NULL);
 
 	if (!modest_conf_key_exists (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, NULL))
-		modest_conf_set_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, TRUE, NULL);
+		modest_conf_set_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, FALSE, NULL);
 	
 	if (!modest_conf_key_exists (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL))
-		modest_conf_set_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN, TRUE, NULL);
+		modest_conf_set_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN, FALSE, NULL);
 
 	/* Editor keys */
 	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_CC, NULL))
