@@ -100,6 +100,8 @@ struct _ModestAccountViewPrivate {
 
 	GtkTreeViewColumn *account_name_column;
 	GtkCellRenderer *account_name_renderer;
+
+	guint update_account_view_idle_id;
 };
 #define MODEST_ACCOUNT_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_ACCOUNT_VIEW, \
@@ -161,6 +163,7 @@ modest_account_view_init (ModestAccountView *obj)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 	
 	priv->sig_handlers = NULL;
+	priv->update_account_view_idle_id = 0;
 
 	priv->datetime_formatter = modest_datetime_formatter_new ();
 	priv->picker_mode = FALSE;
@@ -183,6 +186,11 @@ modest_account_view_finalize (GObject *obj)
 	ModestAccountViewPrivate *priv;
 
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
+
+	if (priv->update_account_view_idle_id > 0) {
+		g_source_remove (priv->update_account_view_idle_id);
+		priv->update_account_view_idle_id = 0;
+	}
 
 	if (priv->datetime_formatter) {
 		g_object_unref (priv->datetime_formatter);
@@ -234,13 +242,17 @@ get_last_updated_string(ModestAccountView *self, ModestAccountMgr* account_mgr, 
 	return last_updated_string;
 }
 
-static void
-update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
+static gboolean
+update_account_view_idle (gpointer userdata)
 {
-	GSList *account_names, *cursor;
+	ModestAccountView *view;
  	ModestAccountViewPrivate *priv;
-	
+	ModestAccountMgr *account_mgr;
+	GSList *account_names, *cursor;
+
+	view = MODEST_ACCOUNT_VIEW (userdata);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(view);
+	account_mgr = modest_runtime_get_account_mgr ();
 
 	/* Get the ID of the currently-selected account,
 	 * so we can select it again after rebuilding the list.
@@ -332,7 +344,22 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 		modest_account_view_select_account (view, selected_name);
 		g_free (selected_name);
 	}
+
+	priv->update_account_view_idle_id = 0;
+	return FALSE;
 }
+
+static void
+update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
+{
+ 	ModestAccountViewPrivate *priv;
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(view);
+
+	if (priv->update_account_view_idle_id == 0) {
+		priv->update_account_view_idle_id = g_idle_add (update_account_view_idle, (gpointer) view);
+	}
+}
+
 
 static void
 on_account_busy_changed(ModestAccountMgr *account_mgr, 
