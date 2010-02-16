@@ -128,6 +128,7 @@ static gboolean      modest_header_view_on_expose_event (GtkTreeView *header_vie
 
 static void         on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
 static void         update_style (ModestHeaderView *self);
+static void         modest_header_view_refilter_by_chunks (ModestHeaderView *self);
 
 typedef enum {
 	HEADER_VIEW_NON_EMPTY,
@@ -189,6 +190,10 @@ struct _ModestHeaderViewPrivate {
 	gboolean filter_date_range;
 	time_t date_range_start;
 	time_t date_range_end;
+
+	guint refilter_handler_id;
+	GtkTreeModel *filtered_model;
+	GtkTreeIter refilter_iter;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -663,6 +668,9 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->selection_changed_handler = 0;
 	priv->acc_removed_handler = 0;
 
+	priv->filtered_model = NULL;
+	priv->refilter_handler_id = 0;
+
 	/* Sort parameters */
 	for (j=0; j < 2; j++) {
 		for (i=0; i < TNY_FOLDER_TYPE_NUM; i++) {
@@ -687,6 +695,12 @@ modest_header_view_dispose (GObject *obj)
 
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	if (priv->refilter_handler_id > 0) {
+		g_source_remove (priv->refilter_handler_id);
+		priv->refilter_handler_id = 0;
+		priv->filtered_model = NULL;
+	}
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	if (priv->live_search_timeout > 0) {
@@ -2391,7 +2405,7 @@ modest_header_view_refilter (ModestHeaderView *header_view)
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
 	if (GTK_IS_TREE_MODEL_FILTER (filter_model)) {
 		priv->status = HEADER_VIEW_INIT;
-		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
+		modest_header_view_refilter_by_chunks (header_view);
 	}
 }
 
@@ -2917,3 +2931,72 @@ modest_header_view_setup_live_search (ModestHeaderView *self)
 	return priv->live_search;
 }
 #endif
+
+static gboolean
+refilter_idle_handler (gpointer userdata)
+{
+	ModestHeaderView *self = MODEST_HEADER_VIEW (userdata);
+	ModestHeaderViewPrivate *priv;
+	GtkTreeModel *filter_model;
+	GtkTreeModel *filtered_model;
+	gint i;
+	gboolean has_more;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	filtered_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
+
+	if (filtered_model != priv->filtered_model) {
+		priv->refilter_handler_id = 0;
+		priv->filtered_model = NULL;
+		return FALSE;
+	}
+
+	if (!gtk_tree_model_sort_iter_is_valid (GTK_TREE_MODEL_SORT (filtered_model), &(priv->refilter_iter))) {
+		priv->refilter_handler_id = 0;
+		priv->filtered_model = NULL;
+		modest_header_view_refilter_by_chunks (self);
+		return FALSE;
+	}
+
+	i = 0;
+	do {
+		GtkTreePath *path;
+		path = gtk_tree_model_get_path (priv->filtered_model, &(priv->refilter_iter));
+		gtk_tree_model_row_changed (priv->filtered_model, path, &(priv->refilter_iter));
+		gtk_tree_path_free (path);
+		i++;
+
+		has_more = gtk_tree_model_iter_next (priv->filtered_model, &(priv->refilter_iter));
+	} while (i < 100 && has_more);
+
+	if (has_more) {
+		return TRUE;
+	} else {
+		priv->filtered_model = NULL;
+		priv->refilter_handler_id = 0;
+		return FALSE;
+	}
+}
+
+static void
+modest_header_view_refilter_by_chunks (ModestHeaderView *self)
+{
+	ModestHeaderViewPrivate *priv;
+	GtkTreeModel *filter_model;
+
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (self));
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+
+	if (priv->refilter_handler_id > 0) {
+		g_source_remove (priv->refilter_handler_id);
+		priv->refilter_handler_id = 0;
+	}
+
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	priv->filtered_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
+
+	if (gtk_tree_model_get_iter_first (priv->filtered_model, &(priv->refilter_iter))) {
+		priv->refilter_handler_id = g_idle_add (refilter_idle_handler, self);
+	}
+}
