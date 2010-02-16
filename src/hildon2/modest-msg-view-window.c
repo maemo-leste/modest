@@ -3911,9 +3911,9 @@ setup_menu (ModestMsgViewWindow *self)
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW(self));
 
 	/* Settings menu buttons */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_find"), NULL,
-					   APP_MENU_CALLBACK (modest_msg_view_window_show_find_toolbar),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_find_in_msg));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
+					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
 
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self),
 					   dngettext(GETTEXT_PACKAGE,
@@ -3939,9 +3939,6 @@ setup_menu (ModestMsgViewWindow *self)
 					   APP_MENU_CALLBACK (modest_ui_actions_remove_attachments),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_remove_attachments));
 
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
-					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_addtocontacts"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_add_to_contacts),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts));
