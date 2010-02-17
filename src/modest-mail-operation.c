@@ -3516,6 +3516,34 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 	}
 
 	if (finished) {
+		TnyAccount *src_account;
+		TnyAccount *dest_account;
+
+		/* send the notification that the source folder might have changed */
+		src_account = modest_tny_folder_get_account (folder);
+		if (src_account) {
+			const gchar *src_folder_id;
+			const gchar *src_account_name;
+
+			src_folder_id = tny_folder_get_id (folder);
+			src_account_name =
+				modest_tny_account_get_parent_modest_account_name_for_server_account (src_account);
+			modest_platform_emit_folder_updated_signal (src_account_name, src_folder_id);
+			g_object_unref (src_account);
+		}
+		/* send the notification that the destination folder might have changed */
+		dest_account = modest_tny_folder_get_account (helper->dest_folder);
+		if (dest_account) {
+			const gchar *dest_folder_id;
+			const gchar *dest_account_name;
+
+			dest_folder_id = tny_folder_get_id (helper->dest_folder);
+			dest_account_name =
+				modest_tny_account_get_parent_modest_account_name_for_server_account (dest_account);
+			modest_platform_emit_folder_updated_signal (dest_account_name, dest_folder_id);
+			g_object_unref (dest_account);
+		}
+
 		/* Synchronize the source folder contents. This should
 		   be done by tinymail but the camel_folder_sync it's
 		   actually disabled in transfer_msgs_thread_clean
