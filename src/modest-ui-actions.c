@@ -58,7 +58,7 @@
 #include <hildon/hildon-gtk.h>
 #include <modest-maemo-utils.h>
 #else
-#include <widgets/modest-shell-window.h>
+#include <gtk/modest-shell-window.h>
 #endif
 #include "modest-utils.h"
 #include "widgets/modest-connection-specific-smtp-window.h"
