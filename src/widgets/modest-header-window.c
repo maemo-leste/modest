@@ -637,7 +637,7 @@ tap_and_hold_query_cb (GtkWidget *header_view,
 		       gpointer user_data)
 {
 	/* Ignore other clicks but right button single clicks */
-	if (!GDK_IS_EVENT_BUTTON (event) || (event->type != GDK_BUTTON_PRESS))
+	if (event->type != GDK_BUTTON_PRESS)
 		return FALSE;
 
 	return !show_context_menu ((ModestHeaderWindow *) user_data,

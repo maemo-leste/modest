@@ -53,9 +53,12 @@
 #include <widgets/modest-header-window.h>
 #include <widgets/modest-folder-window.h>
 #include <widgets/modest-accounts-window.h>
+
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-gtk.h>
 #include <modest-maemo-utils.h>
+#else
+#include <widgets/modest-shell-window.h>
 #endif
 #include "modest-utils.h"
 #include "widgets/modest-connection-specific-smtp-window.h"
@@ -4742,7 +4745,11 @@ create_move_to_dialog (GtkWindow *win,
 		modest_folder_view_set_style (MODEST_FOLDER_VIEW (tree_view),
 					      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+		modest_window = (ModestWindow *) win;
+#else
 		modest_window = modest_shell_peek_window (MODEST_SHELL (win));
+#endif
 		active_account_name = modest_window_get_active_account (modest_window);
 		mgr = modest_runtime_get_account_mgr ();
 		settings = modest_account_mgr_load_account_settings (mgr, active_account_name);
