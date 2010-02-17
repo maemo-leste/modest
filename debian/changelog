@@ -1,3 +1,17 @@
+modest (3.2.13-1) unstable; urgency=low
+
+  * Week 07, 2010 - first release candidate 
+  * 
+  * Fixes: NB#155972 Email hangs always when deleting the searched text in the headers view
+  * Fixes: NB#156451 The toolbar in email editor view should not be shown by default 
+  * Fixes: NB#156453 Missing icon in the editor view 
+  * Fixes: NB#156612 Change the posistion of "Show toolbar" view menu item (and at the same time 
+  * 	clean up view menus of editor and viewer view menus)
+  * Fixes: NB#156752 New message button is not shown in the Accounts view on the 
+  * 	freshly flashed device 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 17 Feb 2010 10:32:17 +0200
+
 modest (3.2.12-6) unstable; urgency=low
 
   * Week 06, 2010 - fifth release candidate
