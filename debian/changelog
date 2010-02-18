@@ -1,3 +1,12 @@
+modest (3.2.13-2) unstable; urgency=low
+
+  * Week 07, 2010 - second release candidate
+  * 
+  * Fixes: NB#157399 Modest crashes when tapped on NMS accounts mailbox.
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 18 Feb 2010 12:02:48 +0200
+
 modest (3.2.13-1) unstable; urgency=low
 
   * Week 07, 2010 - first release candidate 
