@@ -452,7 +452,7 @@ on_mailbox_activated (ModestFolderView *mailboxes_view,
 
 	new_window = GTK_WIDGET (modest_folder_window_new (NULL));
 	active_account = modest_window_get_active_account (MODEST_WINDOW (self));
-	modest_window_set_active_account (MODEST_WINDOW (self), active_account);
+	modest_window_set_active_account (MODEST_WINDOW (new_window), active_account);
 	registered = modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
 							MODEST_WINDOW (new_window),
 							MODEST_WINDOW (self));
