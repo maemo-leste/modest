@@ -1224,7 +1224,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 			  G_CALLBACK (html_adjustment_changed), obj);
 
 	gtk_widget_push_composite_child ();
-	priv->headers_box = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	priv->headers_box = gtk_vbox_new (FALSE, 0);
 	gtk_widget_set_composite_name (priv->headers_box, "headers");
 	gtk_widget_pop_composite_child ();
 
