@@ -1,3 +1,14 @@
+modest (3.2.13-3) unstable; urgency=low
+
+  * Week 08, 2010 - first release candidate
+  * 
+  * Fixes: NB#157399 Modest crashes when tapped on NMS accounts mailbox.
+  * 
+  * Changes -
+  * Background of calendar meetings should be grey.
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 19 Feb 2010 14:40:18 +0200
+
 modest (3.2.13-2) unstable; urgency=low
 
   * Week 07, 2010 - second release candidate
