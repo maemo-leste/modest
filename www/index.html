@@ -50,13 +50,14 @@ $('a.lightbox').lightBox(); // Select all links with lightbox class
 <div class="cont">
   <p><strong>Welcome</strong></p>
   <p>
-  <strong>modest</strong> is a small e-mail program targetting hardware with modest resources,
-  such as low-end PCs and Nokia <a href="http://en.wikipedia.org/wiki/N800" >N800</a>/<a href="http://en.wikipedia.org/wiki/N810" >N810</a> internet tablets.
+  <strong>modest</strong> is a small e-mail program targetting hardware with modest resources. It's developed
+  currently for Gnome/Moblin desktops and Nokia <a href="http://en.wikipedia.org/wiki/N900">N900</a> mobile computers.
   Modest uses the <a href="http://www.tinymail.org/">tinymail</a> e-mail framework.<br/>
-  <p>At this moment, modest requires the
-  <a href="http://maemo.org/development/sdks/maemo5_alpha_sdk/">Maemo
-  5 SDK</a>
-  for Nokia Internet Tablets; older versions ('Diablo') might work as well, but haven't been tested recently.
+  <p>Modest offers two user experiences:
+  <ul>
+    <li>Maemo5/Fremantle based one, targetted to Nokia N900</li>
+    <li>Gtk/Moblin based one, targetted for Gnome and Moblin desktops.</li>
+  </ul>
   </p>
   <p align="center">
   <a href="images/maemo5-editor-1.png" class="lightbox" title="modest on Maemo 5">
@@ -67,6 +68,9 @@ $('a.lightbox').lightBox(); // Select all links with lightbox class
 <h3><img src="images/terminal.png" />development</h3>
 <div class="cont">
   <p><strong>Show me the code</strong></p>
+  <p>Now Modest git repository lives in <a href="http://gitorious.org">Gitorious</a>. 
+  The project is <a href="http://gitorious.org/modest/">gitorious.org/modest</a>.</p>
+  <p>For building in Maemo 5 platform </p>
   <ol>
     <li>Make sure you have the Maemo 5 SDK installed, and activate it.
     <ul>
@@ -74,29 +78,33 @@ $('a.lightbox').lightBox(); // Select all links with lightbox class
       <tt>$ fakeroot apt-get install gnome-common gtk-doc-tools wpeditor-dev</tt>
       </li>
     </ul>
-  </li>
-  <li>Then, get the latest tinymail and modest code:
-  <p><strong>Before cloning modest:</strong> follow <a href="https://garage.maemo.org/scm/?group_id=9">these</a> instructions</p>
-  <ul>
-    <li>svn checkout https://svn.tinymail.org/svn/tinymail/trunk tinymail</li>
-    <li>git clone https://git.maemo.org/projects/modest</li>
-  </ul>
-</li>
+    </li>
 
-<li>Then compile and install tinymail and modest with:
-<ul>
-  <li><tt>export CFLAGS="-ggdb -O0 -DDBC -DDEBUG"</tt> (optional, for debugging)</li>
-  <li><tt>export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"</tt></li>
-  <li><tt>./autogen.sh --with-platform=maemo --with-toolkit=hildon2 && make && make install</tt></li>
-</ul>
-</li>
+    <li>Get the latest tinymail and modest code:
+      <ul>
+        <li>svn checkout https://svn.tinymail.org/svn/tinymail/trunk tinymail</li>
+        <li>git clone git://gitorious.org/modest/modest.git</li>
+        <li>For building the current stable releases for N900, please use <tt>tinymail-1-2</tt> branch in
+	tinymail and <tt>modest-3-2</tt> branch in modest.</li>
+      </ul>
+    </li>
 
-<li>Now, run modest (inside scratchbox) from the Extras menu, or with:
-<ul>
-  <li>run-standalone.sh /usr/local/bin/modest -s</li>
-</ul>
-</li>
-</ol>
+    <li>Then compile and install tinymail and modest with:
+      <ul>
+        <li><tt>export CFLAGS="-ggdb -O0 -DDBC -DDEBUG"</tt> (optional, for debugging)</li>
+        <li><tt>export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"</tt></li>
+        <li><tt>./autogen.sh --with-platform=maemo --with-toolkit=hildon2 && make && make install</tt></li>
+      </ul>
+    </li>
+
+    <li>Now, run modest (inside scratchbox) from the Extras menu, or with:
+      <ul>
+        <li>run-standalone.sh /usr/local/bin/modest -s</li>
+      </ul>
+    </li>
+  </ol>
+  <p>Gtk/Moblin port is experimental. Ask developers in #modest IRC channel in freenode for
+  build instructions</p>.
 </div>
 <h3><img src="images/doc.png" />documentation</h3>
 <div class="cont">
@@ -106,6 +114,8 @@ $('a.lightbox').lightBox(); // Select all links with lightbox class
   <ul>
     <li>There's quite a bit of developer documentation available:</li>					
     <li>The <a href="https://garage.maemo.org/projects/modest/">modest garage project page</a>;</li>
+    <li>The <a href="http://gitorious.org/modest/">Gitorious modest project</a></li>
+    <li>A <a href="https://garage.maemo.org/plugins/wiki/index.php?ModestArchitecture&id=9&type=g">description of Modest implementation and architecture</a>.</li>
     <li>The <strong>modest technical reference</strong> (in git);</li>
     <li>The <a href="http://tinymail.org/trac/tinymail">Tinymail reference</a>;</li>
     <li>The <a href="http://www.go-evolution.org/Camel">Camel Library docs</a> </li>
@@ -114,18 +124,27 @@ $('a.lightbox').lightBox(); // Select all links with lightbox class
   In addition, there's of course the documentation for <a href="http://www.gtk.org/api/">GTK+/GLib</a> and <a href="http://maemo.org/development/documentation/apis/4-x/">Maemo</a>.
   </p>
 </div>
-<h3><img src="images/internet-mail.png" class="image"/>mailing list</h3>
+<h3><img src="images/internet-mail.png" class="image"/>contact and mailing list</h3>
 <div class="cont">
   <p>
-  <strong>contributing and mailing list</strong>
+  <strong>contribute and contact Modest team</strong>
   </p>
   <p>
   You are of course very welcome to contribute to our efforts! Please take a look at the HACKING-file
-  in the source distribution to see what conventions we are using. Of course it's also good to discuss
+  in the source distribution to see what conventions we are using.</p>
+  <p>Of course it's also good to discuss
   your plans/suggestions etc. on the <strong><a href="https://garage.maemo.org/mail/?group_id=9" >modest mailing list</a></strong>;
   <tt>modest-devel</tt> is for development issues, while <tt>modest-users</tt> is for end-user discussions.
   </p>
+  <p>We also have an IRC channel in <tt>irc.freenode.org</tt> channel <tt>#modest</tt></p>
 </div>			
+<h3><img src="images/install_button.png" class="image"/>try modest</h3>
+<div class="cont">
+  <ul>
+    <li>For Nokia N900, Modest is preinstalled, it is the default mail application.</li>
+    <li>For Ubuntu distributions <tt>karmic</tt> and <tt>lucid</tt> we have the <a href="https://launchpad.net/~jdapena/+archive/modest/">Modest PPA</a>. Follow instructions there to install Modest.</a>
+  </ul>
+</div>
 <h3><img src="images/license.png" class="image"/>license</h3>
 <div class="cont">
   <p>
