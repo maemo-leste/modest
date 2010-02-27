@@ -1987,7 +1987,7 @@ static void return_results (GetUnreadMessagesHelper *helper)
 			for (result_node = ah->header_list; result_node != NULL; result_node = g_list_next (result_node)) {
 				TnyHeader *header = (TnyHeader *) result_node->data;
 				DBusMessageIter sh_struct_iter;
-				gint64 ts = MIN (tny_header_get_date_received (header), tny_header_get_date_sent (header));
+				gint64 ts = tny_header_get_date_received (header);
 				gchar *subject = tny_header_dup_subject (header);
 
 				dbus_message_iter_open_container (&sh_array_iter,
