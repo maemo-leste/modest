@@ -2039,6 +2039,7 @@ static void get_unread_messages_get_headers_cb (TnyFolder *self,
 	ModestProtocolType store_protocol_type;
 	ModestProtocol *store_protocol;
 	gint unread_count;
+	ModestProtocolRegistry *registry;
 
 	acc_iterator = tny_list_create_iterator (helper->accounts_list);
 	account = TNY_ACCOUNT (tny_iterator_get_current (acc_iterator));
@@ -2067,12 +2068,18 @@ static void get_unread_messages_get_headers_cb (TnyFolder *self,
 	}
 	g_object_unref (headers_iterator);
 
+	registry = modest_runtime_get_protocol_registry ();
+	store_protocol_type = modest_tny_account_get_protocol_type (account);
+
+	/* Get the number of unread messages for plug-in based accounts */
+	if (modest_protocol_registry_protocol_type_is_provider (registry, store_protocol_type)) {
+		unread_count = tny_folder_get_unread_count (self);
+	}
+
 	account_hits = g_slice_new (AccountHits);
 	account_hits->account_id = g_strdup (modest_tny_account_get_parent_modest_account_name_for_server_account (account));
 	account_hits->account_name = g_strdup (tny_account_get_name (account));
-	store_protocol_type = modest_tny_account_get_protocol_type (account);
-	store_protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), 
-									store_protocol_type);
+	store_protocol = modest_protocol_registry_get_protocol_by_type (registry, store_protocol_type);
 	account_hits->store_protocol = g_strdup (modest_protocol_get_name (store_protocol));
 	account_hits->header_list = result_list;
 	account_hits->mailbox_id = NULL;
