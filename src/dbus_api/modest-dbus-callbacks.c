@@ -1547,6 +1547,25 @@ on_idle_present_modal (gpointer user_data)
 	return FALSE;
 }
 
+/**
+  * This function checks if a modal dialog should be activated
+  * instead of other UI components on a DBus request, and if yes, starts the request
+  * @return TRUE if a modal dialog is about to be acitvated
+  * @note This function should be used before activating any Modest UI element on DBus request
+  */
+static gboolean
+modest_dbus_check_present_modal ()
+{
+	GtkWindow *dialog;
+
+	/* Check if there is already a dialog or note open */
+	dialog = modest_window_mgr_get_modal (modest_runtime_get_window_mgr());
+	if (dialog) {
+		g_idle_add (on_idle_present_modal, dialog);
+	}
+
+	return (NULL != dialog);
+}
 
 /* Callback for normal D-BUS messages */
 gint
@@ -1554,41 +1573,32 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 			GArray * arguments, gpointer data,
 			osso_rpc_t * retval)
 {
-	GtkWindow *dialog;
-
 	/* Check memory low conditions */
 	if (modest_platform_check_memory_low (NULL, FALSE)) {
 		g_idle_add (on_idle_show_memory_low, NULL);
 		goto param_error;
 	}
 
-	/* Check if there is already a dialog or note open */
-	dialog = modest_window_mgr_get_modal (modest_runtime_get_window_mgr());
-	if (dialog) {
-		g_idle_add (on_idle_present_modal, dialog);
-		return OSSO_OK;
-	}
-
 	if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
 		if (arguments->len != MODEST_DBUS_MAIL_TO_ARGS_COUNT)
 			goto param_error;
-		return on_mail_to (arguments, data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_mail_to (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_MESSAGE) == 0) {
 		if (arguments->len != MODEST_DBUS_OPEN_MESSAGE_ARGS_COUNT)
 			goto param_error;
-		return on_open_message (arguments, data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_open_message (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_ACCOUNT) == 0) {
 		if (arguments->len != MODEST_DBUS_OPEN_ACCOUNT_ARGS_COUNT)
 			goto param_error;
-		return on_open_account (arguments, data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_open_account (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_SEND_RECEIVE) == 0) {
 		if (arguments->len != 0)
 			goto param_error;
-		return on_send_receive (arguments, data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_send_receive (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_SEND_RECEIVE_FULL) == 0) {
 		if (arguments->len != MODEST_DBUS_SEND_RECEIVE_FULL_ARGS_COUNT)
 			goto param_error;
-		return on_send_receive_full (arguments, data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_send_receive_full (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_UPDATE_FOLDER_COUNTS) == 0) {
 		if (arguments->len != MODEST_DBUS_UPDATE_FOLDER_COUNTS_ARGS_COUNT)
 			goto param_error;
@@ -1596,23 +1606,23 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
 		if (arguments->len != MODEST_DBUS_COMPOSE_MAIL_ARGS_COUNT)
 			goto param_error;
-		return on_compose_mail (arguments, data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_compose_mail (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_DELETE_MESSAGE) == 0) {
 		if (arguments->len != MODEST_DBUS_DELETE_MESSAGE_ARGS_COUNT)
 			goto param_error;
-		return on_delete_message (arguments,data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_delete_message (arguments,data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX) == 0) {
 		if (arguments->len != 0)
 			goto param_error;
-		return on_open_default_inbox (arguments, data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_open_default_inbox (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_TOP_APPLICATION) == 0) {
 		if (arguments->len != 0)
 			goto param_error;
-		return on_top_application (arguments, data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_top_application (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_EDIT_ACCOUNTS_DIALOG) == 0) {
 		if (arguments->len != 0)
 			goto param_error;
-		return on_open_edit_accounts_dialog (arguments, data, retval);
+		return modest_dbus_check_present_modal () ? OSSO_OK : on_open_edit_accounts_dialog (arguments, data, retval);
 	} else {
 		/* We need to return INVALID here so
 		 * libosso will return DBUS_HANDLER_RESULT_NOT_YET_HANDLED,
