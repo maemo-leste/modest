@@ -2270,38 +2270,47 @@ get_unread_messages_get_account (GetUnreadMessagesHelper *helper)
 
 	/* Search through all accounts */
 	iterator = tny_list_create_iterator (helper->accounts_list);
-	if (tny_iterator_is_done (iterator)) {
-		/* all results, then finish */
-		return_results (helper);
-	} else {
-		TnyAccount *account;
-		TnyList *folders_list;
-		ModestProtocolType protocol_type;
+	do {
+		if (tny_iterator_is_done (iterator)) {
+			/* all results, then finish */
+			return_results (helper);
+			break;
+		} else {
+			TnyAccount *account;
 
-		account = TNY_ACCOUNT (tny_iterator_get_current (iterator));
-		protocol_type = modest_tny_account_get_protocol_type (account);
+			account = TNY_ACCOUNT (tny_iterator_get_current (iterator));
+			if (account && TNY_FOLDER_STORE (account) && TNY_IS_FOLDER_STORE (TNY_FOLDER_STORE (account))) {
+				TnyList *folders_list;
+				ModestProtocolType protocol_type;
 
-		folders_list = tny_simple_list_new ();
-		helper->inboxes_list =  tny_simple_list_new ();
-		if (MODEST_PROTOCOL_REGISTRY_TYPE_INVALID != protocol_type &&
-			modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
-				protocol_type, MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS)) {
-			/* For multi-mailbox protocols we only can get the number of unread messages,
-			   we will not even try to get their email headers */
-			helper->folder_requests_done = 0;
-			helper->folder_requests_total = 1;
-			tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account),
-				folders_list, NULL, FALSE, get_multi_mailbox_account_folders_cb, NULL, helper);
+				protocol_type = modest_tny_account_get_protocol_type (account);
+
+				folders_list = tny_simple_list_new ();
+				helper->inboxes_list =  tny_simple_list_new ();
+				if (MODEST_PROTOCOL_REGISTRY_TYPE_INVALID != protocol_type &&
+					modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+						protocol_type, MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS)) {
+					/* For multi-mailbox protocols we only can get the number of unread messages,
+					   we will not even try to get their email headers */
+					helper->folder_requests_done = 0;
+					helper->folder_requests_total = 1;
+					tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account),
+						folders_list, NULL, FALSE, get_multi_mailbox_account_folders_cb, NULL, helper);
+				}
+				else {
+					/* For non-multi-mailbox protocols we will get their email headers */
+					tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account),
+						folders_list, NULL, FALSE, get_account_folders_cb, NULL, helper);
+				}
+				g_object_unref (folders_list);
+				g_object_unref (account);
+				break;
+			}
 		}
-		else {
-			/* For non-multi-mailbox protocols we will get their email headers */
-			tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account),
-				folders_list, NULL, FALSE, get_account_folders_cb, NULL, helper);
-		}
-		g_object_unref (folders_list);
-		g_object_unref (account);
 
-	}
+		/* incorrect item detected, move on to the next item */
+		tny_iterator_next (iterator);
+	} while (TRUE);
 	g_object_unref (iterator);
 }
 
