@@ -1475,7 +1475,7 @@ modest_account_mgr_has_accounts (ModestAccountMgr* self, gboolean enabled)
 	
 	if (enabled && priv->has_enabled_accounts)
 		return TRUE;
-	else if (priv->has_accounts)
+	else if (!enabled && priv->has_accounts)
 		return TRUE;
 		
 	/* Check that at least one account exists: */
