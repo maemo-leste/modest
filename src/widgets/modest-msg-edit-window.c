@@ -921,7 +921,7 @@ init_window (ModestMsgEditWindow *obj)
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
  	priv->from_field    = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
-								      NULL, g_str_equal);
+								      NULL, g_str_equal, FALSE);
 	modest_selector_set_value_max_chars (priv->from_field, MAX_FROM_VALUE);
 	if (GTK_IS_COMBO_BOX (priv->from_field)) {
 		from_caption = modest_toolkit_utils_create_captioned (title_size_group, NULL,

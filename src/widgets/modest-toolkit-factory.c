@@ -144,7 +144,8 @@ static GtkWidget * modest_toolkit_factory_create_security_options_view_default (
 										GtkSizeGroup *value_size_group);
 static GtkWidget * modest_toolkit_factory_create_text_view_default            (ModestToolkitFactory *self);
 static GtkWidget * modest_toolkit_factory_create_selector_default             (ModestToolkitFactory *self,
-									       ModestPairList *pairs, GEqualFunc id_equal_func);
+									       ModestPairList *pairs, GEqualFunc id_equal_func,
+									       gboolean center);
 static GtkWidget * modest_toolkit_factory_create_details_dialog_with_header_default   (ModestToolkitFactory *self, GtkWindow *parent,
 									       TnyHeader *header, gboolean get_size);
 static GtkWidget * modest_toolkit_factory_create_details_dialog_with_folder_default  (ModestToolkitFactory *self, GtkWindow *parent,
@@ -847,21 +848,21 @@ modest_is_text_view (GtkWidget *widget)
 
 GtkWidget *
 modest_toolkit_factory_create_selector (ModestToolkitFactory *self,
-					ModestPairList *pairs, GEqualFunc id_equal_func)
+					ModestPairList *pairs, GEqualFunc id_equal_func, gboolean center)
 {
-	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_selector (self, pairs, id_equal_func);
+  return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_selector (self, pairs, id_equal_func, center);
 }
 
 static GtkWidget *
 modest_toolkit_factory_create_selector_default (ModestToolkitFactory *self,
-						ModestPairList *pairs, GEqualFunc id_equal_func)
+						ModestPairList *pairs, GEqualFunc id_equal_func, gboolean center)
 {
 #ifdef USE_SELECTOR_COMBOBOX
 	return modest_combo_box_new (pairs, id_equal_func);
 #else
 	return modest_selector_picker_new (MODEST_EDITABLE_SIZE, 
 					   HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
-					   pairs, id_equal_func);
+					   pairs, id_equal_func, center);
 #endif
 }
 

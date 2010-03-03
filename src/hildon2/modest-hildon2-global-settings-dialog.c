@@ -210,7 +210,9 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	ppriv->accounts_list = get_accounts_list ();
 	ppriv->default_account_selector = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
 										  ppriv->accounts_list,
-										  g_str_equal);
+										  g_str_equal,
+										  TRUE);
+log.c
 	if (ppriv->accounts_list == NULL) {
 		gtk_widget_set_sensitive (GTK_WIDGET (ppriv->default_account_selector), FALSE);
 	} else {
@@ -247,7 +249,8 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	 * so it can't know how to manage its memory. */
 	ppriv->msg_format_list = _modest_global_settings_dialog_get_msg_formats ();
 	ppriv->msg_format = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
-								    ppriv->msg_format_list, g_int_equal);
+								    ppriv->msg_format_list, g_int_equal,
+								    TRUE);
 	if (GTK_IS_COMBO_BOX (ppriv->msg_format)) {
 		GtkWidget *caption;
 		caption = modest_toolkit_utils_create_vcaptioned (title_size_group,
@@ -293,7 +296,8 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	 * so it can't know how to manage its memory. */ 
 	ppriv->connect_via_list = _modest_global_settings_dialog_get_connected_via ();
 	ppriv->connect_via = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
-								     ppriv->connect_via_list, g_int_equal);
+								     ppriv->connect_via_list, g_int_equal,
+								     TRUE);
 	if (GTK_IS_COMBO_BOX (ppriv->connect_via)) {
 		GtkWidget *caption;
 		caption = modest_toolkit_utils_create_vcaptioned (title_size_group,
@@ -315,7 +319,7 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	 * so it can't know how to manage its memory. */ 
 	ppriv->update_interval_list = _modest_global_settings_dialog_get_update_interval ();
 	ppriv->update_interval = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
-									 ppriv->update_interval_list, g_int_equal);
+									 ppriv->update_interval_list, g_int_equal, TRUE);
 	if (GTK_IS_COMBO_BOX (ppriv->update_interval)) {
 		GtkWidget *caption;
 		caption = modest_toolkit_utils_create_vcaptioned (title_size_group,

@@ -50,7 +50,7 @@ struct _ModestSelectorPickerPrivate {
 	GEqualFunc id_equal_func;
 
 	gint value_max_chars;
-	
+	gboolean center_aligned;
 };
 #define MODEST_SELECTOR_PICKER_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 										MODEST_TYPE_SELECTOR_PICKER, \
@@ -168,9 +168,15 @@ create_touch_selector (ModestSelectorPicker *self, GtkTreeModel *model)
 {
 	GtkCellRenderer *renderer;
 	GtkWidget *selector;
+	ModestSelectorPickerPrivate *priv;
 
 	renderer = gtk_cell_renderer_text_new ();
 	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
+
+	priv = MODEST_SELECTOR_PICKER_GET_PRIVATE(self);
+	if (priv->center_aligned) {
+		g_object_set (G_OBJECT (renderer), "alignment", PANGO_ALIGN_CENTER, NULL);
+	}
 
 	selector = hildon_touch_selector_new ();
 	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (model),
@@ -205,7 +211,8 @@ modest_selector_picker_set_pair_list (ModestSelectorPicker *self, ModestPairList
 GtkWidget*
 modest_selector_picker_new (HildonSizeType size,
 			    HildonButtonArrangement arrangement,
-			    ModestPairList *pairs, GEqualFunc id_equal_func)
+			    ModestPairList *pairs, GEqualFunc id_equal_func,
+			    gboolean center_aligned)
 {
 	GtkTreeModel *model;
 	GObject *obj;
@@ -219,6 +226,7 @@ modest_selector_picker_new (HildonSizeType size,
 
 	priv = MODEST_SELECTOR_PICKER_GET_PRIVATE(obj);
 	priv->value_max_chars = -1;
+	priv->center_aligned = center_aligned;
 	
 	model = get_model (pairs);
 	if (model) {

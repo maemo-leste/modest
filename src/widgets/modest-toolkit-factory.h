@@ -57,7 +57,7 @@ struct                                          _ModestToolkitFactoryClass
 						     gboolean full, GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group);
 	GtkWidget * (*create_text_view) (ModestToolkitFactory *self);
 	GtkWidget * (*create_selector) (ModestToolkitFactory *self,
-					ModestPairList *pairs, GEqualFunc id_equal_func);
+					ModestPairList *pairs, GEqualFunc id_equal_func, gboolean center);
 	GtkWidget * (*create_details_dialog_with_header) (ModestToolkitFactory *self, GtkWindow *parent,
 							  TnyHeader *header, gboolean get_size);
 	GtkWidget * (*create_details_dialog_with_folder) (ModestToolkitFactory *self, GtkWindow *parent,
@@ -122,7 +122,7 @@ modest_toolkit_factory_create_text_view (ModestToolkitFactory *self);
 
 GtkWidget *
 modest_toolkit_factory_create_selector (ModestToolkitFactory *self,
-					ModestPairList *pairs, GEqualFunc id_equal_func);
+					ModestPairList *pairs, GEqualFunc id_equal_func, gboolean center);
 
 GtkWidget *
 modest_toolkit_factory_create_details_dialog_with_header (ModestToolkitFactory *self, GtkWindow *parent,

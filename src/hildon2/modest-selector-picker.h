@@ -80,7 +80,8 @@ GType        modest_selector_picker_get_type    (void) G_GNUC_CONST;
 GtkWidget*   modest_selector_picker_new         (HildonSizeType size,
 						 HildonButtonArrangement arrangement,
 						 ModestPairList* pairs,
-						 GEqualFunc id_equal_func);
+						 GEqualFunc id_equal_func,
+						 gboolean center_aligned);
 
 /**
  * modest_selector_picker_set_pair_list:
