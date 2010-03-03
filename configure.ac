@@ -26,7 +26,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([modest],[3.90.5],[http://maemo.org])
+AC_INIT([modest],[3.90.6],[http://maemo.org])
 AC_CONFIG_HEADERS([config.h])
 
 m4_define([modest_api_major_version], [1])
