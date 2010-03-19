@@ -130,8 +130,7 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 
 	/* hmmm... maybe we need a modest_text_utils_validate_file_name? */
 	g_return_val_if_fail (orig_name && strlen(orig_name) != 0, NULL);
-
-	if (strlen(orig_name) > 200) {
+	if (strlen(orig_name) > 256) {
 		g_warning ("%s: filename too long ('%s')",
 			   __FUNCTION__, orig_name);
 		return NULL;
