@@ -3632,9 +3632,11 @@ modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 
 	account_name = modest_selector_get_active_id (priv->from_field);
 	if (priv->original_mailbox) {
-		if (!account_name || strcmp (account_name, priv->original_mailbox))
+		if (!account_name || g_strcmp0 (account_name, priv->original_mailbox)) {
 			return TRUE;
-	} else if (!priv->original_account_name || strcmp(account_name, priv->original_account_name)) {
+		}
+	}
+	else if (!priv->original_account_name || g_strcmp0 (account_name, priv->original_account_name)) {
 		return TRUE;
 	}
 
