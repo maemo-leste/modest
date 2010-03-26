@@ -2321,10 +2321,16 @@ modest_text_utils_create_colored_signature (const gchar *signature)
 	if (widget && gtk_style_lookup_color (gtk_widget_get_style (widget), "SecondaryTextColor", &color))
 		gray_color_markup = modest_text_utils_get_color_string (&color);
 
+	/* replace "\n\r" with <br/> */
+	gchar **lines = g_regex_split_simple ("[\\r\\n]{1}", signature, 0, 0);
+	gchar* html_signature = g_strjoinv ("<br/>", lines);
+	g_strfreev (lines);
+
 	retval = g_strdup_printf ("<br/>\n<font color=\"%s\">%s<br/>\n%s<br/>\n</font>",
 				  (gray_color_markup) ? gray_color_markup : "#babababababa",
 				  MODEST_TEXT_UTILS_SIGNATURE_MARKER,
-				  signature);
+				  html_signature);
+	g_free (html_signature);
 
 	if (gray_color_markup)
 		g_free (gray_color_markup);
