@@ -114,6 +114,7 @@ struct _ModestAccountsWindowPrivate {
 /* globals */
 static ModestWindowParentClass *parent_class = NULL;
 static GtkWidget *pre_created_accounts_window = NULL;
+static gboolean pre_created_accounts_window_created = FALSE;
 
 /************************************************************************/
 
@@ -277,13 +278,10 @@ modest_accounts_window_new_real (void)
 	
 	gtk_misc_set_alignment (GTK_MISC (no_accounts_label), 0.5, 0.5);
 #ifdef MODEST_TOOLKIT_HILDON2
-	hildon_helper_set_logical_font (no_accounts_label, "LargeSystemFont");
-#endif
-
-#ifdef MODEST_TOOLKIT_HILDON2
 	GdkPixbuf *new_message_pixbuf;
 	GtkWidget *empty_view_new_message_button;
 
+	hildon_helper_set_logical_font (no_accounts_label, "LargeSystemFont");
 	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
 
 	empty_view_new_message_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
@@ -375,6 +373,7 @@ modest_accounts_window_new (void)
 		pre_created_accounts_window = NULL;
 	} else {
 		self = modest_accounts_window_new_real ();
+		pre_created_accounts_window_created = TRUE;
 	}
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
 	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
@@ -618,14 +617,15 @@ row_count_changed (ModestAccountsWindow *self)
 	model = modest_account_view_get_model (MODEST_ACCOUNT_VIEW (priv->account_view));
 
 	count = gtk_tree_model_iter_n_children (model, NULL);
-
 	if (count == 0) {
 		gtk_widget_hide (priv->account_view);
 		gtk_widget_show (priv->no_accounts_container);
+		hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), FALSE);
 		g_debug ("%s: hiding accounts view", __FUNCTION__);
 	} else {
 		gtk_widget_hide (priv->no_accounts_container);
 		gtk_widget_show (priv->account_view);
+		hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), TRUE);
 		g_debug ("%s: showing accounts view", __FUNCTION__);
 	}
 	gtk_container_child_set (GTK_CONTAINER(priv->box), priv->scrollable, 
@@ -704,9 +704,8 @@ on_queue_changed (ModestMailOperationQueue *queue,
 void 
 modest_accounts_window_pre_create (void)
 {
-	static gboolean pre_created = FALSE;
-	if (!pre_created) {
-		pre_created = TRUE;
+	if (!pre_created_accounts_window_created) {
+		pre_created_accounts_window_created = TRUE;
 		pre_created_accounts_window = GTK_WIDGET (modest_accounts_window_new_real ());
 	}
 }
