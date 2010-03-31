@@ -620,7 +620,6 @@ modest_text_utils_convert_to_html_body (const gchar *data, gssize n, gboolean hy
 void
 modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_indexes, GSList **end_indexes)
 {
-	GString *str;
 	gchar *start, *cur;
 
 	if (!addresses)
@@ -629,7 +628,6 @@ modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_
 	if (strlen (addresses) == 0)
 		return;
 
-	str = g_string_new ("");
 	start = (gchar*) addresses;
 	cur = (gchar*) addresses;
 
