@@ -867,6 +867,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 			}
 			g_slist_free (tags);
 			if (!has_recipient) {
+				gint new_length;
 				GSList * addr_list = NULL;
 
 				addr_list = g_slist_prepend (addr_list, address);
@@ -875,6 +876,12 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 										     addr_list,
 										     "");
 				g_slist_free (addr_list);
+
+				/* update offset delta */
+				recipients = modest_recpt_editor_get_recipients (recpt_editor);
+				new_length = g_utf8_strlen (recipients, -1);
+				offset_delta = offset_delta + new_length - last_length;
+				last_length = new_length;
 			}
 		}
 
