@@ -2861,8 +2861,16 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	/* Check whether to automatically add new contacts to addressbook or not */
 	add_to_contacts = modest_conf_get_bool (modest_runtime_get_conf (),
 						MODEST_CONF_AUTO_ADD_TO_CONTACTS, NULL);
-	if (!modest_msg_edit_window_check_names (edit_window, add_to_contacts))
+	/* first validate the names, this resolves the original email addresses */
+	if (!modest_msg_edit_window_check_names (edit_window, FALSE)) {
 		return TRUE;
+	}
+	if (add_to_contacts) {
+		/* now, add the resolved addresses to the address book */
+		if (!modest_msg_edit_window_check_names (edit_window, TRUE)) {
+			return TRUE;
+		}
+	}
 
 	data = modest_msg_edit_window_get_msg_data (edit_window);
 
