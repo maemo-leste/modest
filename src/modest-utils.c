@@ -916,12 +916,49 @@ modest_utils_create_country_model (void)
 	return model;
 }
 
+/**
+ * Update the territory depending on territory exceptions
+ * @param[in] territory The territory to be checked
+ * @return The resulting territory
+ */
+static const gchar *
+modest_utils_country_model_check_territory_exceptions (const gchar *territory)
+{
+	typedef struct {
+		const gchar *original;
+		const gchar *substitution;
+	} TerritoryException;
+
+	const gchar *result;
+	const TerritoryException *exception;
+
+	static const TerritoryException exceptions[] = {
+		{ "Great Britain", "United Kingdom" },
+		{ NULL, NULL }
+	};
+
+	result = territory;
+	exception = exceptions;
+
+	while (exception->original) {
+		if (0 == g_utf8_collate (exception->original, territory)) {
+			result = exception->substitution;
+			break;
+		}
+
+		/* move on to the next exception */
+		++exception;
+	}
+
+	return result;
+}
+
 void
 modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 {
 	char line[MCC_FILE_MAX_LINE_LEN];
 	guint previous_mcc = 0;
-	gchar *territory;
+	const gchar *territory;
 	GHashTable *country_hash;
 	FILE *file;
 
@@ -933,7 +970,7 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 	}
 
 	/* Get the territory specified for the current locale */
-	territory = nl_langinfo (_NL_IDENTIFICATION_TERRITORY);
+	territory = modest_utils_country_model_check_territory_exceptions (nl_langinfo (_NL_IDENTIFICATION_TERRITORY));
 
 	setlocale (LC_MESSAGES, "en_GB");
 
