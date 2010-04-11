@@ -4813,7 +4813,6 @@ has_pending_addresses (ModestRecptEditor *recpt_editor)
 	const gchar *recipients = NULL;
 	GSList *start_indexes = NULL, *end_indexes = NULL;
 	GSList *current_start, *current_end;
-	GtkTextBuffer *buffer;
 	gint offset_delta = 0;
 	gint last_length;
 	gboolean has_recipients_to_add = FALSE;
@@ -4827,7 +4826,6 @@ has_pending_addresses (ModestRecptEditor *recpt_editor)
 
 	current_start = start_indexes;
 	current_end = end_indexes;
-	buffer = modest_recpt_editor_get_buffer (recpt_editor);
 
 	while (current_start && !has_recipients_to_add) {
 		gchar *address;
@@ -4849,6 +4847,7 @@ has_pending_addresses (ModestRecptEditor *recpt_editor)
 		}
 		current_start = g_slist_next (current_start);
 		current_end = g_slist_next (current_end);
+		g_free (address);
 	}
 	return has_recipients_to_add;
 }
