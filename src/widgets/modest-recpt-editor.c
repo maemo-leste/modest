@@ -1112,7 +1112,6 @@ modest_recpt_editor_add_tags (ModestRecptEditor *editor,
 	GtkTextTag *tag;
 	GtkTextIter start, end;
 	gchar * buffer_contents;
-	GtkTextIter start_match, end_match;
 
 	/* This would move the cursor to the end of the buffer
 	   containing new line character. */
@@ -1131,17 +1130,52 @@ modest_recpt_editor_add_tags (ModestRecptEditor *editor,
 	/* Formatting the buffer content by applying tag */
 	gtk_text_buffer_get_bounds (buffer, &start, &end);
 	_discard_chars (&start, &end);
-	while (gtk_text_iter_forward_search(&start, ";",
-					    GTK_TEXT_SEARCH_TEXT_ONLY |
-					    GTK_TEXT_SEARCH_VISIBLE_ONLY,
-					    &start_match, &end_match, &end )) {
-		int offset;
+	do {
+		gint offset;
+		gboolean comma_found;
+		gboolean semicolon_found;
+		GtkTextIter tmp_start_match1, tmp_end_match1;
+		GtkTextIter tmp_start_match2, tmp_end_match2;
 
-		gtk_text_buffer_apply_tag(buffer, tag, &start, &start_match);
-		offset = gtk_text_iter_get_offset (&end_match);
-		gtk_text_buffer_get_iter_at_offset(buffer, &start, offset);
+		comma_found = gtk_text_iter_forward_search (&start, ",",
+			GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY,
+			&tmp_start_match1, &tmp_end_match1, &end);
+		semicolon_found = gtk_text_iter_forward_search (&start, ";",
+			GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY,
+			&tmp_start_match2, &tmp_end_match2, &end);
+
+		/* check which iterator we should use */
+		if (comma_found && semicolon_found) {
+			gint offset1;
+			gint offset2;
+
+			offset1 = gtk_text_iter_get_offset (&tmp_end_match1);
+			offset2 = gtk_text_iter_get_offset (&tmp_end_match2);
+			if (offset2 > offset1) {
+				offset = offset1;
+				gtk_text_buffer_apply_tag (buffer, tag, &start, &tmp_start_match1);
+			}
+			else {
+				offset = offset2;
+				gtk_text_buffer_apply_tag (buffer, tag, &start, &tmp_start_match2);
+			}
+		}
+		else if (comma_found && !semicolon_found) {
+			offset = gtk_text_iter_get_offset (&tmp_end_match1);
+			gtk_text_buffer_apply_tag (buffer, tag, &start, &tmp_start_match1);
+		}
+		else if (!comma_found && semicolon_found) {
+			offset = gtk_text_iter_get_offset (&tmp_end_match2);
+			gtk_text_buffer_apply_tag (buffer, tag, &start, &tmp_start_match2);
+		}
+		else /* if (!comma_found && !semicolon_found) */ {
+			break;
+		}
+
+		gtk_text_buffer_get_iter_at_offset (buffer, &start, offset);
 		_discard_chars (&start, &end);
-	}
+	} while (TRUE);
+
 	g_free (buffer_contents);
 }
 
