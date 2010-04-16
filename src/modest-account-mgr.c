@@ -1104,7 +1104,6 @@ modest_account_mgr_set_list (ModestAccountMgr *self,
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (name, FALSE);
 	g_return_val_if_fail (key,  FALSE);
-	g_return_val_if_fail (val,  FALSE);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 

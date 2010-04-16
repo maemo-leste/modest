@@ -1728,7 +1728,7 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals, const gcha
 						  MODEST_ACCOUNT_NOTIFICATION_IDS, 
 						  MODEST_CONF_VALUE_INT, FALSE);
 
-        while (notif_list) {
+	while (notif_list) {
 		gint notif_id;
 		NotifyNotification *notif;
 
@@ -1746,17 +1746,11 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals, const gcha
 
 		/* Delete the link, it's like going to the next */
 		notif_list = g_slist_delete_link (notif_list, notif_list);
-        }
-
-	/* Save the ids */
-	if (notif_list) {
-		modest_account_mgr_set_list (modest_runtime_get_account_mgr (), acc_name,
-					     MODEST_ACCOUNT_NOTIFICATION_IDS,
-					     notif_list, MODEST_CONF_VALUE_INT, FALSE);
-
-		g_slist_free (notif_list);
 	}
 
+	/* Reset the ids */
+	modest_account_mgr_set_list (modest_runtime_get_account_mgr (), acc_name,
+		MODEST_ACCOUNT_NOTIFICATION_IDS, NULL, MODEST_CONF_VALUE_INT, FALSE);
 #endif /* MODEST_HAVE_HILDON_NOTIFY */
 }
 
