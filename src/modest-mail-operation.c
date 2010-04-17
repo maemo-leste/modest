@@ -141,6 +141,7 @@ typedef struct
 	gboolean interactive;
 	gboolean msg_readed;
 	gboolean update_folder_counts;
+	guint retries_left;
 } UpdateAccountInfo;
 
 static void destroy_update_account_info         (UpdateAccountInfo *info);
@@ -1923,9 +1924,23 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 
 	if (err || canceled) {
+		gboolean error_handled;
+
+		error_handled = FALSE;
+		if (err && !priv->error) {
+			/* restart the request */
+			if (info->retries_left) {
+				tny_folder_store_get_folders_async (folder_store,
+					list, NULL, TRUE, recurse_folders_async_cb, NULL, user_data);
+				++info->pending_calls;
+
+				--info->retries_left;
+				error_handled = TRUE;
+			}
+		}
 		/* If the error was previosly set by another callback
 		   don't set it again */
-		if (!priv->error) {
+		if (!error_handled && !priv->error) {
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 			if (err)
 				priv->error = g_error_copy (err);
@@ -2081,6 +2096,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	info->account_name = g_strdup (account_name);
 	info->callback = callback;
 	info->user_data = user_data;
+	info->retries_left = 1;
 
 	/* Set account busy */
 	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr (), account_name, TRUE);
@@ -2161,6 +2177,7 @@ modest_mail_operation_update_folder_counts (ModestMailOperation *self,
 	info->account_name = g_strdup (account_name);
 	info->callback = NULL;
 	info->user_data = NULL;
+	info->retries_left = 1;
 
 	/* Set account busy */
 	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr (), account_name, TRUE);
