@@ -54,8 +54,9 @@
 #define FROM_STRING _("mail_va_from")
 #define SENT_STRING _("mcen_fi_message_properties_sent")
 #define TO_STRING _("mail_va_to")
-#define	SUBJECT_STRING _("mail_va_subject")
+#define SUBJECT_STRING _("mail_va_subject")
 #define EMPTY_STRING ""
+#define SEPARATOR_STRING _HL("ecdg_ti_caption_separator")
 
 /*
  * do the hyperlinkification only for texts < 50 Kb,
@@ -239,14 +240,22 @@ forward_cite (const gchar *from,
 	      const gchar *to,
 	      const gchar *subject)
 {
+	const gchar *separator;
+
 	g_return_val_if_fail (sent, NULL);
-	
-	return g_strdup_printf ("%s\n%s %s\n%s %s\n%s %s\n%s %s\n", 
-				FORWARD_STRING, 
-				FROM_STRING, (from)?from:"",
-				SENT_STRING, sent,
-				TO_STRING, (to)?to:"",
-				SUBJECT_STRING, (subject)?subject:"");
+
+	/* the separator string/char (':') */
+	separator = SEPARATOR_STRING;
+	return g_strdup_printf ("%s\n" /* original message marker */
+		"%s%s %s\n" /* original 'From' string */
+		"%s%s %s\n" /* original 'Sent' string (date/time) */
+		"%s%s %s\n" /* original 'To' string */
+		"%s%s %s\n", /* original 'Subject' string */
+		FORWARD_STRING,
+		FROM_STRING, separator, from ? from:EMPTY_STRING,
+		SENT_STRING, separator, sent,
+		TO_STRING, separator, to ? to : EMPTY_STRING,
+		SUBJECT_STRING, separator, subject ? subject : EMPTY_STRING);
 }
 
 gchar * 
