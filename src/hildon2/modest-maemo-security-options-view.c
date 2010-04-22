@@ -319,10 +319,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 										     MODEST_EDITABLE_SIZE);
 		g_free (user_label);
 	
-		/* Prevent the use of some characters. Limit the max
-		   length as well */
-		modest_validating_entry_set_unallowed_characters_whitespace (
-		     MODEST_VALIDATING_ENTRY (ppriv->user_entry));	
+		/* Limit the max length */
 		gtk_entry_set_max_length (GTK_ENTRY (ppriv->user_entry), 64);
 		modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (ppriv->user_entry),
 						      on_entry_max, self);
