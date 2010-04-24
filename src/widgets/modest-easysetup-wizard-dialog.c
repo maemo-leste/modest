@@ -1079,7 +1079,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 
 	/* Set default selection */
 	modest_servertype_selector_set_active_servertype (priv->incoming_servertype_selector,
-							  MODEST_PROTOCOLS_STORE_POP);
+							  MODEST_PROTOCOLS_STORE_IMAP);
 	update_incoming_server_title (self);
 	update_incoming_server_security_choices (self);
 	set_default_custom_servernames (self);
