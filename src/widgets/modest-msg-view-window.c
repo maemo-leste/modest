@@ -2908,8 +2908,17 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
 		gboolean show_error_banner = FALSE;
 		TnyFsStream *temp_stream = NULL;
-		temp_stream = modest_utils_create_temp_stream (att_filename, attachment_uid,
-							       &filepath);
+
+		/* if we have the 'att_filename', create a new temporary stream */
+		if (att_filename) {
+			gchar* esc_att_filename;
+
+			/* escape the filename, so it contains only correct chars */
+			esc_att_filename = modest_text_utils_create_filename (att_filename);
+			temp_stream = modest_utils_create_temp_stream (
+				esc_att_filename, attachment_uid, &filepath);
+			g_free (esc_att_filename);
+		}
 
 		if (temp_stream != NULL) {
 			ModestAccountMgr *mgr;
@@ -2937,7 +2946,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 						modest_account_protocol_decode_part_to_stream_async (
 							MODEST_ACCOUNT_PROTOCOL (protocol),
 							mime_part,
-							filepath,
+							uri,
 							TNY_STREAM (temp_stream),
 							on_decode_to_stream_async_handler,
 							NULL,

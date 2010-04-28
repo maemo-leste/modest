@@ -2378,3 +2378,35 @@ modest_text_utils_live_search_find (const gchar *haystack, const gchar *needles)
 	
 	return match;
 }
+
+gchar* modest_text_utils_create_filename (const gchar *filename)
+{
+	gchar *ptr;
+	gchar *result;
+	static const gchar invalid_characters[] = { " ()[]{}<>|\\/:;=+\"`'&$%!*?" };
+
+	result = g_strndup (filename, 100);
+	ptr = result;
+	while (ptr) {
+		gunichar ch;
+		const gchar *invalid;
+
+		/* get the current character */
+		ch = g_utf8_get_char (ptr);
+		if (!ch) {
+			break;
+		}
+
+		/* check if the current character is valid */
+		invalid = g_utf8_strchr (invalid_characters, -1, ch);
+		if (invalid) {
+			/* all exceptions are 1-byte sequences, substitute in-place */
+			*ptr = '_';
+		}
+
+		/* move on to the next character */
+		ptr = g_utf8_next_char (ptr);
+	}
+
+	return result;
+}

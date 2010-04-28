@@ -699,4 +699,14 @@ gchar * modest_text_utils_create_colored_signature (const gchar *signature);
 
 gboolean modest_text_utils_live_search_find (const gchar *haystack, const gchar *needles);
 
+/**
+ * Create a valid filename based on the filename
+ * @param[in] filename The oridinal filename, it might not be a valid filename
+ * @return The allocated valid filename. Should be released with 'g_free ()'
+ * @note This function allocates a new string that confirms to the filename rules.
+ *       All invalid characters are substituted to '_'.
+ *       For example: "name!/.txt" -> "name__.txt"
+ */
+gchar* modest_text_utils_create_filename (const gchar *filename);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */
