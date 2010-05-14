@@ -2172,7 +2172,8 @@ static void get_account_folders_cb (TnyFolderStore *self, gboolean cancelled, Tn
 		accounts_it = tny_list_create_iterator (helper->accounts_list);
 		account = TNY_ACCOUNT (tny_iterator_get_current (accounts_it));
 
-		if (!modest_tny_account_is_virtual_local_folders (account)) {
+		if (!modest_tny_account_is_virtual_local_folders (account) &&
+			!modest_tny_account_is_memory_card_account (account)) {
 			/* the account does not have (yet) the inbox */
 			account_hit = g_slice_new (AccountHits);
 			account_hit->account_id = g_strdup (modest_tny_account_get_parent_modest_account_name_for_server_account (account));
