@@ -74,7 +74,7 @@ AC_ARG_ENABLE(debug,
 if test "x$with_debug" == "xyes" ; then
         CFLAGS="$CFLAGS -ggdb -O0 -DDEBUG -Wall"
 else
-        CFLAGS="$CFLAGS -O2 -Wall"
+        CFLAGS="$CFLAGS -O2 -DG_DISABLE_CAST_CHECKS -Wall"
 fi
 
 # Option to enable debugging
