@@ -1284,6 +1284,9 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 					     GTK_WINDOW (note), parent_window);
 	
 	if (block) {
+		while (gtk_events_pending ()) {
+			gtk_main_iteration ();
+		}
 		gtk_dialog_run (GTK_DIALOG (note));
 	
 		on_destroy_dialog (note);
