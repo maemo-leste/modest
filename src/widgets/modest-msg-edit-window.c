@@ -4284,11 +4284,7 @@ update_signature (ModestMsgEditWindow *self,
 		signature = modest_account_mgr_get_signature_from_recipient (mgr, old_account, &has_old_signature);
 		if (has_old_signature) {
 			GtkTextIter match_start, match_end;
-			/* We cannot use
-			   MODEST_TEXT_UTILS_SIGNATURE_MARKER as it
-			   seems that the search has some problems
-			   with the blank space at the end */
-			if (gtk_text_iter_forward_search (&iter, "--",
+			if (gtk_text_iter_forward_search (&iter, MODEST_TEXT_UTILS_SIGNATURE_MARKER,
 							  GTK_TEXT_SEARCH_TEXT_ONLY,
 							  &match_start, NULL, NULL)) {
 				gtk_text_buffer_get_end_iter (priv->text_buffer ,&match_end);
@@ -4326,10 +4322,10 @@ update_signature (ModestMsgEditWindow *self,
 							      full_signature, -1,
 							      fmt, TRUE);
 			g_free (fmt);
-			g_free (full_signature);
 		} else {
 			gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);
 		}
+		g_free (full_signature);
 	}
 	g_free (signature);
 	gtk_text_buffer_end_user_action (priv->text_buffer);
