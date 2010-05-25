@@ -542,6 +542,11 @@ modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data
 			g_string_append_c (html, kar);
 		}
 	}
+
+	/* check if the last char in the 'data' is a space */
+	if (space_seen) {
+		g_string_append (html, "&#32;");
+	}
 }
 
 
@@ -2311,17 +2316,30 @@ modest_text_utils_create_colored_signature (const gchar *signature)
 	gchar *gray_color_markup = NULL, *retval;
 	GdkColor color;
 	GtkWidget *widget;
+	GString *html_signature;
+	GString *html_signature_marker;
 
 	/* Get color from widgets */
 	widget = (GtkWidget *) modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
 	if (widget && gtk_style_lookup_color (gtk_widget_get_style (widget), "SecondaryTextColor", &color))
 		gray_color_markup = modest_text_utils_get_color_string (&color);
 
+	/* convert the signature to HTML format */
+	html_signature = g_string_new ("");
+	modest_text_utils_convert_buffer_to_html_start (html_signature, signature, -1);
+
+	/* get the signature marker */
+	html_signature_marker = g_string_new ("");
+	modest_text_utils_convert_buffer_to_html_start (html_signature_marker,
+		MODEST_TEXT_UTILS_SIGNATURE_MARKER, -1);
+
 	retval = g_strdup_printf ("<br/>\n<font color=\"%s\">%s<br/>\n%s<br/>\n</font>",
 				  (gray_color_markup) ? gray_color_markup : "#babababababa",
-				  MODEST_TEXT_UTILS_SIGNATURE_MARKER,
-				  signature);
+				  html_signature_marker->str,
+				  html_signature->str);
 
+	g_string_free (html_signature_marker, TRUE);
+	g_string_free (html_signature, TRUE);
 	if (gray_color_markup)
 		g_free (gray_color_markup);
 
