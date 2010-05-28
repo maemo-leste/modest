@@ -1,3 +1,14 @@
+modest (3.4.0) unstable; urgency=low
+
+  * Fixes: NB#159563 IMAP4 email account automatic sync interval update not working
+  * Fixes: NB#120969 Signature separator misses trailing space (RFC 3676 violation)
+  * Fixes: NB#162686 modest recompilation with G_DISABLE_CAST_CHECKS
+  * Fixes: NB#160635 MfE inbox not refreshed after sync
+  * Fixes: NB#161187 MfE: opening a folder/message from the list view is painfully slow
+  * Created branch for 3.4 release series
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 28 May 2010 12:30:00 +0400
+
 modest (3.2.13-3) unstable; urgency=low
 
   * Week 08, 2010 - first release candidate
