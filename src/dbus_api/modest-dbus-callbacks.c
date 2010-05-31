@@ -1900,6 +1900,9 @@ headers_cmp (TnyHeader *a, TnyHeader *b)
 	return date_a - date_b;
 }
 
+/**
+  * The helper structure for handling GetUnreadMessages DBus request
+  */
 typedef struct {
 	TnyList *accounts_list;
 	TnyList *inboxes_list;
@@ -1908,13 +1911,14 @@ typedef struct {
 	DBusMessage *message;
 	GList *account_hits_list;
 	ModestMailOperation *mail_op;
+	guint folder_requests_total; /**< Total get-folder requests number for multi-mailbox accounts */
+	guint folder_requests_done; /**< Done get-folder requests number for multi-mailbox accounts */
 } GetUnreadMessagesHelper;
 
 typedef struct {
 	gchar *account_id;
 	gchar *account_name;
 	gchar *store_protocol;
-	gchar *mailbox_id;
 	gint unread_count;
 	GList *header_list;
 } AccountHits;
@@ -2034,11 +2038,10 @@ static void get_unread_messages_get_headers_cb (TnyFolder *self,
 	GList *result_list = NULL;
 	gint members_count = 0;
 	AccountHits *account_hits;
-	const gchar *folder_id;
-	const gchar *bar;
 	ModestProtocolType store_protocol_type;
 	ModestProtocol *store_protocol;
 	gint unread_count;
+	ModestProtocolRegistry *registry;
 
 	acc_iterator = tny_list_create_iterator (helper->accounts_list);
 	account = TNY_ACCOUNT (tny_iterator_get_current (acc_iterator));
@@ -2067,27 +2070,21 @@ static void get_unread_messages_get_headers_cb (TnyFolder *self,
 	}
 	g_object_unref (headers_iterator);
 
+	registry = modest_runtime_get_protocol_registry ();
+	store_protocol_type = modest_tny_account_get_protocol_type (account);
+
+	/* Get the number of unread messages for plug-in based accounts */
+	if (modest_protocol_registry_protocol_type_is_provider (registry, store_protocol_type)) {
+		unread_count = tny_folder_get_unread_count (self);
+	}
+
 	account_hits = g_slice_new (AccountHits);
 	account_hits->account_id = g_strdup (modest_tny_account_get_parent_modest_account_name_for_server_account (account));
 	account_hits->account_name = g_strdup (tny_account_get_name (account));
-	store_protocol_type = modest_tny_account_get_protocol_type (account);
-	store_protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), 
-									store_protocol_type);
+	store_protocol = modest_protocol_registry_get_protocol_by_type (registry, store_protocol_type);
 	account_hits->store_protocol = g_strdup (modest_protocol_get_name (store_protocol));
 	account_hits->header_list = result_list;
-	account_hits->mailbox_id = NULL;
 	account_hits->unread_count = unread_count;
-
-	folder_id = tny_folder_get_id (self);
-	bar = g_strstr_len (folder_id, -1, "/");
-	if (bar) {
-		gchar *prefix;
-		prefix = g_strndup (folder_id, bar - folder_id);
-		if (g_strstr_len (prefix, -1, "@")) {
-			account_hits->mailbox_id = g_strdup (prefix);
-		}
-		g_free (prefix);
-	}
 
 	helper->account_hits_list = g_list_prepend (helper->account_hits_list, account_hits);
 
@@ -2135,8 +2132,9 @@ static void get_account_folders_cb (TnyFolderStore *self, gboolean cancelled, Tn
 {
 	GetUnreadMessagesHelper *helper = (GetUnreadMessagesHelper *) user_data;
 	TnyIterator *iterator;
+	gboolean inbox_exists;
 
-	helper->inboxes_list =  TNY_LIST (tny_simple_list_new ());
+	inbox_exists = FALSE;
 	iterator = tny_list_create_iterator (list);
 	while (!tny_iterator_is_done (iterator)) {
 		TnyFolder *folder;
@@ -2145,16 +2143,129 @@ static void get_account_folders_cb (TnyFolderStore *self, gboolean cancelled, Tn
 		if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_INBOX) {
 			tny_list_prepend (helper->inboxes_list, G_OBJECT (folder));
 			g_object_unref (folder);
+			inbox_exists = TRUE;
 			break;
 		}
 		g_object_unref (folder);
 		tny_iterator_next (iterator);
 	}
 	g_object_unref (iterator);
-	
+
+	if (!inbox_exists) {
+		TnyAccount *account;
+		TnyIterator *accounts_it;
+		AccountHits *account_hit;
+		ModestProtocol *store_protocol;
+		ModestProtocolType store_protocol_type;
+
+		/* we have finished with the current account, prepare the account hit */
+		accounts_it = tny_list_create_iterator (helper->accounts_list);
+		account = TNY_ACCOUNT (tny_iterator_get_current (accounts_it));
+
+		if (!modest_tny_account_is_virtual_local_folders (account) &&
+			!modest_tny_account_is_memory_card_account (account)) {
+			/* the account does not have (yet) the inbox */
+			account_hit = g_slice_new (AccountHits);
+			account_hit->account_id = g_strdup (modest_tny_account_get_parent_modest_account_name_for_server_account (account));
+			account_hit->account_name = g_strdup (tny_account_get_name (account));
+			store_protocol_type = modest_tny_account_get_protocol_type (account);
+			store_protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), store_protocol_type);
+			account_hit->store_protocol = g_strdup (modest_protocol_get_name (store_protocol));
+			account_hit->header_list = NULL;
+			account_hit->unread_count = 0;
+
+			helper->account_hits_list = g_list_prepend (helper->account_hits_list, account_hit);
+		}
+	}
+
 	get_unread_messages_get_headers (helper);
 }
 
+static void get_multi_mailbox_account_folders_cb (TnyFolderStore *self, gboolean cancelled, TnyList *list, GError *err, gpointer user_data)
+{
+	GetUnreadMessagesHelper *helper = (GetUnreadMessagesHelper *) user_data;
+	TnyIterator *iterator;
+
+	/* another request has been finished */
+	helper->folder_requests_done += 1;
+
+	/* analize the folders we got */
+	iterator = tny_list_create_iterator (list);
+	while (!tny_iterator_is_done (iterator)) {
+		TnyFolder *folder;
+
+		folder = TNY_FOLDER (tny_iterator_get_current (iterator));
+		if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_INBOX) {
+			tny_list_prepend (helper->inboxes_list, G_OBJECT (folder));
+		}
+
+		/* Try to check if we have inbox sub-folders in this folder */
+		if (TNY_IS_FOLDER_STORE (folder)) {
+			TnyFolderStore *folder_store;
+
+			folder_store = TNY_FOLDER_STORE (folder);
+			if (folder_store) {
+				TnyList *folders_list;
+
+				helper->folder_requests_total += 1;
+				folders_list = tny_simple_list_new ();
+				tny_folder_store_get_folders_async (folder_store, folders_list,
+					NULL, FALSE, get_multi_mailbox_account_folders_cb, NULL, helper);
+				g_object_unref (folders_list);
+			}
+		}
+		g_object_unref (folder);
+		tny_iterator_next (iterator);
+	}
+	g_object_unref (iterator);
+
+	/* Check if we have handled all the inbox folders for multi-mailbox accounts */
+	if (helper->folder_requests_done == helper->folder_requests_total) {
+		TnyIterator *inboxes_it;
+		TnyIterator *accounts_it;
+		TnyAccount *account;
+		guint unread_messages;
+		AccountHits* account_hits;
+		ModestProtocol *store_protocol;
+		ModestProtocolType store_protocol_type;
+
+		/* Store the number of unread messages for the handled account */
+		unread_messages = 0;
+		accounts_it = tny_list_create_iterator (helper->accounts_list);
+		account = TNY_ACCOUNT (tny_iterator_get_current (accounts_it));
+		g_object_unref (accounts_it);
+		inboxes_it = tny_list_create_iterator (helper->inboxes_list);
+		while (!tny_iterator_is_done (inboxes_it)) {
+			TnyFolder *folder;
+
+			folder = TNY_FOLDER (tny_iterator_get_current (inboxes_it));
+			if (folder) {
+				unread_messages += tny_folder_get_unread_count (folder);
+			}
+			tny_iterator_next (inboxes_it);
+		}
+		g_object_unref (inboxes_it);
+		g_object_unref (helper->inboxes_list);
+		helper->inboxes_list = NULL;
+		account_hits = g_slice_new (AccountHits);
+		account_hits->account_id = g_strdup (
+			modest_tny_account_get_parent_modest_account_name_for_server_account (account));
+		account_hits->account_name = g_strdup (tny_account_get_name (account));
+		store_protocol_type = modest_tny_account_get_protocol_type (account);
+		store_protocol = modest_protocol_registry_get_protocol_by_type (
+			modest_runtime_get_protocol_registry (), store_protocol_type);
+		account_hits->store_protocol = g_strdup (modest_protocol_get_name (store_protocol));
+		account_hits->header_list = NULL;
+		account_hits->unread_count = unread_messages;
+		helper->account_hits_list = g_list_prepend (helper->account_hits_list, account_hits);
+
+		/* remove the handled account from the accounts_list */
+		tny_list_remove (helper->accounts_list, G_OBJECT (account));
+		g_object_unref (account);
+
+		get_unread_messages_get_account (helper);
+	}
+}
 
 static void
 get_unread_messages_get_account (GetUnreadMessagesHelper *helper)
@@ -2163,23 +2274,48 @@ get_unread_messages_get_account (GetUnreadMessagesHelper *helper)
 
 	/* Search through all accounts */
 	iterator = tny_list_create_iterator (helper->accounts_list);
-	if (tny_iterator_is_done (iterator)) {
-		/* all results, then finish */
-		return_results (helper);
-	} else {
-		TnyAccount *account = NULL;
-		TnyList *folders_list;
+	do {
+		if (tny_iterator_is_done (iterator)) {
+			/* all results, then finish */
+			return_results (helper);
+			break;
+		} else {
+			TnyAccount *account;
 
-		account = TNY_ACCOUNT (tny_iterator_get_current (iterator));
-		folders_list = TNY_LIST (tny_simple_list_new ());
-		tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account), folders_list, NULL,
-						    FALSE, get_account_folders_cb, NULL, helper);
-		g_object_unref (folders_list);
-		g_object_unref (account);
+			account = TNY_ACCOUNT (tny_iterator_get_current (iterator));
+			if (account && TNY_FOLDER_STORE (account) && TNY_IS_FOLDER_STORE (TNY_FOLDER_STORE (account))) {
+				TnyList *folders_list;
+				ModestProtocolType protocol_type;
 
-	}
+				protocol_type = modest_tny_account_get_protocol_type (account);
+
+				folders_list = tny_simple_list_new ();
+				helper->inboxes_list =  tny_simple_list_new ();
+				if (MODEST_PROTOCOL_REGISTRY_TYPE_INVALID != protocol_type &&
+					modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+						protocol_type, MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS)) {
+					/* For multi-mailbox protocols we only can get the number of unread messages,
+					   we will not even try to get their email headers */
+					helper->folder_requests_done = 0;
+					helper->folder_requests_total = 1;
+					tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account),
+						folders_list, NULL, FALSE, get_multi_mailbox_account_folders_cb, NULL, helper);
+				}
+				else {
+					/* For non-multi-mailbox protocols we will get their email headers */
+					tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account),
+						folders_list, NULL, FALSE, get_account_folders_cb, NULL, helper);
+				}
+				g_object_unref (folders_list);
+				g_object_unref (account);
+				break;
+			}
+		}
+
+		/* incorrect item detected, move on to the next item */
+		tny_iterator_next (iterator);
+	} while (TRUE);
 	g_object_unref (iterator);
-
 }
 
 static gboolean
