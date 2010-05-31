@@ -1044,7 +1044,13 @@ modest_account_mgr_set_last_updated (ModestAccountMgr *self,
 				    time, 
 				    TRUE);
 
-	/* TODO: notify about changes */
+	/* if 'account_name' is not defined, use "<null>" string */
+	if (!account_name) {
+		account_name = "<null>";
+	}
+
+	/* send a folder-updated signal, using a dummi folder id */
+	modest_platform_emit_folder_updated_signal (account_name, "inbox");
 }
 
 gboolean
