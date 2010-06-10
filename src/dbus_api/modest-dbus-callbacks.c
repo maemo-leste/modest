@@ -2108,33 +2108,44 @@ get_unread_messages_get_headers (GetUnreadMessagesHelper *helper)
 	TnyIterator *iterator;
 
 	iterator = tny_list_create_iterator (helper->inboxes_list);
-	if (tny_iterator_is_done (iterator)) {
-		TnyIterator *accounts_iter;
-		TnyAccount *account;
-		g_object_unref (helper->inboxes_list);
-		helper->inboxes_list = NULL;
+	do {
+		if (tny_iterator_is_done (iterator)) {
+			TnyIterator *accounts_iter;
+			TnyAccount *account;
+			g_object_unref (helper->inboxes_list);
+			helper->inboxes_list = NULL;
 
-		accounts_iter = tny_list_create_iterator (helper->accounts_list);
-		account = TNY_ACCOUNT (tny_iterator_get_current (accounts_iter));
-		g_object_unref (accounts_iter);
+			accounts_iter = tny_list_create_iterator (helper->accounts_list);
+			account = TNY_ACCOUNT (tny_iterator_get_current (accounts_iter));
+			g_object_unref (accounts_iter);
 
-		tny_list_remove (helper->accounts_list, (GObject *) account);
-		g_object_unref (account);
-		get_unread_messages_get_account (helper);
-	} else {
-		TnyFolder *folder;
+			tny_list_remove (helper->accounts_list, (GObject *) account);
+			g_object_unref (account);
+			get_unread_messages_get_account (helper);
+			break;
+		} else {
+			TnyFolder *folder;
 
-		folder = TNY_FOLDER (tny_iterator_get_current (iterator));
-		if (folder) {
-			TnyList *headers_list;
+			folder = TNY_FOLDER (tny_iterator_get_current (iterator));
+			if (folder) {
+				TnyList *headers_list;
 
-			headers_list = TNY_LIST (tny_simple_list_new ());
-			tny_folder_get_headers_async (folder, headers_list, FALSE, (TnyGetHeadersCallback) get_unread_messages_get_headers_cb, NULL, helper);
-			g_object_unref (headers_list);
-			tny_list_remove (helper->inboxes_list, G_OBJECT (folder));
-			g_object_unref (folder);
+				headers_list = TNY_LIST (tny_simple_list_new ());
+				tny_folder_get_headers_async (folder, headers_list, FALSE,
+					(TnyGetHeadersCallback) get_unread_messages_get_headers_cb,
+					NULL, helper);
+				g_object_unref (headers_list);
+				tny_list_remove (helper->inboxes_list, G_OBJECT (folder));
+				g_object_unref (folder);
+				break;
+			}
 		}
-	}
+
+		/* retrieved incorrect folder,
+		   move on to the next item in the inboxes_list */
+		tny_iterator_next (iterator);
+	} while (TRUE);
+
 	g_object_unref (iterator);
 }
 
@@ -2250,6 +2261,13 @@ static void get_multi_mailbox_account_folders_cb (TnyFolderStore *self, gboolean
 
 			folder = TNY_FOLDER (tny_iterator_get_current (inboxes_it));
 			if (folder) {
+				TnyList *headers;
+
+				/* before the number of unread messages
+				   can be retrieved, we need to get folders */
+				headers = tny_simple_list_new ();
+				tny_folder_get_headers (folder, headers, FALSE, NULL);
+				g_object_unref (headers);
 				unread_messages += tny_folder_get_unread_count (folder);
 			}
 			tny_iterator_next (inboxes_it);
