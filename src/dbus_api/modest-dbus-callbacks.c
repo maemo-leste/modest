@@ -2217,7 +2217,44 @@ static void get_multi_mailbox_account_folders_cb (TnyFolderStore *self, gboolean
 
 		folder = TNY_FOLDER (tny_iterator_get_current (iterator));
 		if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_INBOX) {
-			tny_list_prepend (helper->inboxes_list, G_OBJECT (folder));
+			const gchar *folder_id;
+
+			/**
+			 * @note for some reason, NMS account sometimes doubles the number of folder,
+			 *       temporary fix is to check if we already have a folder
+			 *       with the same id in the array before adding it to the result
+			 * @todo check why NMS account returns multiple number of the same folder
+			 */
+			folder_id = tny_folder_get_id (folder);
+			if (folder_id) {
+				gboolean alread_in_list;
+				TnyIterator *inboxes_it;
+
+				alread_in_list = FALSE;
+				inboxes_it = tny_list_create_iterator (helper->inboxes_list);
+				while (!tny_iterator_is_done (inboxes_it)) {
+					TnyFolder *folder;
+
+					folder = TNY_FOLDER (tny_iterator_get_current (inboxes_it));
+					if (folder) {
+						const gchar *inbox_id;
+
+						inbox_id = tny_folder_get_id (folder);
+						if (0 == g_strcmp0 (inbox_id, folder_id)) {
+							alread_in_list = TRUE;
+							break;
+						}
+					}
+
+					/* check the next folder in inboxes_list */
+					tny_iterator_next (inboxes_it);
+				}
+				g_object_unref (inboxes_it);
+
+				if (!alread_in_list) {
+					tny_list_prepend (helper->inboxes_list, G_OBJECT (folder));
+				}
+			}
 		}
 
 		/* Try to check if we have inbox sub-folders in this folder */
@@ -2339,22 +2376,49 @@ get_unread_messages_get_account (GetUnreadMessagesHelper *helper)
 				break;
 			}
 		}
-
 		/* incorrect item detected, move on to the next item */
 		tny_iterator_next (iterator);
 	} while (TRUE);
 	g_object_unref (iterator);
 }
 
+/**
+ * This functions checkes if the item refers to a Modest virtual local folder
+ * @param[in] list The pointer to the list of accounts
+ * @param[in] item The current pointer in the list
+ * @param[in] match_data NULL pointer
+ * @return TRUE if the item is a Modest virtual local folder, FALSE otherwize
+ * @note This functions is used for removing local accounts
+ *       while collecting statistics information for unread messages
+ */
+static gboolean
+modest_local_accounts_matcher (TnyList *list G_GNUC_UNUSED, GObject *item, gpointer match_data G_GNUC_UNUSED)
+{
+	/* remove incorrect pointers */
+	g_return_val_if_fail (item, TRUE);
+	g_return_val_if_fail (TNY_ACCOUNT (item), TRUE);
+	g_return_val_if_fail (TNY_FOLDER_STORE (item), TRUE);
+	g_return_val_if_fail (TNY_IS_ACCOUNT (TNY_ACCOUNT (item)), TRUE);
+	g_return_val_if_fail (TNY_IS_FOLDER_STORE (TNY_FOLDER_STORE (item)), TRUE);
+
+	/* check if this is a virtual local folder */
+	return modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (item)) ||
+		modest_tny_account_is_memory_card_account (TNY_ACCOUNT (item));
+}
+
 static gboolean
 on_idle_get_unread_messages (GetUnreadMessagesHelper *helper)
 {
 	ModestTnyAccountStore *astore;
+
 	astore = modest_runtime_get_account_store ();
 
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE (astore),
 					helper->accounts_list,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+
+	/* remove the local accounts */
+	tny_list_remove_matches (helper->accounts_list, modest_local_accounts_matcher, NULL);
 
 	get_unread_messages_get_account (helper);
 
