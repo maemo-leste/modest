@@ -212,7 +212,6 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 										  ppriv->accounts_list,
 										  g_str_equal,
 										  TRUE);
-log.c
 	if (ppriv->accounts_list == NULL) {
 		gtk_widget_set_sensitive (GTK_WIDGET (ppriv->default_account_selector), FALSE);
 	} else {
