@@ -1,3 +1,12 @@
+modest (3.4.1) unstable; urgency=low
+
+  * Fixes: NB#155978 Unread messages count is not updated for Nokia messaging in email home applet
+  * Fixes: NB#163574 memory leak and unused call result in has_pending_addresses
+  * Fixes: NB#162742 memory leak in modest-text-utils.c:modest_text_utils_get_addresses_indexes
+  * Fixes: NB#157397 Unread count in email home applet is displayed wrongly for MFE account
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 11 Jun 2010 11:50:00 +0400
+
 modest (3.4.0) unstable; urgency=low
 
   * Fixes: NB#159563 IMAP4 email account automatic sync interval update not working
