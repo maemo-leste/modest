@@ -1,3 +1,106 @@
+modest (3.90.7) unstable; urgency=low
+
+  * Misc build fixes for maemo and gtk.
+  * Corrected maximum attachment file name length for ext3 FS.
+  * Do not display mmc accounts in the home applet.
+  * NMS: get headers, before the number of unread messages is available.
+  * When NMS account just defined, the applet doubled the number of
+  *    unread messages
+  * Fixes: NB#120969  Signature marker must have a space at the end of
+  *    line.
+  * Fixes: NB#133703  Do not display a Small bar in accounts view on DBus
+  *    activation.
+  * Fixes: NB#138927  The default protocol should be IMAP rather than
+  *    POP.
+  * Fixes: NB#142038  Corrected strings consistency when forwarding
+  *    messages. Added separators (':') after 'From', 'Sent', 'To' and
+  *    'Subject' when forwarding messages.
+  * Fixes: NB#145380  Fixed the default region in account details wizard.
+  * Fixes: NB#147186  Some email recipients disappear when pilots tester
+  *    makes reply-all in mail.
+  * Fixes: NB#152693  Fixed handling attachments with incorrect chars in
+  *    their filenames.
+  * Fixes: NB#154483  Using comma as email recipient separator does not
+  *    work.
+  * Fixes: NB#155762  Signature is not aligned properly in Modest editor
+  *    window.
+  * Fixes: NB#155978  Implemented the home applet info for NMS account.
+  * Fixes: NB#156633  Accounts removed from email widget and (no accounts)
+  *    string shows when aol account is defined.
+  * Fixes: NB#157839  Fixed adding an e-mail address to a contact from
+  *    E-mail application.
+  * Fixes: NB#158455  Added handling for multiple info notes in Modest.
+  * Fixes: NB#159563  IMAP4 email account automatic sync interval update
+  *    not working.
+  * Fixes: NB#160433  Hindi rendering - Email - Contact card saved in
+  *    Hindi is not properly sent via email attachment.
+  * Fixes: NB#161187  Reset the account notifications as soon as the they
+  *    are removed on UI.
+  * Fixes: NB#161967  Crash in modest.
+  * Fixes: NB#162686  Disabled GLib cast checks in Modest.
+  * Fixes: NB#162742  Fixed memory leak in
+  *    modest_text_utils_get_addresses_indexes.
+  * Fixes: NB#163574  Fixed memory leak and unused call result in
+  *    has_pending_addresses.
+  * Fixes: NB#164739  Space not allowed in username popup (which is not
+  *    true).
+  * Fixes: NB#164966  Fixed the Email global settings dialog after opening
+  *    Phone app in Portrait mode.
+  * Fixes: NB#165067  Added handling for multiple info notes in Modest.
+
+ -- Jose Dapena Paz <jdapena@igalia.com>  Tue, 09 Feb 2010 08:15:19 +0100
+
+modest (3.90.6) unstable; urgency=low
+
+  * Cache casefold of strings to speed up live search in headers list.
+  * Reduce get_value operations in filter_row of modest header view.
+  * Set the proper screen size of ModestShell window.
+  * Set the proper parent class for window classes.
+  * Show context menu in response to right button clicks for non Hildon2
+  *    platforms.
+  * Fixed alignment of header widgets in editor for non Hildon2 platforms.
+  * Fixed a crash when moving messages.
+  * Do not set fullscreen in Moblin as it does not allow to show the top menu.
+  * New policy for hildon2 window manager. Show make open_Account methods work
+  *    better.
+  * Emit the folder updated signal on message move.
+  * Remove spacing in headers view calendar, as it was causing a very bad
+  *    effect as the spacing area didn't have the grey background color.
+  * Corrected the number of unread messages for plug-in based protocols.
+  * Implemented correct number of unread messages for multi-mailbox accounts.
+  * Fixed message times for the email home applet.
+  * Misc build fixes.
+  * Fixes: NB#148667  Eat blank spaces after quote symbol before on requoting.
+  * Fixes: NB#149525  Added support for external addressbook Nokia service
+  *    in hildon (com.nokia.asdbus).
+  * Fixes: NB#149836  Set better modal windows in hildon2 window manager to
+  *    avoid keyboard focus hangs.
+  * Fixes: NB#151325  Refresh the book and book view in addressbook if it
+  *    changes in the abook roster.
+  * Fixes: NB#155455  Show as active (color) the accounts that have new
+  *    messages.
+  * Fixes: NB#155972  Set header list model to load more responsive, using
+  *    the new tinymail method tny_gtk_header_list_model_set_update_in_batches.
+  * Fixes: NB#156451  By default editor toolbar should not be shown.
+  * Fixes: NB#156453  Proper icon for insert image action in hildon is
+  *    general_toolbar_image.
+  * Fixes: NB#156458  On receiving dbus ui calls, if we have a modal dialog
+  *    on top, raise modest properly.
+  * Fixes: NB#156612  New editor and msg view menu structures.
+  * Fixes: NB#156752  Update account view happens now in idle, to avoid bad
+  *    recursions.
+  * Fixes: NB#157019  Implemented center-alignment for selectors in the
+  *    global settings dialog
+  * Fixes: NB#157399  Set the active account on creating folder window from
+  *    mailboxes window, to avoid a crash caused by a bad rule in new
+  *    window manager for hildon2.
+  * Fixes: NB#157602  Fixed crash while handling email home applet request.
+  * Fixes: NB#157865  Activate a modal dialog only on UI DBus requests.
+  * Fixes: NB#158249  Fixed Modest crashes after tapping back button in new
+  *    mail editor.
+
+ -- Jose Dapena Paz <jdapena@igalia.com>  Wed, 03 Mar 2010 16:29:43 +0100
+
 modest (3.90.5) unstable; urgency=low
 
   * Add find toolbar to headers window.
