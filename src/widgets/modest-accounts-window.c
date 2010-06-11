@@ -620,12 +620,16 @@ row_count_changed (ModestAccountsWindow *self)
 	if (count == 0) {
 		gtk_widget_hide (priv->account_view);
 		gtk_widget_show (priv->no_accounts_container);
+#ifdef MODEST_TOOLKIT_HILDON2
 		hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), FALSE);
+#endif
 		g_debug ("%s: hiding accounts view", __FUNCTION__);
 	} else {
 		gtk_widget_hide (priv->no_accounts_container);
 		gtk_widget_show (priv->account_view);
+#ifdef MODEST_TOOLKIT_HILDON2
 		hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), TRUE);
+#endif
 		g_debug ("%s: showing accounts view", __FUNCTION__);
 	}
 	gtk_container_child_set (GTK_CONTAINER(priv->box), priv->scrollable, 
