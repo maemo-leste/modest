@@ -2338,11 +2338,13 @@ modest_text_utils_create_colored_signature (const gchar *signature)
 	/* convert the signature to HTML format */
 	html_signature = g_string_new ("");
 	modest_text_utils_convert_buffer_to_html_start (html_signature, signature, -1);
+	modest_text_utils_convert_buffer_to_html_finish (html_signature);
 
 	/* get the signature marker */
 	html_signature_marker = g_string_new ("");
 	modest_text_utils_convert_buffer_to_html_start (html_signature_marker,
 		MODEST_TEXT_UTILS_SIGNATURE_MARKER, -1);
+	modest_text_utils_convert_buffer_to_html_finish (html_signature_marker);
 
 	retval = g_strdup_printf ("<br/>\n<font color=\"%s\">%s<br/>\n%s<br/>\n</font>",
 				  (gray_color_markup) ? gray_color_markup : "#babababababa",
