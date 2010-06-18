@@ -1,3 +1,12 @@
+modest (3.4.2) unstable; urgency=low
+
+  * Fixes: NB#154483 Using comma as email recipient separator does not work
+  * Fixes: NB#147186 Some email recipients disappear when pilots tester makes reply-all in mail
+  * Fixes: NB#171888 POP3 emails deleted from server though "Leave messages on server" checked (PR1.2 regression)
+  * Fixes: NB#155958 Latest received messages have different time stamps in home applet and in the Inbox headers views
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 18 Jun 2010 15:00:00 +0400
+
 modest (3.4.1) unstable; urgency=low
 
   * Fixes: NB#155978 Unread messages count is not updated for Nokia messaging in email home applet
