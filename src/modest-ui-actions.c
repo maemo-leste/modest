@@ -198,6 +198,10 @@ static void modest_ui_actions_on_window_move_to (GtkAction *action,
 						 TnyFolderStore *dst_folder,
 						 ModestWindow *win);
 
+static void
+modest_ui_actions_send_receive_offline (TnyCamelAccount *account,
+	gboolean canceled, GError *err, gpointer user_data);
+
 /*
  * This function checks whether a TnyFolderStore is a pop account
  */
@@ -2526,6 +2530,8 @@ typedef struct {
 	gboolean poke_status;
 	gboolean interactive;
 	ModestMailOperation *mail_op;
+	GtkWindow *parent_window;
+	gboolean force_connection;
 } SendReceiveInfo;
 
 static void
@@ -2594,6 +2600,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 {
 	gchar *acc_name = NULL;
 	SendReceiveInfo *info;
+	ModestProtocolType account_type;
 	ModestTnyAccountStore *acc_store;
 	TnyAccount *account;
 
@@ -2646,6 +2653,8 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	info->poke_status = poke_status;
 	info->interactive = interactive;
 	info->account = account;
+	info->parent_window = (win ? GTK_WINDOW (win) : NULL);
+	info->force_connection = force_connection;
 	/* We need to create the operation here, because otherwise it
 	   could happen that the queue emits the queue-empty signal
 	   while we're trying to connect the account */
@@ -2654,12 +2663,32 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 								       NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), info->mail_op);
 
-	/* Invoke the connect and perform */
-	modest_platform_connect_and_perform ((win) ? GTK_WINDOW (win) : NULL,
-					     force_connection, info->account,
-					     do_send_receive_performer, info);
+	/* for POP3 account we should go offline before we can sync account */
+	account_type = modest_tny_account_get_protocol_type (account);
+	if (MODEST_PROTOCOLS_STORE_POP == account_type) {
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account),
+			FALSE, modest_ui_actions_send_receive_offline, info);
+	}
+	else {
+		/* Invoke the connect and perform */
+		modest_platform_connect_and_perform (info->parent_window,
+			force_connection, info->account, do_send_receive_performer, info);
+	}
 }
 
+static void
+modest_ui_actions_send_receive_offline (TnyCamelAccount *account,
+	gboolean canceled, GError *err, gpointer user_data)
+{
+	SendReceiveInfo *info;
+
+	info = (SendReceiveInfo *)user_data;
+
+	/* Invoke the connect and perform */
+	modest_platform_connect_and_perform (
+		info->parent_window ? info->parent_window : NULL,
+		info->force_connection, info->account, do_send_receive_performer, info);
+}
 
 static void
 modest_ui_actions_do_cancel_send (const gchar *account_name,
