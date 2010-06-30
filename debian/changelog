@@ -1,6 +1,14 @@
+modest (3.4.5) unstable; urgency=low
+
+  * Fixes: NB#145380 Default region in Account details wizard is selected wrongly
+  * Fixes: NB#171352 Manual send & receive doesn't always retrieve emails
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 30 Jun 2010 16:30:00 +0400
+
 modest (3.4.4) unstable; urgency=low
 
-  * Fixes: NB#171352 Manual send & receive doesn't always retrieve emails
+  * Preliminary fix for the bug #171352. POP3 account
+  *     should disconnect before another sync is started
 
  -- Moises Martinez <moises.martinez@nokia.com>  Tue, 29 Jun 2010 11:00:00 +0400
 
