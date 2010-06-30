@@ -4184,6 +4184,47 @@ modest_mail_operation_noop (ModestMailOperation *self)
 	modest_mail_operation_notify_end (self);
 }
 
+static void
+modest_mail_operation_disconnect_account_cb (TnyCamelAccount *account,
+	gboolean canceled, GError *err, gpointer user_data)
+{
+	ModestMailOperation *self;
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (user_data);
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (user_data));
+
+	self = (ModestMailOperation *)user_data;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	priv->done = 1;
+	priv->total = 1;
+	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+	modest_mail_operation_notify_end (self);
+}
+
+void modest_mail_operation_disconnect_account (ModestMailOperation *self, TnyAccount *account)
+{
+	ModestMailOperationPrivate *priv = NULL;
+
+	g_return_if_fail (self);
+	g_return_if_fail (account);
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_CAMEL_ACCOUNT (account));
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	priv->done = 0;
+	priv->total = 1;
+	priv->account = g_object_ref (TNY_CAMEL_ACCOUNT (account));
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_DISCONNECT_ACCOUNT;
+
+	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account),
+		FALSE, modest_mail_operation_disconnect_account_cb, self);
+	modest_mail_operation_notify_start (self);
+}
 
 gchar*
 modest_mail_operation_to_string (ModestMailOperation *self)

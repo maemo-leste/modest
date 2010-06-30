@@ -80,6 +80,7 @@ typedef enum {
 	MODEST_MAIL_OPERATION_TYPE_QUEUE_WAKEUP,
 	MODEST_MAIL_OPERATION_TYPE_UPDATE_FOLDER_COUNTS,
 	MODEST_MAIL_OPERATION_TYPE_UNKNOWN,
+	MODEST_MAIL_OPERATION_TYPE_DISCONNECT_ACCOUNT,
 } ModestMailOperationTypeOperation;
 
 /**
@@ -853,6 +854,12 @@ TnyAccount *modest_mail_operation_get_account   (ModestMailOperation *self);
  **/
 void modest_mail_operation_noop (ModestMailOperation *self);
 
+/**
+ * modest_mail_operation_disconnect_account:
+ * @param[in] self The pointer to the ModestMailOperation instance
+ * @param[in] account The pointer to the TnyAccount to be disconnected
+ */
+void modest_mail_operation_disconnect_account (ModestMailOperation *self, TnyAccount *account);
 
 /**
  * modest_mail_operation_to_string:

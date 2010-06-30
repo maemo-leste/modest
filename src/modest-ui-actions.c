@@ -199,8 +199,7 @@ static void modest_ui_actions_on_window_move_to (GtkAction *action,
 						 ModestWindow *win);
 
 static void
-modest_ui_actions_send_receive_offline (TnyCamelAccount *account,
-	gboolean canceled, GError *err, gpointer user_data);
+modest_ui_actions_send_receive_offline (ModestMailOperation *mail_op, gpointer user_data);
 
 /*
  * This function checks whether a TnyFolderStore is a pop account
@@ -2530,6 +2529,7 @@ typedef struct {
 	gboolean poke_status;
 	gboolean interactive;
 	ModestMailOperation *mail_op;
+	ModestMailOperation *disconnect_op;
 	GtkWindow *parent_window;
 	gboolean force_connection;
 } SendReceiveInfo;
@@ -2666,23 +2666,34 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	/* for POP3 account we should go offline before we can sync account */
 	account_type = modest_tny_account_get_protocol_type (account);
 	if (MODEST_PROTOCOLS_STORE_POP == account_type) {
-		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account),
-			FALSE, modest_ui_actions_send_receive_offline, info);
+		info->disconnect_op =
+			modest_mail_operation_new ((info->win) ? G_OBJECT (info->win) : NULL);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+			info->disconnect_op);
+		g_signal_connect (G_OBJECT (info->disconnect_op), "operation-finished",
+			G_CALLBACK (modest_ui_actions_send_receive_offline), info);
+		modest_mail_operation_disconnect_account (info->disconnect_op, account);
 	}
 	else {
 		/* Invoke the connect and perform */
 		modest_platform_connect_and_perform (info->parent_window,
 			force_connection, info->account, do_send_receive_performer, info);
+		info->disconnect_op = NULL;
 	}
 }
 
 static void
-modest_ui_actions_send_receive_offline (TnyCamelAccount *account,
-	gboolean canceled, GError *err, gpointer user_data)
+modest_ui_actions_send_receive_offline (ModestMailOperation *mail_op, gpointer user_data)
 {
 	SendReceiveInfo *info;
 
 	info = (SendReceiveInfo *)user_data;
+
+	/* release the 'disconnect' mail operation */
+	modest_mail_operation_queue_remove (
+		modest_runtime_get_mail_operation_queue (), info->disconnect_op);
+	g_object_unref (info->disconnect_op);
+	info->disconnect_op = NULL;
 
 	/* Invoke the connect and perform */
 	modest_platform_connect_and_perform (
