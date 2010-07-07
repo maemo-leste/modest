@@ -1,3 +1,9 @@
+modest (3.4.6) unstable; urgency=low
+
+  * Fixes: NB#177902 Email id is not getting updated in Email field in contacts if "automatically add to contacts" field is checked in email settings
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 07 Jul 2010 12:40:00 +0400
+
 modest (3.4.5) unstable; urgency=low
 
   * Fixes: NB#145380 Default region in Account details wizard is selected wrongly
