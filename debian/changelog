@@ -1,3 +1,9 @@
+modest (3.4.7) unstable; urgency=low
+
+  * Fixes: NB#176622 Email Attachment not visible if multipart/alternative mime types present
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 14 Jul 2010 09:45:00 +0400
+
 modest (3.4.6) unstable; urgency=low
 
   * Fixes: NB#177902 Email id is not getting updated in Email field in contacts if "automatically add to contacts" field is checked in email settings
