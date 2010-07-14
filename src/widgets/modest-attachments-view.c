@@ -84,6 +84,13 @@ static void clipboard_get (GtkClipboard *clipboard, GtkSelectionData *selection_
 static void own_clipboard (ModestAttachmentsView *atts_view);
 static void on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
 static void update_style (ModestAttachmentsView *self);
+/**
+ * Add all the attachments that exist in part and its sub-parts to the attachment view
+ * @param[in] self The pointer to the attachment view
+ * @param[in] part The pointer to the MIME part to be checked
+ */
+static gboolean
+modest_attachments_view_add_attachments (ModestAttachmentsView *self, TnyMimePart *part);
 
 static guint signals[LAST_SIGNAL] = {0};
 
@@ -127,7 +134,6 @@ add_digest_attachments (ModestAttachmentsView *attachments_view, TnyMimePart *pa
 	g_object_unref (parts);
 
 }
-
 
 void
 modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg)
@@ -224,7 +230,12 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 				   (g_str_has_prefix (content_type, "text/plain") ||
 				    g_str_has_prefix (content_type, "text/html"))) {
 				   modest_attachments_view_add_attachment (attachments_view, part, TRUE, 0);
-			} else if (g_str_has_prefix (content_type, "multipart/") || 
+			} else if (g_str_has_prefix (content_type, "multipart/mixed")) {
+				if (modest_attachments_view_add_attachments (attachments_view,
+					TNY_MIME_PART (part))) {
+					body_found = TRUE;
+				}
+			} else if (g_str_has_prefix (content_type, "multipart/") ||
 				   g_str_has_prefix (content_type, "text/plain") ||
 				   g_str_has_prefix (content_type, "text/html")) {
 				body_found = TRUE;
@@ -243,6 +254,54 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 
 	gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
 
+}
+
+static gboolean
+modest_attachments_view_add_attachments (ModestAttachmentsView *self, TnyMimePart *part)
+{
+	TnyList *sub_parts;
+	TnyIterator *sub_parts_iter;
+	gboolean is_attachment = FALSE;
+
+	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (part, FALSE);
+	g_return_val_if_fail (TNY_IS_MIME_PART (part), FALSE);
+	g_return_val_if_fail (MODEST_IS_ATTACHMENTS_VIEW (self), FALSE);
+
+	sub_parts = TNY_LIST (tny_simple_list_new ());
+	tny_mime_part_get_parts (part, sub_parts);
+	sub_parts_iter = tny_list_create_iterator (sub_parts);
+	while (!tny_iterator_is_done (sub_parts_iter)) {
+		TnyMimePart *sub_part;
+
+		/* if this is an attachment, add it to the attachment list */
+		sub_part = TNY_MIME_PART (tny_iterator_get_current (sub_parts_iter));
+		if (modest_tny_mime_part_is_attachment_for_modest (sub_part)) {
+			modest_attachments_view_add_attachment (self, sub_part, TRUE, 0);
+			is_attachment = TRUE;
+		}
+		else {
+			const gchar *sub_content_type;
+
+			sub_content_type = tny_mime_part_get_content_type (sub_part);
+			if (g_str_has_prefix (sub_content_type, "multipart/mixed")) {
+				if (modest_attachments_view_add_attachments (self, sub_part)) {
+					is_attachment = TRUE;
+				}
+			}
+			else if (g_str_has_prefix (sub_content_type, "application/")) {
+				modest_attachments_view_add_attachment (self, sub_part, TRUE, 0);
+				is_attachment = TRUE;
+			}
+		}
+
+		/* move on to the next part */
+		tny_iterator_next (sub_parts_iter);
+	}
+	g_object_unref (sub_parts_iter);
+	g_object_unref (sub_parts);
+
+	return is_attachment;
 }
 
 void
