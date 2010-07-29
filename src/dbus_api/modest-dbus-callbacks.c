@@ -1937,6 +1937,8 @@ typedef struct {
 	ModestMailOperation *mail_op;
 	guint folder_requests_total; /**< Total get-folder requests number for multi-mailbox accounts */
 	guint folder_requests_done; /**< Done get-folder requests number for multi-mailbox accounts */
+	guint get_headers_tries_left;
+	TnyFolder *tmp_folder_ptr;
 } GetUnreadMessagesHelper;
 
 typedef struct {
@@ -2048,12 +2050,29 @@ static void return_results (GetUnreadMessagesHelper *helper)
 
 static void get_unread_messages_get_account (GetUnreadMessagesHelper *helper);
 static void get_unread_messages_get_headers (GetUnreadMessagesHelper *helper);
+static void get_unread_messages_get_headers_cb (TnyFolder *self, gboolean cancelled,
+	TnyList *headers, GError *err, GetUnreadMessagesHelper *helper);
+
+static gboolean
+send_get_headers_request (GetUnreadMessagesHelper *helper)
+{
+	TnyList *headers_list;
+
+	headers_list = TNY_LIST (tny_simple_list_new ());
+	tny_folder_get_headers_async (helper->tmp_folder_ptr, headers_list, FALSE,
+		(TnyGetHeadersCallback) get_unread_messages_get_headers_cb, NULL, helper);
+	g_object_unref (headers_list);
+	g_object_unref (helper->tmp_folder_ptr);
+	helper->tmp_folder_ptr = NULL;
+
+	return FALSE;
+}
 
 
 static void get_unread_messages_get_headers_cb (TnyFolder *self,
-						gboolean cancelled, 
+						gboolean cancelled,
 						TnyList *headers,
-						GError *err, 
+						GError *err,
 						GetUnreadMessagesHelper *helper)
 {
 	TnyIterator *acc_iterator;
@@ -2099,7 +2118,31 @@ static void get_unread_messages_get_headers_cb (TnyFolder *self,
 
 	/* Get the number of unread messages for plug-in based accounts */
 	if (modest_protocol_registry_protocol_type_is_provider (registry, store_protocol_type)) {
-		unread_count = tny_folder_get_unread_count (self);
+		guint folder_unread_count;
+
+		folder_unread_count = tny_folder_get_unread_count (self);
+		if (folder_unread_count != unread_count &&
+			unread_count != helper->unread_msgs_count) {
+			/* the number of unread messages is incorrect, try again */
+			if (helper->get_headers_tries_left--) {
+				/* try again at a small timeout */
+				helper->tmp_folder_ptr = g_object_ref (self);
+
+				g_timeout_add (200, (GSourceFunc)send_get_headers_request, helper);
+
+				g_warning ("Getting unread messages, tries left: (%d)",
+					helper->get_headers_tries_left);
+				return;
+			}
+			else {
+				/* too many tries, give up for now */
+				unread_count = 0;
+				g_warning ("Getting unread messages: failed");
+			}
+		}
+		else {
+			unread_count = folder_unread_count;
+		}
 	}
 
 	account_hits = g_slice_new (AccountHits);
@@ -2145,6 +2188,7 @@ get_unread_messages_get_headers (GetUnreadMessagesHelper *helper)
 				TnyList *headers_list;
 
 				headers_list = TNY_LIST (tny_simple_list_new ());
+				helper->get_headers_tries_left = 20;
 				tny_folder_get_headers_async (folder, headers_list, FALSE,
 					(TnyGetHeadersCallback) get_unread_messages_get_headers_cb,
 					NULL, helper);
