@@ -1,3 +1,9 @@
+modest (3.4.8) unstable; urgency=low
+
+  * Fixes: NB#180745 Fixed crash in modest-home-applet
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 29 Jul 2010 16:00:00 +0400
+
 modest (3.4.7) unstable; urgency=low
 
   * Fixes: NB#176622 Email Attachment not visible if multipart/alternative mime types present
