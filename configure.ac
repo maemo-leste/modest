@@ -458,7 +458,7 @@ if test "x$with_platform" == "xmaemo"; then
 
   # warnings are errors, but don't check format errors, because
   # it breaks with logical ids
-  CFLAGS="$CFLAGS -Wno-format-extra-args -Werror"
+  CFLAGS="$CFLAGS -Wno-format-extra-args"
 
    desktopentrydir=`$PKG_CONFIG osso-af-settings --variable=desktopentrydir`
    serviceentrydir=`$PKG_CONFIG dbus-glib-1 --variable=prefix`/share/dbus-1/services
