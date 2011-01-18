@@ -1,3 +1,15 @@
+modest (3.90.7-3) unstable; urgency=low
+
+  * Version bump to push to gitorious.
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Tue, 18 Jan 2011 17:24:21 +0200
+
+modest (3.90.7-2) unstable; urgency=low
+
+  * LED pattern adjusted so it's stock PR1.2 compatible.
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Wed, 24 Sep 2010 18:50:29 +0200
+
 modest (3.90.7-1) unstable; urgency=low
 
   * Added patches from bugs #2563 and #3700.
