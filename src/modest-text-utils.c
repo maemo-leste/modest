@@ -996,7 +996,9 @@ get_breakpoint (const gchar * s, const gint indent, const gint limit)
 static gchar *
 cite (const time_t sent_date, const gchar *from)
 {
-	return g_strdup (_("mcen_ia_editor_original_message"));
+	char sent_str[101];
+	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
+	return g_strdup_printf("On %s, %s wrote:\n", sent_str, from);
 }
 
 static gchar *
