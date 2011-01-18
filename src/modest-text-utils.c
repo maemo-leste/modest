@@ -1122,16 +1122,15 @@ modest_text_utils_quote_plain_text (const gchar *text,
 
 	q = g_string_new ("");
 
-	if (signature != NULL) {
-		g_string_append_printf (q, "\n%s\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER);
-		q = g_string_append (q, signature);
-	}
-
-	q = g_string_append (q, "\n");
 	q = g_string_append (q, cite);
 	q = g_string_append_c (q, '\n');
 
 	q = modest_text_utils_quote_body (q, text, ">", limit);
+
+	if (signature != NULL) {
+		g_string_append_printf (q, "\n%s\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER);
+		q = g_string_append (q, signature);
+	}
 
 	attachments_string = quoted_attachments (attachments);
 	q = g_string_append (q, attachments_string);
