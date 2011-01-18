@@ -1,3 +1,9 @@
+modest (3.90.7-1) unstable; urgency=low
+
+  * Added patches from bugs #2563 and #3700.
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Wed, 25 Aug 2010 21:52:45 +0100
+
 modest (3.90.7) unstable; urgency=low
 
   * Misc build fixes for maemo and gtk.
