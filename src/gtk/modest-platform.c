@@ -73,7 +73,7 @@
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
 #define MODEST_NOTIFICATION_CATEGORY "email-message"
-#define MODEST_NEW_MAIL_LIGHTING_PATTERN "PatternChatAndEmail"
+#define MODEST_NEW_MAIL_LIGHTING_PATTERN "PatternCommunicationEmail"
 
 #define COMMON_FOLDER_DIALOG_ENTRY "entry"
 #define COMMON_FOLDER_DIALOG_ACCOUNT_PICKER "account-picker"
