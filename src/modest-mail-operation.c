@@ -247,7 +247,6 @@ static void          modest_mail_operation_create_msg (ModestMailOperation *self
 						       const GList *images_list,
 						       TnyHeaderFlags priority_flags,
 						       const gchar *references, const gchar *in_reply_to,
-						       TnyList *header_pairs,
 						       ModestMailOperationCreateMsgCallback callback,
 						       gpointer userdata);
 
@@ -267,7 +266,6 @@ typedef struct
 	GList *attachments_list;
 	GList *images_list;
 	TnyHeaderFlags priority_flags;
-	TnyList *header_pairs;
 	ModestMailOperationCreateMsgCallback callback;
 	gpointer userdata;
 } CreateMsgInfo;
@@ -856,7 +854,6 @@ create_msg_thread (gpointer thread_data)
 					      info->references, info->in_reply_to,
 					      info->plain_body, 
 					      info->attachments_list, &attached,
-					      info->header_pairs,
 					      &(priv->error));
 	} else {
 		new_msg = modest_tny_msg_new_html_plain (info->to, info->from, info->cc,
@@ -865,7 +862,6 @@ create_msg_thread (gpointer thread_data)
 							 info->html_body,
 							 info->plain_body, info->attachments_list,
 							 info->images_list, &attached,
-							 info->header_pairs,
 							 &(priv->error));
 	}
 
@@ -903,7 +899,6 @@ create_msg_thread (gpointer thread_data)
 	g_list_free (info->attachments_list);
 	g_list_foreach (info->images_list, (GFunc) g_object_unref, NULL);
 	g_list_free (info->images_list);
-	g_object_unref (info->header_pairs);
 
 	if (info->callback) {
 		CreateMsgIdleInfo *idle_info;
@@ -935,7 +930,6 @@ modest_mail_operation_create_msg (ModestMailOperation *self,
 				  TnyHeaderFlags priority_flags,
 				  const gchar *references,
 				  const gchar *in_reply_to,
-				  TnyList *header_pairs,
 				  ModestMailOperationCreateMsgCallback callback,
 				  gpointer userdata)
 {
@@ -958,7 +952,6 @@ modest_mail_operation_create_msg (ModestMailOperation *self,
 	info->images_list = g_list_copy ((GList *) images_list);
 	g_list_foreach (info->images_list, (GFunc) g_object_ref, NULL);
 	info->priority_flags = 0 | priority_flags;
-	info->header_pairs = tny_list_copy (header_pairs);
 
 	info->callback = callback;
 	info->userdata = userdata;
@@ -1165,8 +1158,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     const GList *images_list,
 				     const gchar *references,
 				     const gchar *in_reply_to,
-				     TnyHeaderFlags priority_flags,
-				     TnyList *header_pairs)
+				     TnyHeaderFlags priority_flags)
 {
 	ModestMailOperationPrivate *priv = NULL;
 	SendNewMailInfo *info;
@@ -1203,7 +1195,6 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
 					  attachments_list, images_list, priority_flags,
 					  references, in_reply_to,
-					  header_pairs,
 					  modest_mail_operation_send_new_mail_cb, info);
 
 }
@@ -1435,7 +1426,6 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 				      TnyHeaderFlags priority_flags,
 				      const gchar *references,
 				      const gchar *in_reply_to,
-				      TnyList *header_pairs,
 				      SaveToDraftstCallback callback,
 				      gpointer user_data)
 {
@@ -1462,7 +1452,6 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
 					  attachments_list, images_list, priority_flags,
 					  references, in_reply_to,
-					  header_pairs,
 					  modest_mail_operation_save_to_drafts_cb, info);
 }
 

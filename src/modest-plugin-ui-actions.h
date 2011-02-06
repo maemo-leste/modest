@@ -133,7 +133,7 @@ modest_ui_actions_on_send_custom_msg (const gchar *account_name,
 				      const gchar *plain_body, const gchar *html_body,
 				      const GList *attachments_list, const GList *images_list,
 				      const gchar *references, const gchar *in_reply_to,
-				      TnyHeaderFlags priority_flags, TnyList *header_pairs);
+				      TnyHeaderFlags priority_flags);
 
 /**
  * modest_ui_actions_on_send_custom_msg:
@@ -160,7 +160,7 @@ modest_ui_actions_send_msg_with_transport (TnyTransportAccount *transport_accoun
 					   const gchar *plain_body, const gchar *html_body,
 					   const GList *attachments_list, const GList *images_list,
 					   const gchar *references, const gchar *in_reply_to,
-					   TnyHeaderFlags priority_flags, TnyList *header_pairs);
+					   TnyHeaderFlags priority_flags);
 
 G_END_DECLS
 #endif /* __MODEST_PLUGIN_UI_ACTIONS_H__ */

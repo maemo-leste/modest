@@ -683,7 +683,6 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	GnomeVFSFileSize total_size, allowed_size;
 	guint64 available_disk, expected_size, parts_size;
 	guint parts_count;
-	TnyList *header_pairs;
 
 	/* we check for low-mem */
 	if (modest_platform_check_memory_low (win, TRUE))
@@ -755,11 +754,8 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	body = use_signature ? g_strconcat ((body_str) ? body_str : "", signature, NULL) :
 		g_strdup(body_str);
 
-	header_pairs = TNY_LIST (tny_simple_list_new ());
 	msg = modest_tny_msg_new_html_plain (to_str, from_str, cc_str, bcc_str, subject_str,
-					     NULL, NULL, body, NULL, NULL, NULL, NULL, header_pairs, NULL);
-	g_object_unref (header_pairs);
-
+					     NULL, NULL, body, NULL, NULL, NULL, NULL, NULL);
 	if (!msg) {
 		g_printerr ("modest: failed to create new msg\n");
 		goto cleanup;
@@ -2822,7 +2818,6 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      data->priority_flags,
 					      data->references,
 					      data->in_reply_to,
-					      data->custom_header_pairs,
 					      on_save_to_drafts_cb,
 					      g_object_ref(edit_window));
 
@@ -2936,8 +2931,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 							    data->images,
 							    data->references,
 							    data->in_reply_to,
-							    data->priority_flags,
-							    data->custom_header_pairs);
+							    data->priority_flags);
 
 
 	/* Free data: */
@@ -2964,7 +2958,7 @@ modest_ui_actions_on_send_custom_msg (const gchar *account_name,
 				      const gchar *plain_body, const gchar *html_body,
 				      const GList *attachments_list, const GList *images_list,
 				      const gchar *references, const gchar *in_reply_to,
-				      TnyHeaderFlags priority_flags, TnyList *header_pairs)
+				      TnyHeaderFlags priority_flags)
 {
 	TnyTransportAccount *transport_account = NULL;
 	gboolean result = FALSE;
@@ -2985,7 +2979,7 @@ modest_ui_actions_on_send_custom_msg (const gchar *account_name,
 							    plain_body, html_body,
 							    attachments_list, images_list,
 							    references, in_reply_to,
-							    priority_flags, header_pairs);
+							    priority_flags);
 
 	/* Free data: */
 	g_object_unref (G_OBJECT (transport_account));
@@ -3001,7 +2995,7 @@ modest_ui_actions_send_msg_with_transport (TnyTransportAccount *transport_accoun
 					   const gchar *plain_body, const gchar *html_body,
 					   const GList *attachments_list, const GList *images_list,
 					   const gchar *references, const gchar *in_reply_to,
-					   TnyHeaderFlags priority_flags, TnyList *header_pairs)
+					   TnyHeaderFlags priority_flags)
 {
 	gboolean had_error = FALSE;
 	ModestMailOperation *mail_operation;
@@ -3026,8 +3020,7 @@ modest_ui_actions_send_msg_with_transport (TnyTransportAccount *transport_accoun
 					     images_list,
 					     references,
 					     in_reply_to,
-					     priority_flags,
-					     header_pairs);
+					     priority_flags);
 
 	if (modest_mail_operation_get_status (mail_operation) == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));

@@ -81,7 +81,7 @@ TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gc
 			    const gchar *bcc, const gchar* subject, 
 			    const gchar *references, const gchar *in_reply_to,
 			    const gchar *body,
-			    GList *attachments, gint *attached, TnyList *header_pairs, GError **err);
+			    GList *attachments, gint *attached, GError **err);
 
 /**
  * modest_tny_msg_new_html_plain:
@@ -105,7 +105,7 @@ TnyMsg* modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* mailfro
 				       const gchar *bcc, const gchar* subject,
 				       const gchar *references, const gchar *in_reply_to,
 				       const gchar *html_body, const gchar *plain_body,
-				       GList *attachments, GList *images, gint *attached, TnyList *header_pairs, GError **err);
+				       GList *attachments, GList *images, gint *attached, GError **err);
 
 /**
  * modest_tny_msg_find_body_part:
