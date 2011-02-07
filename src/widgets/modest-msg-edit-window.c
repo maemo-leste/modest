@@ -4741,10 +4741,11 @@ _create_addressbook_box (GtkSizeGroup *title_size_group,
 
 	box = gtk_hbox_new (FALSE, 0);
 
-	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 #ifndef MODEST_TOOLKIT_HILDON2
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
 #else
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 0.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, 0, MODEST_MARGIN_DEFAULT);
 #endif
 
