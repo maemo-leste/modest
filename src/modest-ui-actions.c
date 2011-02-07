@@ -361,15 +361,16 @@ headers_action_mark_as_unread (TnyHeader *header,
 	}
 }
 
-/** After deleing a message that is currently visible in a window,
- * show the next message from the list, or close the window if there are no more messages.
+/** After deleting a message that is currently visible in a window,
+ * show the previoues (newer) message from the list, or close the 
+ * window if there are no more messages.
  **/
 void
 modest_ui_actions_refresh_message_window_after_delete (ModestMsgViewWindow* win)
 {
-	/* Close msg view window or select next */
-	if (!modest_msg_view_window_select_next_message (win) &&
-	    !modest_msg_view_window_select_previous_message (win)) {
+	/* Close msg view window or select previous (newer) */
+	if (!modest_msg_view_window_select_previous_message (win) &&
+	    !modest_msg_view_window_select_next_message (win)) {
 		gboolean ret_value;
 		g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
 	}
@@ -4876,8 +4877,8 @@ move_to_cb (ModestMailOperation *mail_op,
 	if (MODEST_IS_MSG_VIEW_WINDOW (object)) {
 		ModestMsgViewWindow *self = MODEST_MSG_VIEW_WINDOW (object);
 
-		if (!modest_msg_view_window_select_next_message (self) &&
-		    !modest_msg_view_window_select_previous_message (self)) {
+		if (!modest_msg_view_window_select_previous_message (self) &&
+		    !modest_msg_view_window_select_next(self)) {
 			/* No more messages to view, so close this window */
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
 		}
