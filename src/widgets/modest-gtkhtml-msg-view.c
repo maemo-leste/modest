@@ -111,6 +111,7 @@ static gboolean motion_notify_event (GtkWidget *widget,
 				     gpointer userdata);
 #endif
 
+#ifndef MODEST_TOOLKIT_HILDON2
 static gboolean 
 button_press_event (GtkWidget *widget,
 		    GdkEventButton *event,
@@ -119,6 +120,7 @@ static gboolean
 button_release_event (GtkWidget *widget,
 		      GdkEventButton *event,
 		      gpointer userdata);
+#endif
 
 /* GtkContainer methods */
 static void forall (GtkContainer *container, gboolean include_internals,
@@ -1205,10 +1207,13 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	g_signal_connect (G_OBJECT(priv->body_view), "motion-notify-event",
 			  G_CALLBACK (motion_notify_event), obj);
 #endif
+
+#ifndef MODEST_TOOLKIT_HILDON2
 	g_signal_connect (G_OBJECT (priv->body_view), "button-press-event",
 			  G_CALLBACK (button_press_event), obj);
 	g_signal_connect (G_OBJECT (priv->body_view), "button-release-event",
 			  G_CALLBACK (button_release_event), obj);
+#endif
 
 	g_signal_connect (G_OBJECT (priv->mail_header_view), "recpt-activated", 
 			  G_CALLBACK (on_recpt_activated), obj);
@@ -1378,6 +1383,7 @@ motion_notify_event (GtkWidget *widget,
 }
 #endif
 
+#ifndef MODEST_TOOLKIT_HILDON2
 static gboolean
 idle_motion (gpointer userdata)
 {
@@ -1429,6 +1435,7 @@ button_release_event (GtkWidget *widget,
 	}
 	return FALSE;
 }
+#endif
 
 static GtkAdjustment *
 get_vadjustment (ModestGtkhtmlMsgView *self)
