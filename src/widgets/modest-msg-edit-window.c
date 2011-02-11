@@ -2717,7 +2717,7 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 		return;
 
 	dialog = modest_toolkit_factory_create_file_chooser_dialog (modest_runtime_get_toolkit_factory (),
-								    _("mcen_ia_select_attachment_title"),
+								    _("mcen_ti_select_attachment_title"),
 								    (GtkWindow *) window,
 								    GTK_FILE_CHOOSER_ACTION_OPEN);
 	conf_folder = modest_conf_get_string (modest_runtime_get_conf (),
