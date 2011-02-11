@@ -1,3 +1,16 @@
+modest (3.90.7-5) unstable; urgency=low
+
+  * Applied naikel's patches, fixes bug #11858 and #11859.
+  * Use correct translation string, fixes bug #11835.
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Fri, 11 Feb 2011 21:28:05 +0200
+
+modest (3.90.7-4) unstable; urgency=low
+
+  * Applied naikel's patches to fix attachments (closes bug #11844).
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Mon,  7 Feb 2011 19:35:17 +0200
+
 modest (3.90.7-3) unstable; urgency=low
 
   * Version bump to push to gitorious.
