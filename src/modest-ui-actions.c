@@ -4878,7 +4878,7 @@ move_to_cb (ModestMailOperation *mail_op,
 		ModestMsgViewWindow *self = MODEST_MSG_VIEW_WINDOW (object);
 
 		if (!modest_msg_view_window_select_previous_message (self) &&
-		    !modest_msg_view_window_select_next(self)) {
+		    !modest_msg_view_window_select_next_message(self)) {
 			/* No more messages to view, so close this window */
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
 		}
