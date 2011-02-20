@@ -1,3 +1,10 @@
+modest (3.90.7-6) unstable; urgency=low
+
+  * Compilation fixes, thanks to David Fries.
+  * Horizontal scrolling fix.
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Sun, 20 Feb 2011 22:15:13 +0200
+
 modest (3.90.7-5) unstable; urgency=low
 
   * Applied naikel's patches, fixes bug #11858 and #11859.

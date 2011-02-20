@@ -575,7 +575,11 @@ init_window (ModestMsgViewWindow *obj)
 	priv->main_scroll = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	modest_scrollable_set_horizontal_policy (MODEST_SCROLLABLE (priv->main_scroll), GTK_POLICY_AUTOMATIC);
         g_object_set (G_OBJECT (priv->main_scroll),
+#ifdef MODEST_TOOLKIT_HILDON2
+		      "mov-mode", MODEST_MOVEMENT_MODE_BOTH,
+#else
 		      "movement-mode", MODEST_MOVEMENT_MODE_BOTH,
+#endif
 		      "horizontal-max-overshoot", 0,
 		      NULL);
 	gtk_container_add (GTK_CONTAINER (priv->main_scroll), priv->msg_view);
