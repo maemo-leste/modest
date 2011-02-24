@@ -84,6 +84,8 @@ static void on_activity_changed (ModestFolderView *view,
 static gboolean on_key_press(GtkWidget *widget,
 			     GdkEventKey *event,
 			     gpointer user_data);
+static void on_screen_changed(GdkScreen *screen,
+		              gpointer userdata);
 #endif
 
 typedef struct _ModestMailboxesWindowPrivate ModestMailboxesWindowPrivate;
@@ -239,6 +241,7 @@ static void
 connect_signals (ModestMailboxesWindow *self)
 {
 	ModestMailboxesWindowPrivate *priv;
+	GdkScreen *screen;
 
 	priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE(self);
 
@@ -269,6 +272,14 @@ connect_signals (ModestMailboxesWindow *self)
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
 
 #ifdef MODEST_TOOLKIT_HILDON2
+	screen = gtk_widget_get_screen(GTK_WIDGET(self));
+
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (screen), 
+					   "size-changed",
+			     		    G_CALLBACK (on_screen_changed), self);
+
 	/* connect window keys -> priv->folder_view scroll here? */
 	g_signal_connect(G_OBJECT(self), "key-press-event",
 			G_CALLBACK(on_key_press), self);
@@ -311,7 +322,7 @@ modest_mailboxes_window_new (const gchar *account)
 	GtkWidget *action_area_box;
 	GdkPixbuf *new_message_pixbuf;
 	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->folder_view));
-	priv->new_message_button = hildon_button_new (0, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
+	priv->new_message_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 
 	hildon_button_set_title (HILDON_BUTTON (priv->new_message_button), _("mcen_ti_new_message"));
 	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
@@ -674,5 +685,15 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	}
 
 	return FALSE;
+}
+
+static void
+on_screen_changed (GdkScreen *screen,
+                   gpointer   userdata) 
+{
+	ModestMailboxesWindow *self = (ModestMailboxesWindow *) userdata;
+	ModestMailboxesWindowPrivate *priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE (self);
+
+	gtk_widget_queue_resize(priv->new_message_button);
 }
 #endif

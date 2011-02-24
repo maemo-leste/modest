@@ -87,6 +87,8 @@ static void row_count_changed (ModestAccountsWindow *self);
 static gboolean on_key_press(GtkWidget *widget,
 			     GdkEventKey *event,
 			     gpointer user_data);
+static void on_screen_changed(GdkScreen *screen,
+		              gpointer userdata);
 #endif
 static gboolean on_delete_event (GtkWidget *widget,
 				 GdkEvent *event,
@@ -210,6 +212,7 @@ connect_signals (ModestAccountsWindow *self)
 {
 	ModestAccountsWindowPrivate *priv;
 	GtkTreeModel *model;
+	GdkScreen *screen;
 
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
 
@@ -245,6 +248,14 @@ connect_signals (ModestAccountsWindow *self)
 					   G_OBJECT (priv->new_message_button),
 					   "clicked",
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
+
+	screen = gtk_widget_get_screen(GTK_WIDGET(self));
+
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (screen), 
+					   "size-changed",
+			     		    G_CALLBACK (on_screen_changed), self);
 #endif
 
 	/* we don't register this in sighandlers, as it should be run
@@ -740,6 +751,16 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	}
 
 	return FALSE;
+}
+
+static void
+on_screen_changed (GdkScreen *screen,
+                   gpointer   userdata) 
+{
+	ModestAccountsWindow *self = (ModestAccountsWindow *) userdata;
+	ModestAccountsWindowPrivate *priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
+
+	gtk_widget_queue_resize(priv->new_message_button);
 }
 #endif
 

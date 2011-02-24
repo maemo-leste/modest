@@ -183,6 +183,8 @@ static void on_header_view_model_destroyed (gpointer user_data,
 static gboolean on_key_press(GtkWidget *widget,
 					GdkEventKey *event,
 					gpointer user_data);
+static void on_screen_changed(GdkScreen *screen,
+		              gpointer userdata);
 #endif
 
 static void  isearch_toolbar_close  (GtkWidget *widget,
@@ -362,6 +364,7 @@ modest_header_window_disconnect_signals (ModestWindow *self)
 static void
 connect_signals (ModestHeaderWindow *self)
 {
+	GdkScreen *screen;
 	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
 
 	/* header view */
@@ -433,6 +436,14 @@ connect_signals (ModestHeaderWindow *self)
 
 
 #ifdef MODEST_TOOLKIT_HILDON2
+	screen = gtk_widget_get_screen(GTK_WIDGET(self));
+
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (screen), 
+					   "size-changed",
+			     		    G_CALLBACK (on_screen_changed), self);
+
 	g_signal_connect(G_OBJECT(self), "key-press-event",
 			G_CALLBACK(on_key_press), self);
 #endif
@@ -1549,6 +1560,16 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	}
 
 	return FALSE;
+}
+
+static void
+on_screen_changed (GdkScreen *screen,
+                   gpointer   userdata) 
+{
+	ModestHeaderWindow *self = (ModestHeaderWindow *) userdata;
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	gtk_widget_queue_resize(priv->new_message_button);
 }
 #endif
 

@@ -117,6 +117,8 @@ static void on_account_changed (TnyAccountStore *account_store,
 static gboolean on_key_press(GtkWidget *widget,
 			     GdkEventKey *event,
 			     gpointer user_data);
+static void on_screen_changed(GdkScreen *screen,
+		              gpointer userdata);
 #endif
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
@@ -287,6 +289,7 @@ static void
 connect_signals (ModestFolderWindow *self)
 {
 	ModestFolderWindowPrivate *priv;
+	GdkScreen *screen;
 
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
 
@@ -315,6 +318,13 @@ connect_signals (ModestFolderWindow *self)
 						       G_OBJECT (priv->new_message_button),
 						       "clicked",
 						       G_CALLBACK (modest_ui_actions_on_new_msg), self);
+
+	screen = gtk_widget_get_screen(GTK_WIDGET(self));
+
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (screen), 
+						       "size-changed",
+			     			       G_CALLBACK (on_screen_changed), self);
 #endif
 
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
@@ -1006,5 +1016,15 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	}
 
 	return FALSE;
+}
+
+static void
+on_screen_changed (GdkScreen *screen,
+                   gpointer   userdata) 
+{
+	ModestFolderWindow *self = (ModestFolderWindow *) userdata;
+	ModestFolderWindowPrivate *priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	gtk_widget_queue_resize(priv->new_message_button);
 }
 #endif
