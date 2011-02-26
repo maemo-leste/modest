@@ -1,3 +1,10 @@
+modest (3.90.7-7) unstable; urgency=low
+
+  * Fixed New Message button resizing in portrait mode.
+  * Hildonized New Message button in mailbox window.
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Fri, 25 Feb 2011 13:33:44 +0200
+
 modest (3.90.7-6) unstable; urgency=low
 
   * Compilation fixes, thanks to David Fries.
