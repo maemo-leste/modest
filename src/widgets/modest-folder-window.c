@@ -136,6 +136,9 @@ struct _ModestFolderWindowPrivate {
 	gchar *current_store_account;
 	gboolean progress_hint;
 	guint queue_change_handler;
+
+	/* tree view mode */
+	gboolean tree_view;
 };
 #define MODEST_FOLDER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_FOLDER_WINDOW, \
@@ -143,6 +146,8 @@ struct _ModestFolderWindowPrivate {
 
 /* globals */
 static ModestWindowParentClass *parent_class = NULL;
+static GtkWidget *pre_created_folder_window = NULL;
+static gboolean pre_created_folder_window_created = FALSE;
 
 /************************************************************************/
 
@@ -340,13 +345,14 @@ connect_signals (ModestFolderWindow *self)
 }
 
 ModestWindow *
-modest_folder_window_new (TnyFolderStoreQuery *query)
+modest_folder_window_new_real (TnyFolderStoreQuery *query)
 {
 	ModestFolderWindow *self = NULL;	
 	ModestFolderWindowPrivate *priv = NULL;
 	GdkPixbuf *window_icon;
 	GtkWidget *scrollable;
 	GtkWidget *top_alignment;
+
 #ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *live_search;
 #endif
@@ -369,8 +375,16 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 #endif
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (priv->folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
-	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
-				       MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
+	priv->tree_view = modest_conf_get_bool (modest_runtime_get_conf (),
+						MODEST_CONF_TREE_VIEW, NULL);
+
+	/* We want to hide accounts in list mode */
+	if (!priv->tree_view) {
+		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
+				       	       MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
+	} else 
+		modest_window_set_title (MODEST_WINDOW (self), _("mcen_ap_name"));
+
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *action_area_box;
@@ -416,15 +430,9 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	gtk_widget_show (priv->top_vbox);
 	gtk_widget_show (top_alignment);
 
-	connect_signals (MODEST_FOLDER_WINDOW (self));
-
 	/* Get device name */
 #ifdef MODEST_TOOLKIT_HILDON2
-	HildonProgram *app;
 	modest_maemo_utils_get_device_name ();
-
-	app = hildon_program_get_instance ();
-	hildon_program_add_window (app, HILDON_WINDOW (self));
 #endif
 	
 	/* Set window icon */
@@ -434,6 +442,25 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 		gtk_window_set_icon (toplevel, window_icon);
 		g_object_unref (window_icon);
 	}
+
+	return MODEST_WINDOW(self);
+}
+
+ModestWindow *
+modest_folder_window_new (TnyFolderStoreQuery *query)
+{
+	ModestWindow *self;
+	ModestFolderWindowPrivate *priv = NULL;
+
+	if (pre_created_folder_window) {
+		self = MODEST_WINDOW (pre_created_folder_window);
+		pre_created_folder_window = NULL;
+	} else {
+		self = modest_folder_window_new_real (query);
+		pre_created_folder_window_created = TRUE;
+	}
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
 
 	/* Dont't restore settings here, 
 	 * because it requires a gtk_widget_show(), 
@@ -464,12 +491,13 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 						  GTK_TREE_VIEW (priv->folder_view),
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_rename_folder));
+
 #endif
 	
 	g_signal_connect (G_OBJECT (self), "map-event",
 			  G_CALLBACK (on_map_event),
 			  G_OBJECT (self));
-	update_progress_hint (self);
+	update_progress_hint (MODEST_FOLDER_WINDOW(self));
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	GtkAccelGroup *accel_group;
@@ -483,8 +511,17 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
 #endif
 
-	return MODEST_WINDOW(self);
+	connect_signals (MODEST_FOLDER_WINDOW (self));
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	HildonProgram *app;
+	app = hildon_program_get_instance ();
+	hildon_program_add_window (app, HILDON_WINDOW (self));
+#endif
+
+	return self;
 }
+
 
 ModestFolderView *
 modest_folder_window_get_folder_view (ModestFolderWindow *self)
@@ -593,6 +630,9 @@ static void
 setup_menu (ModestFolderWindow *self)
 {
 	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
+	ModestFolderWindowPrivate *priv = NULL;
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
 
 	/* folders actions*/
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_new_folder"), NULL,
@@ -600,7 +640,9 @@ setup_menu (ModestFolderWindow *self)
 				   NULL);
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_send_receive),
-				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive));
+				   !priv->tree_view ?
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive) :
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive_all));
 #ifdef MODEST_TOOLKIT_HILDON2
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_rename_folder"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (set_rename_edit_mode),
@@ -627,13 +669,44 @@ setup_menu (ModestFolderWindow *self)
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_cancel_send),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
 
-	modest_window_add_to_menu (MODEST_WINDOW (self),
-				   dngettext(GETTEXT_PACKAGE,
-					     "mcen_me_edit_account",
-					     "mcen_me_edit_accounts",
-					     1),
-				   NULL, MODEST_WINDOW_MENU_CALLBACK (edit_account),
-				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_edit_accounts));
+	if (priv->tree_view)
+	{
+		/* In tree view mode, this window gets more menu options */
+
+		modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_options"), NULL,
+				   	   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_settings), 
+				   	   NULL);
+		modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_new_account"), NULL, 
+				   	   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_new_account), 
+				  	   NULL);
+
+		modest_window_add_to_menu (MODEST_WINDOW (self),
+					   dngettext(GETTEXT_PACKAGE,
+						     "mcen_me_edit_account",
+						     "mcen_me_edit_accounts",
+						     2),
+					   NULL,
+					   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_accounts), 
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_edit_accounts));
+	} else {
+	
+		modest_window_add_to_menu (MODEST_WINDOW (self),
+					   dngettext(GETTEXT_PACKAGE,
+						     "mcen_me_edit_account",
+						     "mcen_me_edit_accounts",
+						     1),
+					   NULL, MODEST_WINDOW_MENU_CALLBACK (edit_account),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_edit_accounts));
+	}
+}
+
+void 
+modest_folder_window_pre_create (void)
+{
+	if (!pre_created_folder_window_created) {
+		pre_created_folder_window_created = TRUE;
+		pre_created_folder_window = GTK_WIDGET (modest_folder_window_new_real (NULL));
+	}
 }
 
 static void
@@ -656,8 +729,24 @@ on_folder_activated (ModestFolderView *folder_view,
 	if (tny_folder_get_caps (folder) & TNY_FOLDER_CAPS_NOSELECT)
 		return;
 
+	if (modest_conf_get_bool (modest_runtime_get_conf (), 
+		                  MODEST_CONF_TREE_VIEW, NULL))
+	{
+		/* Tree view mode, account should be changed when a folder is selected */
+		TnyAccount *account = modest_tny_folder_get_account(TNY_FOLDER(folder));
+		gchar *account_name = modest_account_mgr_get_account_from_tny_account(modest_runtime_get_account_mgr(), account);
+		g_object_unref(G_OBJECT(account));
+
+		if (!account_name)
+			account_name = g_strdup(modest_account_mgr_get_default_account(modest_runtime_get_account_mgr()));
+
+		modest_window_set_active_account(MODEST_WINDOW(self), account_name);
+		if (account_name)
+			g_free(account_name);
+	} 
+
 	headerwin = modest_header_window_new (folder, 
-					      modest_window_get_active_account (MODEST_WINDOW (self)),
+					      modest_window_get_active_account(MODEST_WINDOW (self)),
 					      modest_window_get_active_mailbox (MODEST_WINDOW (self)));
 
 	if (modest_window_mgr_register_window (modest_runtime_get_window_mgr (),
@@ -757,6 +846,16 @@ edit_mode_changed (ModestFolderWindow *folder_window,
 }
 #endif
 
+static gboolean
+take_screenshot (gpointer userdata)
+{
+	ModestFolderWindow *self = (ModestFolderWindow *) userdata;
+
+	hildon_gtk_window_take_screenshot (GTK_WINDOW(self), TRUE);
+
+	return FALSE;	
+}
+
 static gboolean 
 on_map_event (GtkWidget *widget,
 	      GdkEvent *event,
@@ -768,6 +867,12 @@ on_map_event (GtkWidget *widget,
 	if (priv->progress_hint) {
 		modest_window_show_progress (MODEST_WINDOW (self), TRUE);
 	}
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (priv->tree_view) {
+		g_timeout_add(80, take_screenshot, userdata);
+	}
+#endif
 
 	return FALSE;
 }
@@ -821,6 +926,7 @@ update_progress_hint (ModestFolderWindow *self)
 
 	if (GTK_WIDGET_VISIBLE (self)) {
 		modest_window_show_progress (MODEST_WINDOW (self), priv->progress_hint ? 1:0);
+		gtk_widget_queue_draw(GTK_WIDGET (self));
 	}
 }
 

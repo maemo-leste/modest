@@ -258,6 +258,7 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	state->notifications = modest_togglable_get_active (priv->notifications);
 	state->add_to_contacts = modest_togglable_get_active (priv->add_to_contacts);
 	state->auto_update = modest_togglable_get_active (priv->auto_update);
+	state->tree_view = modest_togglable_get_active (priv->tree_view);
 	id = modest_selector_get_active_id (priv->connect_via);
 	state->default_account = modest_selector_get_active_id (priv->default_account_selector);
 	state->connect_via = *id;
@@ -289,6 +290,8 @@ modest_global_settings_dialog_save_settings_default (ModestGlobalSettingsDialog 
 	modest_conf_set_bool (conf, MODEST_CONF_AUTO_ADD_TO_CONTACTS, current_state.add_to_contacts, &error);
 	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_bool (conf, MODEST_CONF_AUTO_UPDATE, current_state.auto_update, &error);
+	RETURN_FALSE_ON_ERROR(error);
+	modest_conf_set_bool (conf, MODEST_CONF_TREE_VIEW, current_state.tree_view, &error);
 	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, current_state.connect_via, NULL);
 	RETURN_FALSE_ON_ERROR(error);
@@ -357,6 +360,7 @@ settings_changed (ModestGlobalSettingsState initial_state,
 	if (initial_state.auto_update != current_state.auto_update ||
 	    initial_state.notifications != current_state.notifications ||
 	    initial_state.add_to_contacts != current_state.add_to_contacts ||
+	    initial_state.tree_view != current_state.tree_view ||
 	    initial_state.connect_via != current_state.connect_via ||
 	    initial_state.update_interval != current_state.update_interval ||
 	    initial_state.play_sound != current_state.play_sound ||

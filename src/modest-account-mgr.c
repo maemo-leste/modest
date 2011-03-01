@@ -35,6 +35,7 @@
 #include <modest-account-mgr-priv.h>
 #include <modest-account-mgr-helpers.h>
 #include <modest-platform.h>
+#include "modest-tny-account.h"
 
 /* 'private'/'protected' functions */
 static void modest_account_mgr_class_init (ModestAccountMgrClass * klass);
@@ -1714,4 +1715,25 @@ modest_account_mgr_singleton_protocol_exists (ModestAccountMgr *mgr,
 	modest_account_mgr_free_account_names (account_names);
 
 	return found;
+}
+
+gchar*
+modest_account_mgr_get_account_from_tny_account  (ModestAccountMgr *self,
+						  TnyAccount *account)
+{
+	gchar *account_name = NULL;
+	GSList *account_names = modest_account_mgr_account_names(self, TRUE);
+	GSList *cursor = account_names;
+	while (cursor) {
+		const gchar *store = modest_account_mgr_get_string(self,(gchar *)cursor->data,
+						"store_account",FALSE);
+		if (!strcmp(store,tny_account_get_id(TNY_ACCOUNT(account)))) {
+			account_name = g_strdup((gchar *)cursor->data);
+			break;
+		}
+		cursor = cursor -> next;
+	}
+	
+	modest_account_mgr_free_account_names (account_names);
+	return  account_name;
 }

@@ -808,10 +808,20 @@ cleanup:
 void
 modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 {
+	ModestAccountMgr *account_mgr;
+
+	account_mgr = modest_runtime_get_account_mgr();
 	/* if there are no accounts yet, just show the wizard */
-	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE))
+	if (!modest_account_mgr_has_accounts (account_mgr, TRUE))
 		if (!modest_ui_actions_run_account_setup_wizard (win))
 			return;
+
+	/* If clicked from a folder window in tree view mode, set the default account first */
+	if (MODEST_IS_FOLDER_WINDOW(win) &&
+	    modest_conf_get_bool (modest_runtime_get_conf(), MODEST_CONF_TREE_VIEW, NULL)) {
+		gchar *account_name = modest_account_mgr_get_default_account(account_mgr);
+		modest_window_set_active_account(MODEST_WINDOW(win), account_name);
+	}
 
 	modest_ui_actions_compose_msg(win, NULL, NULL, NULL, NULL, NULL, NULL, FALSE);
 }
@@ -2546,7 +2556,9 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 		modest_ui_actions_on_accounts (NULL, win);
 
 	/* Refresh the current folder. The if is always TRUE it's just an extra check */
-	if (MODEST_IS_ACCOUNTS_WINDOW (win)) {
+	if (MODEST_IS_ACCOUNTS_WINDOW (win) || 
+	    (MODEST_IS_FOLDER_WINDOW (win) && 
+		modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_TREE_VIEW, NULL))) {
 		modest_ui_actions_do_send_receive_all (win, TRUE, TRUE, TRUE);
 	} else {
 		const gchar *active_account;
@@ -4878,7 +4890,7 @@ move_to_cb (ModestMailOperation *mail_op,
 		ModestMsgViewWindow *self = MODEST_MSG_VIEW_WINDOW (object);
 
 		if (!modest_msg_view_window_select_previous_message (self) &&
-		    !modest_msg_view_window_select_next_message(self)) {
+		    !modest_msg_view_window_select_next_message (self)) {
 			/* No more messages to view, so close this window */
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
 		}
@@ -5497,6 +5509,11 @@ modest_ui_actions_on_settings (GtkAction *action,
 {
 	GtkWidget *dialog;
 	GtkWindow *toplevel;
+	gboolean tree_view;
+
+	/* We need to monitor tree view mode changes to recreate the window */
+        tree_view = modest_conf_get_bool (modest_runtime_get_conf (),
+        	MODEST_CONF_TREE_VIEW, NULL);
 
 	dialog = modest_platform_get_global_settings_dialog ();
 	toplevel = (GtkWindow *) gtk_widget_get_toplevel (GTK_WIDGET (win));
@@ -5507,6 +5524,16 @@ modest_ui_actions_on_settings (GtkAction *action,
 	gtk_dialog_run (GTK_DIALOG (dialog));
 
 	gtk_widget_destroy (dialog);
+
+	if (tree_view != modest_conf_get_bool (modest_runtime_get_conf (),
+        				      MODEST_CONF_TREE_VIEW, NULL)) {
+#ifdef MODEST_TOOLKIT_HILDON2
+  	        hildon_gtk_window_take_screenshot (toplevel, FALSE);
+#endif
+		ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+		modest_window_mgr_unregister_window (mgr, MODEST_WINDOW(toplevel));
+		modest_window_mgr_show_initial_window (mgr);
+	}
 }
 
 void

@@ -63,6 +63,9 @@
 #include "modest-ui-constants.h"
 #include "widgets/modest-window.h"
 #include <modest-account-protocol.h>
+#include <modest-account-mgr.h>
+#include <modest-account-mgr-helpers.h>
+#include <modest-datetime-formatter.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon.h>
 #endif
@@ -103,6 +106,10 @@ static void         on_row_activated       (GtkTreeView *treeview,
 					    GtkTreePath *path,
 					    GtkTreeViewColumn *column,
 					    gpointer userdata);
+
+static gboolean     button_press_event     (GtkWidget *view,
+		        		    GdkEventButton *bevent,
+					    gpointer user_data);
 
 static void         on_account_removed     (TnyAccountStore *self,
 					    TnyAccount *account,
@@ -210,6 +217,10 @@ struct _ModestFolderViewPrivate {
 
 	GSList   *signal_handlers;
 	GdkColor active_color;
+
+	ModestDatetimeFormatter *datetime_formatter;
+
+	gboolean tree_view;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -355,7 +366,7 @@ get_inner_models (ModestFolderView *self,
 
 	f_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (!GTK_IS_TREE_MODEL_FILTER(f_model)) {
-		g_debug ("%s: emtpy model or not filter model", __FUNCTION__);
+		g_debug ("%s: empty model or not filter model", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -461,7 +472,7 @@ on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
 }
 
 static void
-convert_parent_folders_to_dots (gchar **item_name)
+convert_parent_folders_to_string (gchar **item_name, gchar *to_string)
 {
 	gint n_parents = 0;
 	gint n_inbox_parents = 0;
@@ -500,7 +511,7 @@ convert_parent_folders_to_dots (gchar **item_name)
 
 		buffer = g_string_new ("");
 		for (i = 0; i < n_parents - n_inbox_parents; i++) {
-			buffer = g_string_append (buffer, MODEST_FOLDER_DOT);
+			buffer = g_string_append (buffer, to_string);
 		}
 		buffer = g_string_append (buffer, last_separator);
 		g_free (*item_name);
@@ -551,7 +562,11 @@ format_compact_style (gchar **item_name,
 			return;
 
 		/* convert parent folders to dots */
-		convert_parent_folders_to_dots  (item_name);
+		convert_parent_folders_to_string  (item_name, 
+						   modest_conf_get_bool (modest_runtime_get_conf (), 
+		                  					 MODEST_CONF_TREE_VIEW, NULL) ?
+							"" :		
+							MODEST_FOLDER_DOT); 
 
 		folder_name = tny_folder_get_name (folder);
 		if (g_str_has_suffix (*item_name, folder_name)) {
@@ -629,6 +644,11 @@ replace_special_folder_prefix (gchar **item_name)
 		}
 	}
 	g_free (prefix);
+	convert_parent_folders_to_string  (item_name, 
+					   modest_conf_get_bool (modest_runtime_get_conf (), 
+		                  			         MODEST_CONF_TREE_VIEW, NULL) ?
+								 "" :		
+							         MODEST_FOLDER_DOT);
 }
 
 static void
@@ -813,6 +833,40 @@ text_cell_data  (GtkTreeViewColumn *column,
 		g_free (fname);
 }
 
+/* Get the string for the last updated time. Result must NOT be g_freed */
+static const gchar*
+get_last_updated_string(ModestFolderView *self, ModestAccountMgr* account_mgr, ModestAccountSettings *settings)
+{
+	/* FIXME: let's assume that 'last update' applies to the store account... */
+	const gchar *last_updated_string;
+	const gchar *store_account_name;
+	const gchar *account_name;
+	time_t last_updated;
+	ModestServerAccountSettings *server_settings;
+	ModestFolderViewPrivate *priv;
+
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+	server_settings = modest_account_settings_get_store_settings (settings);
+	store_account_name = modest_server_account_settings_get_account_name (server_settings);
+	last_updated = modest_account_mgr_get_last_updated (account_mgr, store_account_name);
+
+	g_object_unref (server_settings);
+	account_name = modest_account_settings_get_account_name (settings);
+	if (!modest_account_mgr_account_is_busy(account_mgr, account_name)) {
+		if (last_updated > 0) {
+			last_updated_string = 
+				modest_datetime_formatter_display_datetime (priv->datetime_formatter,
+									   last_updated);
+		} else {
+			last_updated_string = _("mcen_va_never");
+		}
+	} else 	{
+		last_updated_string = _("mcen_va_refreshing");
+	}
+
+	return last_updated_string;
+}
+
 static void
 messages_cell_data  (GtkTreeViewColumn *column,
 		 GtkCellRenderer *renderer,
@@ -836,6 +890,25 @@ messages_cell_data  (GtkTreeViewColumn *column,
 
 	self = MODEST_FOLDER_VIEW (data);
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+
+	if (TNY_IS_ACCOUNT(instance)) {
+		ModestAccountSettings *settings = NULL;
+		ModestAccountMgr *account_mgr;
+
+		account_mgr = modest_runtime_get_account_mgr();
+		gchar *account_name = modest_account_mgr_get_account_from_tny_account(account_mgr, 
+										      TNY_ACCOUNT(instance));
+		if (account_name) {
+			settings = modest_account_mgr_load_account_settings (account_mgr, account_name);
+			g_free(account_name);
+		}
+
+		if (settings)
+			item_name = g_strconcat (_("mcen_ti_lastupdated"), "\n",
+					 	get_last_updated_string(self, account_mgr, settings),
+					 	NULL);
+	}
 
 
 	if (type != TNY_FOLDER_TYPE_ROOT) {
@@ -984,8 +1057,19 @@ get_account_protocol_pixbufs (ModestFolderView *folder_view,
 								  protocol_type);
 
 	if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+		gboolean is_mailbox = FALSE;
+
+		/* Check if it's a mailbox */
+		if (TNY_IS_FOLDER(object)) {
+			const gchar *folder_name;
+			folder_name = tny_folder_get_name (TNY_FOLDER (object));
+			if (folder_name && strchr (folder_name, '@') != NULL)
+				is_mailbox = TRUE;
+		}
+
 		pixbuf = modest_account_protocol_get_icon (MODEST_ACCOUNT_PROTOCOL (protocol), 
-							   priv->filter & MODEST_FOLDER_VIEW_FILTER_SHOW_ONLY_MAILBOXES?
+							   /*priv->filter & MODEST_FOLDER_VIEW_FILTER_SHOW_ONLY_MAILBOXES? */
+							   is_mailbox ?
 							   MODEST_ACCOUNT_PROTOCOL_ICON_MAILBOX:
 							   MODEST_ACCOUNT_PROTOCOL_ICON_FOLDER,
 							   object, FOLDER_ICON_SIZE);
@@ -1011,19 +1095,19 @@ get_folder_icons (ModestFolderView *folder_view, TnyFolderType type, GObject *in
 		*junk_pixbuf = NULL, *sent_pixbuf = NULL,
 		*trash_pixbuf = NULL, *draft_pixbuf = NULL,
 		*normal_pixbuf = NULL, *anorm_pixbuf = NULL, *mmc_pixbuf = NULL,
-		*ammc_pixbuf = NULL, *avirt_pixbuf = NULL;
+		*ammc_pixbuf = NULL, *avirt_pixbuf = NULL, *remote_pixbuf = NULL;
 
 	static GdkPixbuf *inbox_pixbuf_open = NULL, *outbox_pixbuf_open = NULL,
 		*junk_pixbuf_open = NULL, *sent_pixbuf_open = NULL,
 		*trash_pixbuf_open = NULL, *draft_pixbuf_open = NULL,
 		*normal_pixbuf_open = NULL, *anorm_pixbuf_open = NULL, *mmc_pixbuf_open = NULL,
-		*ammc_pixbuf_open = NULL, *avirt_pixbuf_open = NULL;
+		*ammc_pixbuf_open = NULL, *avirt_pixbuf_open = NULL, *remote_pixbuf_open = NULL;
 
 	static GdkPixbuf *inbox_pixbuf_close = NULL, *outbox_pixbuf_close = NULL,
 		*junk_pixbuf_close = NULL, *sent_pixbuf_close = NULL,
 		*trash_pixbuf_close = NULL, *draft_pixbuf_close = NULL,
 		*normal_pixbuf_close = NULL, *anorm_pixbuf_close = NULL, *mmc_pixbuf_close = NULL,
-		*ammc_pixbuf_close = NULL, *avirt_pixbuf_close = NULL;
+		*ammc_pixbuf_close = NULL, *avirt_pixbuf_close = NULL, *remote_pixbuf_close = NULL;
 
 	ThreePixbufs *retval = NULL;
 
@@ -1064,9 +1148,9 @@ get_folder_icons (ModestFolderView *folder_view, TnyFolderType type, GObject *in
 	    type != TNY_FOLDER_TYPE_INBOX &&
 	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
 		return get_composite_icons (MODEST_FOLDER_ICON_REMOTE_FOLDER,
-					    &anorm_pixbuf,
-					    &anorm_pixbuf_open,
-					    &anorm_pixbuf_close);
+					    &remote_pixbuf,
+					    &remote_pixbuf_open,
+					    &remote_pixbuf_close);
 	}
 
 	switch (type) {
@@ -1095,7 +1179,7 @@ get_folder_icons (ModestFolderView *folder_view, TnyFolderType type, GObject *in
 					retval = get_composite_icons (MODEST_FOLDER_ICON_ACCOUNT,
 								      &anorm_pixbuf,
 								      &anorm_pixbuf_open,
-								      &anorm_pixbuf_close);
+								      &anorm_pixbuf_close); 
 				}
 			}
 		}
@@ -1269,6 +1353,9 @@ add_columns (GtkWidget *treeview)
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(treeview), FALSE);
 	gtk_tree_view_set_enable_search (GTK_TREE_VIEW(treeview), FALSE);
 	gtk_tree_view_set_rules_hint ((GtkTreeView *) treeview, TRUE);
+	gtk_tree_view_set_level_indentation(GTK_TREE_VIEW(treeview), 
+			modest_conf_get_int (modest_runtime_get_conf (), 
+				MODEST_CONF_FOLDER_VIEW_WINDOW_TREE_VIEW_INDENTATION, NULL));
 
 	/* Add column */
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeview),column);
@@ -1292,7 +1379,9 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->mailbox = NULL;
 	priv->folder_to_select = NULL;
 	priv->outbox_deleted_handler = 0;
-	priv->reexpand = TRUE;
+	priv->tree_view = modest_conf_get_bool (modest_runtime_get_conf (),
+        					MODEST_CONF_TREE_VIEW, NULL);
+	priv->reexpand = priv->tree_view ? FALSE : TRUE;
 	priv->signal_handlers = 0;
 #ifdef MODEST_TOOLKIT_HILDON2
 	priv->live_search = NULL;
@@ -1335,6 +1424,8 @@ modest_folder_view_init (ModestFolderView *obj)
 	update_style (obj);
  	g_signal_connect (G_OBJECT (obj), "notify::style", 
 			  G_CALLBACK (on_notify_style), (gpointer) obj);
+
+	priv->datetime_formatter = modest_datetime_formatter_new ();
 }
 
 static void
@@ -1437,6 +1528,11 @@ modest_folder_view_finalize (GObject *obj)
 		g_signal_handler_disconnect (modest_runtime_get_conf (),
 					     priv->conf_key_signal);
 		priv->conf_key_signal = 0;
+	}
+
+	if (priv->datetime_formatter) {
+		g_object_unref (priv->datetime_formatter);
+		priv->datetime_formatter = NULL;
 	}
 
 	/* Clear hidding array created by cut operation */
@@ -1811,6 +1907,8 @@ modest_folder_view_new_full (TnyFolderStoreQuery *query, gboolean do_refresh)
 
 	g_signal_connect (self, "expose-event", G_CALLBACK (modest_folder_view_on_map), NULL);
 
+	g_signal_connect (self, "button-press-event", G_CALLBACK (button_press_event), NULL);
+	
 	/* Hide headers by default */
 	gtk_tree_view_set_headers_visible ((GtkTreeView *)self, FALSE);
 
@@ -2210,6 +2308,34 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 		}
 	}
 
+	if (retval && priv->tree_view && TNY_IS_FOLDER(instance) && type == TNY_FOLDER_TYPE_INBOX) {
+		/* Hide Inbox in Mailboxes accounts in tree view mode */
+		TnyAccount *account;
+		gchar *account_name;
+		ModestProtocolType store_protocol;
+		GtkTreePath *path;
+		gint depth;
+
+		path = gtk_tree_model_get_path(model, iter);
+		depth = gtk_tree_path_get_depth(path);
+		gtk_tree_path_free(path);
+
+		if (depth == 2) {
+			/* We just hide the root mailboxes account Inbox since it's invalid anyway */
+			account = modest_tny_folder_get_account(TNY_FOLDER(instance));
+			account_name = modest_account_mgr_get_account_from_tny_account(modest_runtime_get_account_mgr(), account);
+			g_object_unref(G_OBJECT(account));
+	
+			store_protocol = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+										account_name);
+
+			if (modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+									    store_protocol,
+									    MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS))
+				retval = FALSE;
+		}
+	}
+
 	if (retval && TNY_IS_FOLDER (instance)) {
 		rules = modest_tny_folder_get_rules (TNY_FOLDER (instance));
 	}
@@ -2217,7 +2343,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_DELETABLE)) {
 		if (TNY_IS_FOLDER (instance)) {
 			retval = !(rules & MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE);
-		} else if (TNY_IS_ACCOUNT (instance)) {
+		} else if (TNY_IS_ACCOUNT (instance) && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS)) {
 			retval = FALSE;
 		}
 	}
@@ -2225,7 +2351,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_RENAMEABLE)) {
 		if (TNY_IS_FOLDER (instance)) {
 			retval = !(rules & MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE);
-		} else if (TNY_IS_ACCOUNT (instance)) {
+		} else if (TNY_IS_ACCOUNT (instance) && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS)) {
 			retval = FALSE;
 		}
 	}
@@ -2233,7 +2359,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_MOVEABLE)) {
 		if (TNY_IS_FOLDER (instance)) {
 			retval = !(rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE);
-		} else if (TNY_IS_ACCOUNT (instance)) {
+		} else if (TNY_IS_ACCOUNT (instance) && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS)) {
 			retval = FALSE;
 		}
 	}
@@ -2315,16 +2441,31 @@ modest_folder_view_update_model (ModestFolderView *self,
 
 	/* FIXME: the local accounts are not shown when the query
 	   selects only the subscribed folders */
-	TnyGtkFolderListStoreFlags flags;
-	flags = TNY_GTK_FOLDER_LIST_STORE_FLAG_SHOW_PATH;
-	if (priv->do_refresh)
-		flags |= TNY_GTK_FOLDER_LIST_STORE_FLAG_DELAYED_REFRESH;
-	else
-		flags |= TNY_GTK_FOLDER_LIST_STORE_FLAG_NO_REFRESH;
-	model = tny_gtk_folder_list_store_new_with_flags (NULL, 
+
+	if (!priv->tree_view) {
+		TnyGtkFolderListStoreFlags flags; 
+		flags = TNY_GTK_FOLDER_LIST_STORE_FLAG_SHOW_PATH;
+
+		if (priv->do_refresh)
+			flags |= TNY_GTK_FOLDER_LIST_STORE_FLAG_DELAYED_REFRESH;
+		else
+			flags |= TNY_GTK_FOLDER_LIST_STORE_FLAG_NO_REFRESH;
+	
+		model = tny_gtk_folder_list_store_new_with_flags (NULL, 
+							  	  flags);
+		
+		tny_gtk_folder_list_store_set_path_separator (TNY_GTK_FOLDER_LIST_STORE (model),
+						      	      MODEST_FOLDER_PATH_SEPARATOR);
+	} else {
+		TnyGtkFolderStoreTreeModelFlags flags;
+		flags = TNY_GTK_FOLDER_STORE_TREE_MODEL_FLAG_SHOW_PATH;
+
+		model = tny_gtk_folder_store_tree_model_new_with_flags(NULL, 
 							  flags);
-	tny_gtk_folder_list_store_set_path_separator (TNY_GTK_FOLDER_LIST_STORE (model),
-						      MODEST_FOLDER_PATH_SEPARATOR);
+
+		tny_gtk_folder_store_tree_model_set_path_separator (TNY_GTK_FOLDER_STORE_TREE_MODEL (model),
+						                    MODEST_FOLDER_PATH_SEPARATOR);
+	}
 
 	/* When the model is a list store (plain representation) the
 	   outbox is not a child of any account so we have to manually
@@ -2496,6 +2637,78 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			       0, priv->cur_folder_store, TRUE);
 	}
 }
+
+/* This is a hack that lets us use the icons in a tree view
+ * as expanders, since GtkTreeView widget doesn't allow widgets
+ * inside of it, and there's no GtkCellRenderer to include 
+ * custom expanders in a tree view.
+ * This function detects if a click has been done in an
+ * expander icon and expands/collapse accordingly.
+ */
+static gboolean
+button_press_event (GtkWidget *treeview,
+		    GdkEventButton *bevent,
+		    gpointer user_data)
+{
+	GtkTreeViewColumn *column = NULL;
+	GtkTreePath *path = NULL;
+	GdkRectangle rec;
+	GList *node, *cells;
+	gint colx;
+
+	/* Exit if we are in list mode, otherwise clicking 
+	 * on an icon would do nothing */
+	if (!modest_conf_get_bool (modest_runtime_get_conf (),
+        			   MODEST_CONF_TREE_VIEW, NULL))
+		return FALSE;
+
+	/* Obtain cell rectangle */
+	gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(treeview), 
+				      bevent->x, bevent->y,
+				      &path,
+				      NULL, NULL, NULL);
+	/* No path found */	
+	g_return_val_if_fail (path,FALSE);
+
+	column = gtk_tree_view_get_column(GTK_TREE_VIEW(treeview),0);
+
+	/* This should not happen */
+	g_return_val_if_fail (column,FALSE);
+
+	gtk_tree_view_get_cell_area(GTK_TREE_VIEW(treeview),
+				    path, column, &rec);
+ 
+	/* Find the cell renderer within the column */
+ 
+	cells = gtk_cell_layout_get_cells(GTK_CELL_LAYOUT(column));
+ 
+	for (node = cells, colx=rec.x; node != NULL;  node = node->next)
+	{
+		GtkCellRenderer *checkcell = (GtkCellRenderer*) node->data;
+		gint width = 0;
+ 
+		gtk_cell_renderer_get_size(checkcell, GTK_WIDGET(treeview), NULL, NULL, NULL, &width, NULL);
+
+		if (bevent->x >= colx && bevent->x < (colx + width))
+		{
+			g_list_free(cells);
+			if (GTK_IS_CELL_RENDERER_PIXBUF(checkcell))
+			{
+			 	if (gtk_tree_view_row_expanded(GTK_TREE_VIEW(treeview), path))
+					gtk_tree_view_collapse_row(GTK_TREE_VIEW(treeview), path);
+				else
+					gtk_tree_view_expand_row(GTK_TREE_VIEW(treeview), path, FALSE);
+				return TRUE;
+			}
+			return FALSE;
+		}
+		colx += width;
+	}
+ 
+	g_list_free(cells);
+	return FALSE;
+}
+
 
 static void
 on_row_activated (GtkTreeView *treeview,
@@ -3356,6 +3569,37 @@ modest_folder_view_unset_filter (ModestFolderView *self,
 	}
 }
 
+gboolean 
+iter_fulfils_rules (GtkTreeModel *filter_model, GtkTreeIter *iter, ModestTnyFolderRules rules)
+{
+	GtkTreeIter child;
+	gboolean fulfil = FALSE;
+	
+	do {
+		TnyFolderStore *folder;
+
+		if (gtk_tree_model_iter_has_child(filter_model, iter)) {
+			gtk_tree_model_iter_children (filter_model, &child, iter);
+			fulfil = iter_fulfils_rules(filter_model, &child, rules);
+		}
+
+		gtk_tree_model_get (filter_model, iter, INSTANCE_COLUMN, &folder, -1);
+		if (folder) {
+
+			if (TNY_IS_FOLDER (folder)) {
+				ModestTnyFolderRules folder_rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
+				/* Folder rules are negative: non_writable, non_deletable... */
+				if (!(folder_rules & rules))
+					fulfil = TRUE;
+			}
+			g_object_unref (folder);
+		}
+
+	} while (gtk_tree_model_iter_next (filter_model, iter) && !fulfil);
+	
+	return fulfil;
+}
+
 gboolean
 modest_folder_view_any_folder_fulfils_rules (ModestFolderView *self,
 					     ModestTnyFolderRules rules)
@@ -3370,21 +3614,7 @@ modest_folder_view_any_folder_fulfils_rules (ModestFolderView *self,
 	if (!gtk_tree_model_get_iter_first (filter_model, &iter))
 		return FALSE;
 
-	do {
-		TnyFolderStore *folder;
-
-		gtk_tree_model_get (filter_model, &iter, INSTANCE_COLUMN, &folder, -1);
-		if (folder) {
-			if (TNY_IS_FOLDER (folder)) {
-				ModestTnyFolderRules folder_rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
-				/* Folder rules are negative: non_writable, non_deletable... */
-				if (!(folder_rules & rules))
-					fulfil = TRUE;
-			}
-			g_object_unref (folder);
-		}
-
-	} while (gtk_tree_model_iter_next (filter_model, &iter) && !fulfil);
+	fulfil = iter_fulfils_rules(filter_model, &iter, rules);
 
 	return fulfil;
 }
