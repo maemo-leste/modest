@@ -741,19 +741,29 @@ text_cell_data  (GtkTreeViewColumn *column,
 
 	} else if (TNY_IS_ACCOUNT (instance)) {
 		/* If it's a server account */
+		ModestAccountMgr *account_mgr;
+		gchar *account_name;
+
+		item_weight = 400;
+		account_mgr = modest_runtime_get_account_mgr();
+		account_name = modest_account_mgr_get_account_from_tny_account(account_mgr, 
+										      TNY_ACCOUNT(instance));
+		if (account_name) {
+			if (modest_account_mgr_get_has_new_mails (account_mgr, account_name))
+				item_weight = 800;
+			g_free(account_name);
+		}
+
 		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (instance))) {
 			item_name = g_strdup (priv->local_account_name);
-			item_weight = 800;
 		} else if (modest_tny_account_is_memory_card_account (TNY_ACCOUNT (instance))) {
 			/* fname is only correct when the items are first
 			 * added to the model, not when the account is
 			 * changed later, so get the name from the account
 			 * instance: */
 			item_name = g_strdup (tny_account_get_name (TNY_ACCOUNT (instance)));
-			item_weight = 800;
 		} else {
 			item_name = g_strdup (fname);
-			item_weight = 800;
 		}
 	}
 
