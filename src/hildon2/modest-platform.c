@@ -1805,8 +1805,11 @@ modest_platform_create_folder_view_full (TnyFolderStoreQuery *query, gboolean do
 {
 	GtkWidget *widget = modest_folder_view_new_full (query, do_refresh);
 
-	/* Show one account by default */
+	/* Show one account in list mode, all accounts in tree view mode */
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (widget),
+				      modest_conf_get_bool (modest_runtime_get_conf (),
+					              	    MODEST_CONF_TREE_VIEW, NULL) ?
+				      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL :
 				      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
 
 	return widget;
@@ -2700,6 +2703,7 @@ modest_platform_play_email_tone (void)
 #define MOVE_TO_DIALOG_BACK_BUTTON "back-button"
 #define MOVE_TO_DIALOG_ACTION_BUTTON "action-button"
 #define MOVE_TO_DIALOG_SHOWING_FOLDERS "showing-folders"
+#define MOVE_TO_DIALOG_TREE_VIEW "tree-view"
 #define MOVE_TO_DIALOG_SCROLLABLE "scrollable"
 #define MOVE_TO_FOLDER_SEPARATOR "/"
 
@@ -2802,7 +2806,9 @@ move_to_dialog_set_selected_folder_store (GtkWidget *dialog,
 		translate_path (&full_name);
 		hildon_button_set_value (HILDON_BUTTON (action_button), full_name);
 		g_free (full_name);
-	}
+	} else
+		hildon_button_set_value (HILDON_BUTTON (action_button), NULL);
+		
 	g_free (account_name);
 	g_free (short_name);
 
@@ -2819,6 +2825,7 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	GtkWidget *folder_view;
 	GtkWidget *scrollable;
 	GtkWidget *action_button;
+	gboolean tree_view_mode;
 
         back_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
         action_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
@@ -2846,8 +2853,13 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 				       MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
 	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view), 
 					 MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
-	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), 
-				       MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
+
+	tree_view_mode = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_TREE_VIEW));
+
+	if (!tree_view_mode)
+		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), 
+				       	       MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
+
 	modest_scrollable_jump_to (MODEST_SCROLLABLE (scrollable), 0, 0);
 }
 
@@ -2926,11 +2938,14 @@ on_move_to_dialog_row_activated (GtkTreeView       *tree_view,
 	TnyFolderStore *selected = NULL;
 	GtkWidget *dialog;
 	GtkWidget *folder_view;
-	gboolean showing_folders;
+	gboolean showing_folders, tree_view_mode;
 
 	dialog = (GtkWidget *) user_data;
 	showing_folders = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), 
 							      MOVE_TO_DIALOG_SHOWING_FOLDERS));
+
+	tree_view_mode = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), 
+							      MOVE_TO_DIALOG_TREE_VIEW));
 
 	folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), 
 						     MOVE_TO_DIALOG_FOLDER_VIEW));
@@ -2939,23 +2954,35 @@ on_move_to_dialog_row_activated (GtkTreeView       *tree_view,
 	if (!selected)
 		return;
 
-	if (!showing_folders) {
-		gboolean valid = TRUE;
+	if (tree_view_mode) {
+        	GtkWidget *back_button =
+			GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
+        	GtkWidget *action_button =
+			GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
+        	move_to_dialog_set_selected_folder_store (dialog, selected);
+		gtk_widget_set_sensitive (back_button, TRUE);
+		gtk_widget_set_sensitive (action_button, TRUE);
+	}
+	else {
 
-		if (TNY_IS_ACCOUNT (selected) &&
-		    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (selected))) {
-			ModestProtocolType protocol_type;
+		if (!showing_folders) {
+			gboolean valid = TRUE;
 
-			protocol_type = modest_tny_account_get_protocol_type (TNY_ACCOUNT (selected));
-			valid  = !modest_protocol_registry_protocol_type_has_tag 
-				(modest_runtime_get_protocol_registry (),
-				 protocol_type,
-				 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_INCOMING_XFERS);
+			if (TNY_IS_ACCOUNT (selected) &&
+		    	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (selected))) {
+				ModestProtocolType protocol_type;
+
+				protocol_type = modest_tny_account_get_protocol_type (TNY_ACCOUNT (selected));
+				valid  = !modest_protocol_registry_protocol_type_has_tag 
+					(modest_runtime_get_protocol_registry (),
+				 	 protocol_type,
+				 	 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_INCOMING_XFERS);
+			}
+			if (valid)
+				move_to_dialog_show_folders (dialog, selected);
+		} else {
+			move_to_dialog_set_selected_folder_store (dialog, selected);
 		}
-		if (valid)
-			move_to_dialog_show_folders (dialog, selected);
-	} else {
-		move_to_dialog_set_selected_folder_store (dialog, selected);
 	}
 	g_object_unref (selected);
 }
@@ -2988,11 +3015,13 @@ on_move_to_dialog_action_clicked (GtkButton *selection,
 				  gpointer   user_data)
 {
 	GtkWidget *dialog;
-	gboolean showing_folders;
+	gboolean showing_folders, tree_view_mode;
 
 	dialog = (GtkWidget *) user_data;
 	showing_folders = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS));
-	if (showing_folders) {
+	tree_view_mode = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_TREE_VIEW));
+
+	if (showing_folders || tree_view_mode) {
 		TnyFolderStore *selected;
 		GtkWidget *folder_view;
 
@@ -3031,6 +3060,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	GtkWidget *top_vbox;
 	GtkWidget *action_button;
 	GtkTreeSelection *selection;
+	gboolean tree_view_mode;
 
 	/* Create dialog. We cannot use a touch selector because we
 	   need to use here the folder view widget directly */
@@ -3100,6 +3130,9 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON, back_button);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON, action_button);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SCROLLABLE, folder_view_container);
+
+	tree_view_mode = modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_TREE_VIEW, NULL);
+	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_TREE_VIEW, GINT_TO_POINTER (tree_view_mode));
 
         /* Simulate the behaviour of a HildonPickerDialog by emitting
 	   a response when a folder is selected */

@@ -140,16 +140,17 @@ const gchar *modest_defs_namespace (const gchar *string);
 
 
 /* place for widget settings */
-#define MODEST_CONF_WIDGET_SUBNAMESPACE  "/widgets"
-#define MODEST_CONF_WIDGET_NAMESPACE     (modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE))
-#define MODEST_CONF_FOLDER_VIEW_KEY      "folder-view"
-#define MODEST_CONF_HEADER_VIEW_KEY      "header-view"
-#define MODEST_CONF_MAIN_PANED_KEY       "modest-main-paned"
-#define MODEST_CONF_MSG_PANED_KEY        "modest-msg-paned"
-#define MODEST_CONF_FOLDER_PANED_KEY     "modest-folder-paned"
-#define MODEST_CONF_MAIN_WINDOW_KEY      "modest-main-window"
-#define MODEST_CONF_EDIT_WINDOW_KEY      "modest-edit-msg-window"
-#define MODEST_CONF_MSG_VIEW_WINDOW_KEY  "modest-msg-view-window"
+#define MODEST_CONF_WIDGET_SUBNAMESPACE     "/widgets"
+#define MODEST_CONF_WIDGET_NAMESPACE        (modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE))
+#define MODEST_CONF_FOLDER_VIEW_KEY         "folder-view"
+#define MODEST_CONF_HEADER_VIEW_KEY         "header-view"
+#define MODEST_CONF_MAIN_PANED_KEY          "modest-main-paned"
+#define MODEST_CONF_MSG_PANED_KEY           "modest-msg-paned"
+#define MODEST_CONF_FOLDER_PANED_KEY        "modest-folder-paned"
+#define MODEST_CONF_MAIN_WINDOW_KEY         "modest-main-window"
+#define MODEST_CONF_EDIT_WINDOW_KEY         "modest-edit-msg-window"
+#define MODEST_CONF_MSG_VIEW_WINDOW_KEY     "modest-msg-view-window"
+#define MODEST_CONF_FOLDER_VIEW_WINDOW_KEY  "modest-folder-view-window"
 
 #define MODEST_SERVER_ACCOUNT_SUBNAMESPACE "/server_accounts"
 #define MODEST_SERVER_ACCOUNT_NAMESPACE  (modest_defs_namespace (MODEST_SERVER_ACCOUNT_SUBNAMESPACE))
@@ -173,6 +174,9 @@ const gchar *modest_defs_namespace (const gchar *string);
 #define MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR_FULLSCREEN		\
 	(modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE "/"	\
 				MODEST_CONF_MSG_VIEW_WINDOW_KEY "/show_toolbar_fullscreen"))
+#define MODEST_CONF_FOLDER_VIEW_WINDOW_TREE_VIEW_INDENTATION		\
+	(modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE "/"	\
+				MODEST_CONF_FOLDER_VIEW_WINDOW_KEY "/tree_view_indentation"))
 
 /* per-account data */
 #define MODEST_ACCOUNT_DISPLAY_NAME      "display_name"      /* string */
@@ -243,6 +247,7 @@ const gchar *modest_defs_namespace (const gchar *string);
 #define MODEST_CONF_FORWARD_TYPE         (modest_defs_namespace  ("/forward_type"))      /*  int  */
 #define MODEST_CONF_NOTIFICATIONS (modest_defs_namespace ("/notifications")) /* bool */
 #define MODEST_CONF_AUTO_ADD_TO_CONTACTS (modest_defs_namespace ("/auto_add_to_contacs")) /* bool */
+#define MODEST_CONF_TREE_VIEW 		 (modest_defs_namespace ("/tree_view")) /* bool */
 
 /* hidden global settings */
 #define MODEST_CONF_FETCH_HTML_EXTERNAL_IMAGES (modest_defs_namespace ("/fetch_external_images")) /* bool */
@@ -263,5 +268,8 @@ const gchar *modest_defs_namespace (const gchar *string);
  */
 #define MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE (25*1024)
 #define MODEST_MAX_ATTACHMENT_SIZE (15*1024*1024)
+
+/* Default tree view indentation */
+#define MODEST_DEFAULT_TREE_VIEW_INDENTATION 30
 
 #endif /*__MODEST_DEFS_H__*/

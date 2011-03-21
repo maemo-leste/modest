@@ -674,6 +674,16 @@ on_button_press_cb (GtkWidget      *widget,
 
 	return FALSE;
 }
+
+static void
+on_screen_changed (GdkScreen *screen,
+                   gpointer   userdata) 
+{
+	ModestHeaderWindow *self = (ModestHeaderWindow *) userdata;
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	gtk_widget_queue_resize(priv->new_message_button);
+}
 #endif
 
 static GtkWidget *

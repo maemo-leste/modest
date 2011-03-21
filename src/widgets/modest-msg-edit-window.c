@@ -1412,7 +1412,29 @@ update_next_cid (ModestMsgEditWindow *self, TnyList *attachments)
 	}
 	g_object_unref (iter);
 }
+/*
+static void
+get_header_pairs (TnyMimePart *self, TnyList *list)
+{
+	TnyIterator *iter;
+	TnyList *pairs = tny_simple_list_new ();
+	tny_mime_part_get_header_pairs (TNY_MIME_PART (self), pairs);
+	iter = tny_list_create_iterator (pairs);
+	while (!tny_iterator_is_done (iter))
+	{
+		TnyPair *pair = TNY_PAIR (tny_iterator_get_current (iter));
 
+		*//* Skip Content-Type since we don't want to preserve that header *//*
+		if (g_ascii_strcasecmp (tny_pair_get_name(pair), "Content-Type"))
+			tny_list_append(list, G_OBJECT(pair));
+
+		g_object_unref (pair);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+	g_object_unref (pairs);
+}
+*/
 static void
 set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 {

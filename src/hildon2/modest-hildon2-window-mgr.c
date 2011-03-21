@@ -538,10 +538,11 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	    MODEST_IS_HEADER_WINDOW (current_top) ||
 	    MODEST_IS_FOLDER_WINDOW (current_top) ||
 	    MODEST_IS_MAILBOXES_WINDOW (current_top)) {
+		gboolean tree_view = modest_conf_get_bool (modest_runtime_get_conf (),MODEST_CONF_TREE_VIEW, NULL);
 		toplevel_acc_name = modest_window_get_active_account (current_top);
 
-		if (acc_name != NULL && g_strcmp0 (toplevel_acc_name, acc_name) == 0) {
-			/* Same account, no action */
+		if (tree_view || (acc_name != NULL && g_strcmp0 (toplevel_acc_name, acc_name) == 0)) {
+			/* Same account or tree view, no action */
 
 			if (window_precedence (GTK_WINDOW (current_top)) >= window_precedence (GTK_WINDOW (window))) {
 				if (!(MODEST_IS_MSG_VIEW_WINDOW (current_top) && MODEST_IS_MSG_VIEW_WINDOW (window))) {
@@ -1016,8 +1017,15 @@ modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
 							   self);
 	}
 
-	/* Return accounts window */
-	initial_window = MODEST_WINDOW (modest_accounts_window_new ());
+	/* Return initial window */
+	if (!modest_conf_get_bool (modest_runtime_get_conf (), 
+				   MODEST_CONF_TREE_VIEW, NULL))
+		initial_window = MODEST_WINDOW (modest_accounts_window_new ());
+	else {
+		initial_window = MODEST_WINDOW (modest_folder_window_new (NULL)); 
+		modest_window_set_active_account(MODEST_WINDOW(initial_window), 
+				 modest_account_mgr_get_default_account(modest_runtime_get_account_mgr()));
+	}
 	modest_window_mgr_register_window (self, initial_window, NULL);
 
 	return initial_window;
@@ -1073,7 +1081,11 @@ modest_hildon2_window_mgr_create_caches (ModestWindowMgr *self)
 {
 	g_return_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self));
 
-	modest_accounts_window_pre_create ();
+	if (modest_conf_get_bool (modest_runtime_get_conf (), 
+				  MODEST_CONF_TREE_VIEW, NULL))
+		modest_folder_window_pre_create();
+	else
+		modest_accounts_window_pre_create ();
 
 	MODEST_WINDOW_MGR_CLASS(parent_class)->create_caches (self);
 }

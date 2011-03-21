@@ -35,6 +35,7 @@
 #include <modest-conf.h>
 #include <modest-protocol-registry.h>
 #include <modest-account-settings.h>
+#include <tny-account.h>
 
 G_BEGIN_DECLS
 
@@ -384,6 +385,9 @@ gboolean modest_account_mgr_set_list (ModestAccountMgr *self,
 				      GSList *val,
 				      ModestConfValueType list_type,
 				      gboolean server_account);
+
+gchar* modest_account_mgr_get_account_from_tny_account (ModestAccountMgr *self,
+						  	TnyAccount *account);
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_MGR_H__ */

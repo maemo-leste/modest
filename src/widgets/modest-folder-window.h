@@ -90,6 +90,15 @@ GType modest_folder_window_get_type (void) G_GNUC_CONST;
 ModestWindow* modest_folder_window_new (TnyFolderStoreQuery *query);
 
 /**
+ * modest_accounts_window_pre_create:
+ *
+ * Creates an instance of #ModestFolderWindow that will be used in the next call
+ * to modest_folder_window_new (). Should be called in the initialisation process
+ *
+ */
+void modest_folder_window_pre_create (void);
+
+/**
  * modest_folder_window_get_folder_view:
  * @self: a #ModestFolderWindow
  *

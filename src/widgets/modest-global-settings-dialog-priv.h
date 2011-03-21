@@ -44,6 +44,7 @@ typedef struct _ModestGlobalSettingsState {
 	gboolean prefer_formatted_text;
 	gboolean notifications;
 	gboolean add_to_contacts;
+	gboolean tree_view;
 } ModestGlobalSettingsState;
 
 typedef struct _ModestGlobalSettingsDialogPrivate ModestGlobalSettingsDialogPrivate;
@@ -70,6 +71,8 @@ struct _ModestGlobalSettingsDialogPrivate {
 
 	GtkWidget *notifications;
 	GtkWidget *add_to_contacts;
+
+	GtkWidget *tree_view;
 
 	ModestGlobalSettingsState initial_state;
 };

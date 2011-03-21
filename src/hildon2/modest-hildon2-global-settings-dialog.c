@@ -278,6 +278,12 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	gtk_button_set_alignment (GTK_BUTTON (ppriv->add_to_contacts), 0.0, 0.5);
 	gtk_box_pack_start (GTK_BOX (vbox), ppriv->add_to_contacts, FALSE, FALSE, 0);
 
+	/* Tree view mode */
+	ppriv->tree_view = hildon_check_button_new (MODEST_EDITABLE_SIZE);
+	gtk_button_set_label (GTK_BUTTON (ppriv->tree_view), _("mcen_fi_options_tree_view"));
+	gtk_button_set_alignment (GTK_BUTTON (ppriv->tree_view), 0.0, 0.5);
+	gtk_box_pack_start (GTK_BOX (vbox), ppriv->tree_view, FALSE, FALSE, 0);
+
 	/* Separator label */
 	separator = gtk_label_new (_("mcen_ti_updating"));
 	gtk_label_set_justify ((GtkLabel *) separator, GTK_JUSTIFY_CENTER);
@@ -480,6 +486,16 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 	}
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (ppriv->add_to_contacts), checked);
 	ppriv->initial_state.add_to_contacts = checked;
+
+	/* Tree view mode */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_TREE_VIEW, &error);
+	if (error) {
+		g_clear_error (&error);
+		error = NULL;
+		checked = FALSE;
+	}
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (ppriv->tree_view), checked);
+	ppriv->initial_state.tree_view = checked;
 
 	/* Autoupdate */
 	checked = modest_conf_get_bool (conf, MODEST_CONF_AUTO_UPDATE, &error);

@@ -276,6 +276,11 @@ create_updating_page (ModestDefaultGlobalSettingsDialog *self)
 									     _("mcen_fi_options_automatic_add"));
 	gtk_box_pack_start (GTK_BOX (vbox), ppriv->add_to_contacts, FALSE, FALSE, 0);
 
+	/* Tree view */
+	ppriv->tree_view = modest_toolkit_factory_create_check_button (modest_runtime_get_toolkit_factory (),
+									     _("mcen_fi_options_tree_view"));
+	gtk_box_pack_start (GTK_BOX (vbox), ppriv->tree_view, FALSE, FALSE, 0);
+
 	/* Separator label */
 	separator = gtk_label_new (_("mcen_ti_updating"));
 	attr_list = pango_attr_list_new ();
@@ -481,6 +486,16 @@ modest_default_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 	}
 	modest_togglable_set_active (ppriv->add_to_contacts, checked);
 	ppriv->initial_state.add_to_contacts = checked;
+
+	/* Tree view */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_TREE_VIEW, &error);
+	if (error) {
+		g_clear_error (&error);
+		error = NULL;
+		checked = FALSE;
+	}
+	modest_togglable_set_active (ppriv->tree_view, checked);
+	ppriv->initial_state.tree_view = checked;
 
 	/* Autoupdate */
 	checked = modest_conf_get_bool (conf, MODEST_CONF_AUTO_UPDATE, &error);

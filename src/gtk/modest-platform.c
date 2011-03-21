@@ -1276,9 +1276,12 @@ modest_platform_create_folder_view_full (TnyFolderStoreQuery *query, gboolean do
 {
 	GtkWidget *widget = modest_folder_view_new_full (query, do_refresh);
 
-	/* Show one account by default */
-	modest_folder_view_set_style (MODEST_FOLDER_VIEW (widget),
-				      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
+	/* Show one account in list mode, all accounts in tree view mode */
+        modest_folder_view_set_style (MODEST_FOLDER_VIEW (widget),
+                                      modest_conf_get_bool (modest_runtime_get_conf (),
+                                                            MODEST_CONF_TREE_VIEW, NULL) ?
+                                      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL :
+                                      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
 
 	return widget;
 }

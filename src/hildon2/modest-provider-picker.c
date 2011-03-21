@@ -390,15 +390,16 @@ modest_provider_picker_refresh (ModestProviderPicker *self)
 					continue;
 
 				do {
-					const gchar *id;
+					gchar *id;
 					gtk_tree_model_get (priv->model, &iter, 
-							    MODEL_COL_ID, id,
+							    MODEL_COL_ID, &id,
 							    -1);
 
 					if (g_strcmp0 (id, modest_protocol_get_name (proto)) == 0) {
 						gtk_list_store_remove (GTK_LIST_STORE (priv->model), &iter);
 						break;
 					}
+					g_free(id);
 
 				} while (gtk_tree_model_iter_next (priv->model, &iter));
 			}
