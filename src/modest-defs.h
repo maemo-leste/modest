@@ -227,6 +227,8 @@ const gchar *modest_defs_namespace (const gchar *string);
 
 #define MODEST_ACCOUNT_LIMIT_RETRIEVE	 "limit-retrieve"	     /* int */
 
+#define MODEST_ACCOUNT_OFFLINE_SYNC      "offline_sync"      /* boolean */
+
 #define MODEST_ACCOUNT_SECURITY "security"
 #define MODEST_ACCOUNT_SECURITY_VALUE_NONE "none"
 #define MODEST_ACCOUNT_SECURITY_VALUE_NORMAL "normal" /* Meaning "Normal (TLS)", as in our UI spec. */ 

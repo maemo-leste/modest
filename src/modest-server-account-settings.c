@@ -48,6 +48,7 @@ struct _ModestServerAccountSettingsPrivate {
 	ModestProtocolType auth_protocol;
 	gchar *account_name;
 	gchar *uri;
+	gboolean offline_sync;
 };
 
 #define MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE(o)     (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
@@ -112,6 +113,7 @@ modest_server_account_settings_instance_init (ModestServerAccountSettings *obj)
 	priv->auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
 	priv->account_name = NULL;
 	priv->uri = NULL;
+	priv->offline_sync = FALSE;
 }
 
 static void   
@@ -366,5 +368,28 @@ modest_server_account_settings_set_auth_protocol (ModestServerAccountSettings *s
 
 	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
 	priv->auth_protocol = auth_protocol;
+}
+
+gboolean 
+modest_server_account_settings_get_offline_sync (ModestServerAccountSettings *settings)
+{
+	ModestServerAccountSettingsPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings), 0);
+
+	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
+	return priv->offline_sync;
+}
+
+void   
+modest_server_account_settings_set_offline_sync (ModestServerAccountSettings *settings,
+						 gboolean offline_sync)
+{
+	ModestServerAccountSettingsPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings));
+
+	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
+	priv->offline_sync = offline_sync;
 }
 

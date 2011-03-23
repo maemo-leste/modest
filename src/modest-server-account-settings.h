@@ -260,6 +260,26 @@ const gchar *modest_server_account_settings_get_account_name (ModestServerAccoun
 void modest_server_account_settings_set_account_name (ModestServerAccountSettings *settings,
 						      const gchar *account_name);
 
+/**
+ * modest_account_settings_get_offline_sync:
+ * @settings: a #ModestAccountSettings
+ *
+ * obtains if we should synchronise the account for offline use
+ *
+ * Returns: a #gboolean
+ */
+gboolean modest_server_account_settings_get_offline_sync (ModestServerAccountSettings *settings);
+					      
+/**
+ * modest_account_settings_set_offline_sync:
+ * @settings: a #ModestAccountSettings
+ * @offline_sync: a #gboolean
+ *
+ * if set, mails in these folders will be downloaded for offline reading
+ */
+void modest_server_account_settings_set_offline_sync (ModestServerAccountSettings *settings, 
+						      gboolean offline_sync);
+
 
 G_END_DECLS
 
