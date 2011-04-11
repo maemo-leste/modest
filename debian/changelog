@@ -1,3 +1,9 @@
+modest (3.90.7-8) unstable; urgency=low
+
+  * Added tree view mode.
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Thu, 24 Mar 2011 13:10:49 +0200
+
 modest (3.90.7-7) unstable; urgency=low
 
   * Fixed New Message button resizing in portrait mode.
