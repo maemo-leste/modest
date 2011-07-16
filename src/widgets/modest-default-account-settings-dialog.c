@@ -127,6 +127,7 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	GtkWidget *entry_outgoingserver;
 	GtkWidget *checkbox_outgoing_smtp_specific;
 	GtkWidget *button_outgoing_smtp_servers;
+	GtkWidget *checkbox_offline_sync;
 	
 	GtkWidget *signature_dialog;
 
@@ -818,6 +819,20 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 	g_signal_connect (G_OBJECT (priv->button_outgoing_smtp_servers), "clicked",
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);
 
+	/* offline sync checkbox: */
+	if (!priv->checkbox_offline_sync) {
+		priv->checkbox_offline_sync = hildon_check_button_new (MODEST_EDITABLE_SIZE);
+		hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_offline_sync), 
+			FALSE);
+		gtk_button_set_label (GTK_BUTTON (priv->checkbox_offline_sync),
+				      _("mcen_fi_advsetup_offline_sync"));
+		gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_offline_sync), 0.0, 0.5);
+	}
+	gtk_widget_show (priv->checkbox_offline_sync);
+	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_offline_sync, 
+			    FALSE, FALSE, 0);
+	connect_for_modified (self, priv->checkbox_offline_sync);
+
 	gtk_widget_show (GTK_WIDGET (box));
 
 	return GTK_WIDGET (box);
@@ -1207,6 +1222,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	if (incoming_account) {
 		const gchar *username, *password, *hostname, *proto_str, *account_title;
 		gchar *proto_name, *title;
+                gboolean offline_sync;
 		ModestProtocolType incoming_protocol;
 
 		if (!modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry,
@@ -1222,6 +1238,8 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		hostname = modest_server_account_settings_get_hostname (incoming_account);
 		username = modest_server_account_settings_get_username (incoming_account);
 		password = modest_server_account_settings_get_password (incoming_account);
+                offline_sync = modest_server_account_settings_get_offline_sync (incoming_account);
+
 		gtk_entry_set_text( GTK_ENTRY (priv->entry_user_username),
 				    null_means_empty (username));
 		gtk_entry_set_text( GTK_ENTRY (priv->entry_user_password), 
@@ -1229,6 +1247,8 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 
 		gtk_entry_set_text( GTK_ENTRY (priv->entry_incomingserver), 
 				    null_means_empty (hostname));
+
+                hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_offline_sync), offline_sync);
 
 		/* Load security settings */
 		modest_security_options_view_load_settings (
@@ -1351,6 +1371,11 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 	
 	password = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password));
 	modest_server_account_settings_set_password (store_settings, password);
+
+	/* Save offline sync setting: */
+	modest_server_account_settings_set_offline_sync
+		(store_settings, 
+		 hildon_check_button_get_active(HILDON_CHECK_BUTTON(priv->checkbox_offline_sync)));
 
 	/* Save security settings */
 	modest_security_options_view_save_settings (MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security), 

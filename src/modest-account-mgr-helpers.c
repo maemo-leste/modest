@@ -468,6 +468,7 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 	ModestProtocol *protocol;
 	ModestProtocolRegistry *registry;
 	gchar *hostname, *username, *pwd, *uri, *proto, *auth, *sec;
+        gboolean offline_sync;
 
 	if (!modest_account_mgr_account_exists (self, name, TRUE)) {
 		g_warning ("%s account %s does not exist", __FUNCTION__, name);
@@ -545,6 +546,11 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 	if (hostname)
 		modest_server_account_settings_set_hostname (settings, hostname);
 
+        offline_sync = modest_account_mgr_get_bool (self, name, 
+                                       		    MODEST_ACCOUNT_OFFLINE_SYNC, TRUE);
+        if (offline_sync)
+            modest_server_account_settings_set_offline_sync (settings, TRUE);
+
 	if (!uri) {
 		if (!username || !hostname) {
 			g_free (username);
@@ -594,6 +600,7 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 		gint port;
 		const gchar *auth_protocol_name;
 		const gchar *security_name;
+                gboolean offline_sync;
 
 		hostname = null_means_empty (modest_server_account_settings_get_hostname (settings));
 		username = null_means_empty (modest_server_account_settings_get_username (settings));
@@ -605,6 +612,7 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry,
 									  modest_server_account_settings_get_security_protocol (settings));
 		security_name = modest_protocol_get_name (protocol);
+                offline_sync = modest_server_account_settings_get_offline_sync (settings);
 
 		has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_HOSTNAME, 
 							    hostname, TRUE);
@@ -628,6 +636,10 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 			(has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_SECURITY,
 									   security_name,
 									   TRUE));
+		if (!has_errors)
+			(has_errors = !modest_account_mgr_set_bool (self, account_name, MODEST_ACCOUNT_OFFLINE_SYNC,
+									    offline_sync,
+									    TRUE));
 	} else {
 		const gchar *uri = modest_server_account_settings_get_uri (settings);
 		has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_URI,
