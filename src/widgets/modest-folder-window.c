@@ -846,6 +846,7 @@ edit_mode_changed (ModestFolderWindow *folder_window,
 }
 #endif
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean
 take_screenshot (gpointer userdata)
 {
@@ -855,6 +856,7 @@ take_screenshot (gpointer userdata)
 
 	return FALSE;	
 }
+#endif
 
 static gboolean 
 on_map_event (GtkWidget *widget,
