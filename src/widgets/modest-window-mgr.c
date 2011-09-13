@@ -296,12 +296,10 @@ modest_window_mgr_finalize (GObject *obj)
 	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
 	priv->sighandlers = NULL;
 
-	if (priv->queue_change_handler > 0) {
-		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+	if (g_signal_handler_is_connected (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
+					   priv->queue_change_handler))
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
 					     priv->queue_change_handler);
-		priv->queue_change_handler = 0;
-	}
-
 	if (priv->progress_operations) {
 		g_object_unref (priv->progress_operations);
 		priv->progress_operations = NULL;
@@ -569,12 +567,10 @@ modest_window_mgr_register_window_default (ModestWindowMgr *self,
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
 	/* We set up the queue change handler */
-	if (priv->queue_change_handler == 0) {
-		priv->queue_change_handler = g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
-							       "queue-changed",
-							       G_CALLBACK (modest_window_mgr_on_queue_changed),
-							       self);
-	}
+	priv->queue_change_handler = g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+						       "queue-changed",
+						       G_CALLBACK (modest_window_mgr_on_queue_changed),
+						       self);
 
 
 	/* remove from the list of pre-registered uids */
