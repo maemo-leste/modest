@@ -1,3 +1,15 @@
+modest (3.90.7-10) unstable; urgency=low
+
+  * Fixed modest crashes (thanks to freemangordon)
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Wed, 05 Oct 2011 15:00:54 +0200
+
+modest (3.90.7-9) unstable; urgency=low
+
+  * Offline IMAP support
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Sun, 07 Aug 2011 15:16:15 +0300
+
 modest (3.90.7-8) unstable; urgency=low
 
   * Added tree view mode.
