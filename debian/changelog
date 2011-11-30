@@ -1,3 +1,10 @@
+modest (3.90.7-11) unstable; urgency=low
+
+  * Rebuilt without thumb support.
+  * Fixed translation string for "Save attachments".
+
+ -- Mohammad Abu-Garbeyyeh <mohammad7410@gmail.com>  Tue, 29 Nov 2011 19:26:35 +0200
+
 modest (3.90.7-10) unstable; urgency=low
 
   * Fixed modest crashes (thanks to freemangordon)
