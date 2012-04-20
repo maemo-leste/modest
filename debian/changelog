@@ -1,3 +1,15 @@
+modest (3.90.7-11.1) unstable; urgency=low
+
+  * Fixed bug https://bugs.maemo.org/show_bug.cgi?id=12285.
+    Do not delete email from server if "Leave messages on server" is ON
+     - forward-port http://gitorious.org/modest/modest/commit/92aec20908f7b772d66842882d4bd26a33081c51
+  * Manual send & receive doesn't always retrieve emails
+     - https://gitorious.org/modest/modest/commit/f2dc25426f49e090f31e858f6639726febde76ec
+  * Use async operation instead of synchronous one for the main thread
+     - https://gitorious.org/modest/modest/commit/1ddca655159e0a0f527eb24b58614190668a05f5
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Fri, 20 Apr 2012 16:22:37 +0300
+
 modest (3.90.7-11) unstable; urgency=low
 
   * Rebuilt without thumb support.
