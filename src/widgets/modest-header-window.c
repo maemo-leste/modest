@@ -294,7 +294,29 @@ modest_header_window_dispose (GObject *obj)
 
 	folder = modest_header_view_get_folder ((ModestHeaderView *) priv->header_view);
 	if (folder) {
-		tny_folder_sync_async (folder, TRUE, NULL, NULL, NULL);
+		gboolean expunge;
+		TnyAccount *account;
+		ModestProtocolType proto_type;
+		ModestProtocolRegistry *proto_reg;
+		
+		account = modest_tny_folder_get_account (folder);
+		proto_type = modest_tny_account_get_protocol_type (account);
+		g_object_unref (account);
+		proto_reg = modest_runtime_get_protocol_registry ();
+		
+		if (modest_protocol_registry_protocol_type_has_leave_on_server (proto_reg, proto_type)) {
+			const gchar *name;
+			ModestAccountMgr* account_mgr;
+			
+			account_mgr = modest_runtime_get_account_mgr ();
+			name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+			expunge = !modest_account_mgr_get_leave_on_server (account_mgr, name);
+		}
+		else {
+			expunge = TRUE;
+		}
+
+		tny_folder_sync_async (folder, expunge, NULL, NULL, NULL);
 		g_object_unref (folder);
 	}
 
