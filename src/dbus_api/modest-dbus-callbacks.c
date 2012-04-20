@@ -666,6 +666,26 @@ on_idle_open_message_performer (gpointer user_data)
 	return FALSE;
 }
 
+static void
+on_open_message_msg_found (TnyFolder *folder,
+			   gboolean cancelled,
+			   TnyMsg *msg,
+			   GError *err,
+			   gpointer user_data)
+{
+	OpenMsgPerformerInfo *info;
+
+	info = (OpenMsgPerformerInfo *)user_data;
+	if (msg) {
+		info->connect = FALSE;
+		g_object_unref (msg);
+	} else {
+		info->connect = TRUE;
+	}
+
+	g_idle_add (on_idle_open_message_performer, info);
+}
+
 static gint 
 on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
@@ -724,20 +744,15 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 			info->connect = FALSE;
 		}
 		if (folder) {
-			TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);
-			if (msg) {
-				info->connect = FALSE;
-				g_object_unref (msg);
-			} else {
-				info->connect = TRUE;
-			}
+			tny_folder_find_msg_async (folder, uri, on_open_message_msg_found, NULL, info);
 			g_object_unref (folder);
 		}
-
-		/* We need to call it into an idle to get
-		   modest_platform_connect_and_perform into the main
-		   loop */
-		g_idle_add (on_idle_open_message_performer, info);
+		else {
+			/* We need to call it into an idle to get
+			modest_platform_connect_and_perform into the main
+			loop */
+			g_idle_add (on_idle_open_message_performer, info);
+		}
 		osso_retval = OSSO_OK;
 	} else {
 		g_free (uri);
