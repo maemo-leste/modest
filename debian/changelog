@@ -1,3 +1,16 @@
+modest (3.90.7-11.1-thumb2) unstable; urgency=low
+
+  * Add libosso-abook-dev as a build dependency
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Fri, 21 May 2012 14:08:32 +0300
+
+modest (3.90.7-11.1-thumb1) unstable; urgency=low
+
+  * Make sure libosso-abook is installed prior to compilation, otherwise no address
+    book support will be included
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Fri, 21 May 2012 14:08:32 +0300
+
 modest (3.90.7-11.1-thumb0) unstable; urgency=low
 
   * Thumb compiled
