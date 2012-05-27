@@ -14,7 +14,7 @@ Package: modest
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${launcher:Depends}, libmodest-dbus-client (>= 3.2.0),
  modest-providers-data, modest-l10n-mr | modest-l10n-mr0, osso-icons-theme, operator-wizard-settings,
- osso-countries-l10n-mr | osso-countries-l10n-mr0, microb-engine
+ osso-countries-l10n-mr | osso-countries-l10n-mr0, microb-engine, kernel-feature-errata-430973-workaround
 Description: an e-mail client for platforms with modest resources
  e-mail client for osso
 
