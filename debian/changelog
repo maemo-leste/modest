@@ -1,4 +1,4 @@
-modest (3.90.7-11.1-thumb3) unstable; urgency=low
+modest (3.90.7-11.1+thumb3) unstable; urgency=low
 
   * Add kernel-feature-errata-430973-workaround as a dependency
 
