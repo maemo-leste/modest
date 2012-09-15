@@ -22,7 +22,7 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 endif
 
 ifneq (,$(findstring thumb,$(DEB_BUILD_OPTIONS)))
-        CFLAGS += -mthumb
+        CFLAGS += -mthumb -mword-relocations -pie
 endif
 
 ifeq (,$(findstring nolauncher,$(DEB_BUILD_OPTIONS)))
