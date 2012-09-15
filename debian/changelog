@@ -1,3 +1,15 @@
+modest (3.90.7-11.2+thumb0) unstable; urgency=low
+
+  * Thumb2 compiled
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Sat, 15 Sep 2012 11:02:43 +0300
+
+modest (3.90.7-11.2) unstable; urgency=low
+
+  * Allow scrolling settings dialog in both modes (horizontal & vertical)
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Mon, 16 Jul 2012 10:10:00 +0200
+
 modest (3.90.7-11.1+thumb3) unstable; urgency=low
 
   * Add kernel-feature-errata-430973-workaround as a dependency

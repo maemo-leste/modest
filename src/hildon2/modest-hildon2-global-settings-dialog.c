@@ -342,6 +342,7 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 
 	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 
+	g_object_set (scrollable, "mov-mode", HILDON_MOVEMENT_MODE_BOTH, NULL);
 	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (scrollable), vbox);
 	gtk_widget_show (vbox);
 	gtk_widget_show (scrollable);
