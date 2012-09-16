@@ -13,7 +13,7 @@ CFLAGS = -Wall -g
 PACKAGENAME = modest
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
+	CFLAGS += -O0 -fno-omit-frame-pointer
 else
 	CFLAGS += -O2
 endif
@@ -22,11 +22,15 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 endif
 
 ifneq (,$(findstring thumb,$(DEB_BUILD_OPTIONS)))
-        CFLAGS += -mthumb -mword-relocations -pie
+	CFLAGS += -mthumb
 endif
 
 ifeq (,$(findstring nolauncher,$(DEB_BUILD_OPTIONS)))
 	conf_opt = --enable-maemo-launcher
+endif
+
+ifeq (,$(findstring nolauncher,$(DEB_BUILD_OPTIONS)))
+	CFLAGS +=-shared -rdynamic -pie -mword-relocations
 endif
 
 ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
@@ -50,7 +54,7 @@ build: build-stamp
 build-stamp:  config.status
 	dh_testdir
 
-        # commands to compile the package.
+	# commands to compile the package.
 	$(MAKE)
 	touch build-stamp
 
@@ -58,7 +62,7 @@ build-stamp:  config.status
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp 
+	rm -f build-stamp
 
 # commands to clean up after the build process.
 #	-$(MAKE) distclean
@@ -70,12 +74,12 @@ endif
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.guess
 endif
-	dh_clean 
+	dh_clean
 
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k 
+	dh_clean -k
 	dh_installdirs
 
 # install the package into debian/tmp/
@@ -96,12 +100,12 @@ binary-indep: build install
 binary-arch: build install
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs 
+	dh_installchangelogs
 	dh_installdocs
 	dh_installexamples
 	dh_install --sourcedir=debian/tmp -v
 	dh_installmenu
-#	dh_installdebconf	
+#	dh_installdebconf
 #	dh_installlogrotate
 #	dh_installemacsen
 #	dh_installpam
