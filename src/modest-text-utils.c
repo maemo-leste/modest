@@ -250,7 +250,7 @@ forward_cite (const gchar *from,
 		"%s%s %s\n" /* original 'From' string */
 		"%s%s %s\n" /* original 'Sent' string (date/time) */
 		"%s%s %s\n" /* original 'To' string */
-		"%s%s %s\n", /* original 'Subject' string */
+		"%s%s %s", /* original 'Subject' string */
 		FORWARD_STRING,
 		FROM_STRING, separator, from ? from:EMPTY_STRING,
 		SENT_STRING, separator, sent,
@@ -998,7 +998,7 @@ cite (const time_t sent_date, const gchar *from)
 {
 	char sent_str[101];
 	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
-	return g_strdup_printf("On %s, %s wrote:\n", sent_str, from);
+	return g_strdup_printf("On %s %s wrote:", sent_str, from);
 }
 
 static gchar *
