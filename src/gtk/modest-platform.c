@@ -1197,7 +1197,7 @@ update_timeout_handler (gpointer userdata)
 	}
 
 	if (auto_update && right_connection) {
-		modest_ui_actions_do_send_receive_all (NULL, FALSE, FALSE, FALSE);
+		modest_ui_actions_do_send_receive_all (NULL, FALSE, TRUE, FALSE);
 	}
 
 	return TRUE;

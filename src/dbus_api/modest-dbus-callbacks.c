@@ -985,9 +985,9 @@ on_idle_send_receive(gpointer user_data)
 
 	if ((auto_update && right_connection) || data->manual) {
 		if (data->account_id) {
-			modest_ui_actions_do_send_receive (data->account_id, data->manual, FALSE, data->manual, NULL);
+			modest_ui_actions_do_send_receive (data->account_id, data->manual, TRUE, data->manual, NULL);
 		} else {
-			modest_ui_actions_do_send_receive_all (NULL, data->manual, FALSE, data->manual);
+			modest_ui_actions_do_send_receive_all (NULL, data->manual, TRUE, data->manual);
 		}
 	}
 

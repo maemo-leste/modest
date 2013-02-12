@@ -71,7 +71,7 @@ modest_default_connection_policy_on_connect (TnyConnectionPolicy *self, TnyAccou
 			account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 			top_window = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
 			if (top_window)
-				modest_ui_actions_do_send_receive (account_name, FALSE, FALSE, TRUE, top_window);
+				modest_ui_actions_do_send_receive (account_name, FALSE, TRUE, TRUE, top_window);
 		}
 	}
 
