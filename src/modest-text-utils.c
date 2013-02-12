@@ -44,6 +44,7 @@
 #include <modest-account-mgr-helpers.h>
 #include <modest-runtime.h>
 #include <ctype.h>
+#include <locale.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
