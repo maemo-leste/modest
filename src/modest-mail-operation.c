@@ -135,9 +135,10 @@ typedef struct
 	UpdateAccountCallback callback;
 	gpointer user_data;
 	TnyList *folders;
+	TnyList *folders2;
 	gint pending_calls;
 	gboolean poke_all;
-	TnyFolderObserver *inbox_observer;
+	TnyFolderObserver *observer;
 	gboolean interactive;
 	gboolean msg_readed;
 	gboolean update_folder_counts;
@@ -1550,6 +1551,7 @@ destroy_update_account_info (UpdateAccountInfo *info)
 {
 	g_free (info->account_name);
 	g_object_unref (info->folders);
+	g_object_unref (info->folders2);
 	g_object_unref (info->mail_op);
 	g_slice_free (UpdateAccountInfo, info);
 }
@@ -1692,7 +1694,12 @@ update_account_notify_user_and_free (UpdateAccountInfo *info,
 }
 
 static void
-inbox_refreshed_cb (TnyFolder *inbox, 
+folder_refresh_status_update (GObject *obj,
+			     TnyStatus *status,
+			     gpointer user_data);
+
+static void
+folder_refreshed_cb (TnyFolder *current_folder, 
 		    gboolean canceled, 
 		    GError *err, 
 		    gpointer user_data)
@@ -1707,6 +1714,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	TnyList *new_headers = NULL;
 	gboolean headers_only;
 	time_t time_to_store;
+	TnyIterator *iter_all_folders;
 
 	info = (UpdateAccountInfo *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
@@ -1721,17 +1729,47 @@ inbox_refreshed_cb (TnyFolder *inbox,
 				     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
 				     "canceled");
 
-		if (inbox)
-			tny_folder_remove_observer (inbox, info->inbox_observer);
-		g_object_unref (info->inbox_observer);
-		info->inbox_observer = NULL;
+		iter_all_folders = tny_list_create_iterator (info->folders);
+
+		while (!tny_iterator_is_done (iter_all_folders)) {
+			TnyFolder *folder = NULL;
+			folder = TNY_FOLDER (tny_iterator_get_current (iter_all_folders));
+
+			tny_folder_remove_observer (folder, info->observer);
+			tny_list_remove (info->folders2, (GObject*)folder);
+
+			g_object_unref (folder);
+			tny_iterator_next (iter_all_folders);
+		}
+
+		g_object_unref (iter_all_folders);
+
+		g_object_unref (info->observer);
+		info->observer = NULL;
 
 		/* Notify the user about the error and then exit */
 		update_account_notify_user_and_free (info, NULL);
 		return;
 	}
 
-	if (!inbox) {
+	if (tny_list_get_length (info->folders2) > 0) {
+		iter_all_folders = tny_list_create_iterator (info->folders2);
+
+		if (!tny_iterator_is_done (iter_all_folders)) {
+			TnyFolder *folder = NULL;
+			folder = TNY_FOLDER (tny_iterator_get_current (iter_all_folders));
+
+			tny_list_remove (info->folders2, (GObject*)folder);
+
+			tny_folder_refresh_async (folder, folder_refreshed_cb, folder_refresh_status_update, info);
+			g_object_unref (folder);
+		}
+
+		g_object_unref (iter_all_folders);
+		return;
+	}
+
+	if (!current_folder) {
 		/* Try to send anyway */
 		goto send_mail;
 	}
@@ -1759,10 +1797,10 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	/* Create the new headers array. We need it to sort the
 	   new headers by date */
 	new_headers_array = g_ptr_array_new ();
-	if (info->inbox_observer) {
-		new_headers_iter = tny_list_create_iterator (((InternalFolderObserver *) info->inbox_observer)->new_headers);
+	if (info->observer) {
+		new_headers_iter = tny_list_create_iterator (((InternalFolderObserver *) info->observer)->new_headers);
 		if (!tny_iterator_is_done (new_headers_iter)) {
-			modest_platform_emit_folder_updated_signal (info->account_name, tny_folder_get_id (TNY_FOLDER (inbox)));
+			modest_platform_emit_folder_updated_signal (info->account_name, tny_folder_get_id (TNY_FOLDER (current_folder)));
 			modest_account_mgr_set_has_new_mails (modest_runtime_get_account_mgr (),
 							      info->account_name, TRUE);
 		}
@@ -1779,9 +1817,22 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		}
 		g_object_unref (new_headers_iter);
 
-		tny_folder_remove_observer (inbox, info->inbox_observer);
-		g_object_unref (info->inbox_observer);
-		info->inbox_observer = NULL;
+		iter_all_folders = tny_list_create_iterator (info->folders);
+
+		while (!tny_iterator_is_done (iter_all_folders)) {
+			TnyFolder *folder = NULL;
+			folder = TNY_FOLDER (tny_iterator_get_current (iter_all_folders));
+
+			tny_folder_remove_observer (folder, info->observer);
+
+			g_object_unref (folder);
+			tny_iterator_next (iter_all_folders);
+		}
+
+		g_object_unref (iter_all_folders);
+
+		g_object_unref (info->observer);
+		info->observer = NULL;
 	}
 
 	if (new_headers_array->len == 0) {
@@ -1865,7 +1916,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 }
 
 static void
-inbox_refresh_status_update (GObject *obj,
+folder_refresh_status_update (GObject *obj,
 			     TnyStatus *status,
 			     gpointer user_data)
 {
@@ -1971,7 +2022,7 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 	/* This means that we have all the folders */
 	if (info->pending_calls == 0) {
 		TnyIterator *iter_all_folders;
-		TnyFolder *inbox = NULL;
+		TnyFolder *first = NULL;
 
 		/* If there was any error do not continue */
 		if (priv->error) {
@@ -1988,9 +2039,19 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 
 			folder = TNY_FOLDER (tny_iterator_get_current (iter_all_folders));
 
-			if (!info->update_folder_counts && tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_INBOX) {
-				/* Get a reference to the INBOX */
-				inbox = g_object_ref (folder);
+			if (!info->update_folder_counts) {
+				/* Refresh the folder. Our observer receives
+				 * the new emails during folder refreshes, so
+				 * we can use observer->new_headers
+				 */
+				if (!info->observer)
+					info->observer = g_object_new (internal_folder_observer_get_type (), NULL);
+				tny_folder_add_observer (folder, info->observer);
+
+				if (!first)
+					first = g_object_ref(folder);
+				else
+					tny_list_append (info->folders2, (GObject *) folder);
 			} else {
 				/* Issue a poke status over the folder */
 				if (info->poke_all)
@@ -2003,22 +2064,14 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 		}
 		g_object_unref (iter_all_folders);
 
-		/* Refresh the INBOX */
-		if (inbox) {
-			/* Refresh the folder. Our observer receives
-			 * the new emails during folder refreshes, so
-			 * we can use observer->new_headers
-			 */
-			info->inbox_observer = g_object_new (internal_folder_observer_get_type (), NULL);
-			tny_folder_add_observer (inbox, info->inbox_observer);
-
-			/* Refresh the INBOX */
-			tny_folder_refresh_async (inbox, inbox_refreshed_cb, inbox_refresh_status_update, info);
-			g_object_unref (inbox);
+		if (first) {
+			/* Refresh folder */
+			tny_folder_refresh_async (first, folder_refreshed_cb, folder_refresh_status_update, info);
+			g_object_unref (first);
 		} else {
-			/* We could not perform the inbox refresh but
+			/* We could not perform the folder refresh but
 			   we'll try to send mails anyway */
-			inbox_refreshed_cb (inbox, FALSE, NULL, info);
+			folder_refreshed_cb (NULL, FALSE, NULL, info);
 		}
 	}
 }
@@ -2078,6 +2131,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	info = g_slice_new0 (UpdateAccountInfo);
 	info->pending_calls = 1;
 	info->folders = tny_simple_list_new ();
+	info->folders2 = tny_simple_list_new ();
 	info->mail_op = g_object_ref (self);
 	info->poke_all = poke_all;
 	info->interactive = interactive;
@@ -2159,6 +2213,7 @@ modest_mail_operation_update_folder_counts (ModestMailOperation *self,
 	info = g_slice_new0 (UpdateAccountInfo);
 	info->pending_calls = 1;
 	info->folders = tny_simple_list_new ();
+	info->folders2 = tny_simple_list_new ();
 	info->mail_op = g_object_ref (self);
 	info->poke_all = TRUE;
 	info->interactive = FALSE;
