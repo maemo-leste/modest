@@ -2052,11 +2052,11 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 					first = g_object_ref(folder);
 				else
 					tny_list_append (info->folders2, (GObject *) folder);
-			} else {
-				/* Issue a poke status over the folder */
-				if (info->poke_all)
-					tny_folder_poke_status (folder);
 			}
+
+			/* Issue a poke status over the folder */
+			if (info->poke_all)
+				tny_folder_poke_status (folder);
 
 			/* Free and go to next */
 			g_object_unref (folder);
