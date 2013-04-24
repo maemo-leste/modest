@@ -2036,10 +2036,14 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 		while (!tny_iterator_is_done (iter_all_folders) &&
 		       priv->status == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS) {
 			TnyFolder *folder = NULL;
+			TnyAccount *account = NULL;
+			gboolean update_all_folders = FALSE;
 
 			folder = TNY_FOLDER (tny_iterator_get_current (iter_all_folders));
+			account = tny_folder_get_account(folder);
+			update_all_folders = g_object_get_data (G_OBJECT(account), MODEST_ACCOUNT_UPDATE_ALL_FOLDERS);
 
-			if (!info->update_folder_counts) {
+			if (!info->update_folder_counts && (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_INBOX || update_all_folders)) {
 				/* Refresh the folder. Our observer receives
 				 * the new emails during folder refreshes, so
 				 * we can use observer->new_headers

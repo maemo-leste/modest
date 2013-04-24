@@ -280,6 +280,26 @@ gboolean modest_server_account_settings_get_offline_sync (ModestServerAccountSet
 void modest_server_account_settings_set_offline_sync (ModestServerAccountSettings *settings, 
 						      gboolean offline_sync);
 
+/**
+ * modest_account_settings_get_update_all_folders:
+ * @settings: a #ModestAccountSettings
+ *
+ * obtains if we should update all folders for the account (not only INBOX)
+ *
+ * Returns: a #gboolean
+ */
+gboolean modest_server_account_settings_get_update_all_folders (ModestServerAccountSettings *settings);
+
+/**
+ * modest_account_settings_set_update_all_folders:
+ * @settings: a #ModestAccountSettings
+ * @update: a #gboolean
+ *
+ * if set, all folders for this account will be updated (not only INBOX)
+ */
+void modest_server_account_settings_set_update_all_folders (ModestServerAccountSettings *settings,
+						      gboolean enable);
+
 
 G_END_DECLS
 

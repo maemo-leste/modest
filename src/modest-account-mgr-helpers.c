@@ -469,6 +469,7 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 	ModestProtocolRegistry *registry;
 	gchar *hostname, *username, *pwd, *uri, *proto, *auth, *sec;
         gboolean offline_sync;
+	gboolean update_all_folders;
 
 	if (!modest_account_mgr_account_exists (self, name, TRUE)) {
 		g_warning ("%s account %s does not exist", __FUNCTION__, name);
@@ -551,6 +552,12 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
         if (offline_sync)
             modest_server_account_settings_set_offline_sync (settings, TRUE);
 
+	update_all_folders = modest_account_mgr_get_bool (self, name,
+							  MODEST_ACCOUNT_UPDATE_ALL_FOLDERS, TRUE);
+
+	if (update_all_folders)
+		modest_server_account_settings_set_update_all_folders (settings, TRUE);
+
 	if (!uri) {
 		if (!username || !hostname) {
 			g_free (username);
@@ -601,6 +608,7 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 		const gchar *auth_protocol_name;
 		const gchar *security_name;
                 gboolean offline_sync;
+		gboolean update_all_folders;
 
 		hostname = null_means_empty (modest_server_account_settings_get_hostname (settings));
 		username = null_means_empty (modest_server_account_settings_get_username (settings));
@@ -613,6 +621,7 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 									  modest_server_account_settings_get_security_protocol (settings));
 		security_name = modest_protocol_get_name (protocol);
                 offline_sync = modest_server_account_settings_get_offline_sync (settings);
+		update_all_folders = modest_server_account_settings_get_update_all_folders (settings);
 
 		has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_HOSTNAME, 
 							    hostname, TRUE);
@@ -639,6 +648,10 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 		if (!has_errors)
 			(has_errors = !modest_account_mgr_set_bool (self, account_name, MODEST_ACCOUNT_OFFLINE_SYNC,
 									    offline_sync,
+									    TRUE));
+		if (!has_errors)
+			(has_errors = !modest_account_mgr_set_bool (self, account_name, MODEST_ACCOUNT_UPDATE_ALL_FOLDERS,
+									    update_all_folders,
 									    TRUE));
 	} else {
 		const gchar *uri = modest_server_account_settings_get_uri (settings);

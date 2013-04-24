@@ -128,6 +128,7 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	GtkWidget *checkbox_outgoing_smtp_specific;
 	GtkWidget *button_outgoing_smtp_servers;
 	GtkWidget *checkbox_offline_sync;
+	GtkWidget *checkbox_update_all_folders;
 	
 	GtkWidget *signature_dialog;
 
@@ -833,6 +834,20 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 			    FALSE, FALSE, 0);
 	connect_for_modified (self, priv->checkbox_offline_sync);
 
+	/* update all folders checkbox: */
+	if (!priv->checkbox_update_all_folders) {
+		priv->checkbox_update_all_folders = hildon_check_button_new (MODEST_EDITABLE_SIZE);
+		hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_update_all_folders),
+			FALSE);
+		gtk_button_set_label (GTK_BUTTON (priv->checkbox_update_all_folders),
+				      _("mcen_fi_advsetup_update_all_folders"));
+		gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_update_all_folders), 0.0, 0.5);
+	}
+	gtk_widget_show (priv->checkbox_update_all_folders);
+	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_update_all_folders,
+			    FALSE, FALSE, 0);
+	connect_for_modified (self, priv->checkbox_update_all_folders);
+
 	gtk_widget_show (GTK_WIDGET (box));
 
 	return GTK_WIDGET (box);
@@ -1223,6 +1238,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		const gchar *username, *password, *hostname, *proto_str, *account_title;
 		gchar *proto_name, *title;
                 gboolean offline_sync;
+		gboolean update_all_folders;
 		ModestProtocolType incoming_protocol;
 
 		if (!modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry,
@@ -1239,6 +1255,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		username = modest_server_account_settings_get_username (incoming_account);
 		password = modest_server_account_settings_get_password (incoming_account);
                 offline_sync = modest_server_account_settings_get_offline_sync (incoming_account);
+		update_all_folders = modest_server_account_settings_get_update_all_folders (incoming_account);
 
 		gtk_entry_set_text( GTK_ENTRY (priv->entry_user_username),
 				    null_means_empty (username));
@@ -1249,6 +1266,8 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 				    null_means_empty (hostname));
 
                 hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_offline_sync), offline_sync);
+
+		hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_update_all_folders), update_all_folders);
 
 		/* Load security settings */
 		modest_security_options_view_load_settings (
@@ -1376,6 +1395,11 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 	modest_server_account_settings_set_offline_sync
 		(store_settings, 
 		 hildon_check_button_get_active(HILDON_CHECK_BUTTON(priv->checkbox_offline_sync)));
+
+	/* Save update all folders setting: */
+	modest_server_account_settings_set_update_all_folders
+		(store_settings,
+		 hildon_check_button_get_active(HILDON_CHECK_BUTTON(priv->checkbox_update_all_folders)));
 
 	/* Save security settings */
 	modest_security_options_view_save_settings (MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security), 

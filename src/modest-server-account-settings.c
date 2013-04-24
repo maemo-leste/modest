@@ -49,6 +49,7 @@ struct _ModestServerAccountSettingsPrivate {
 	gchar *account_name;
 	gchar *uri;
 	gboolean offline_sync;
+	gboolean update_all_folders;
 };
 
 #define MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE(o)     (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
@@ -114,6 +115,7 @@ modest_server_account_settings_instance_init (ModestServerAccountSettings *obj)
 	priv->account_name = NULL;
 	priv->uri = NULL;
 	priv->offline_sync = FALSE;
+	priv->update_all_folders = FALSE;
 }
 
 static void   
@@ -393,3 +395,25 @@ modest_server_account_settings_set_offline_sync (ModestServerAccountSettings *se
 	priv->offline_sync = offline_sync;
 }
 
+gboolean
+modest_server_account_settings_get_update_all_folders (ModestServerAccountSettings *settings)
+{
+	ModestServerAccountSettingsPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings), 0);
+
+	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
+	return priv->update_all_folders;
+}
+
+void
+modest_server_account_settings_set_update_all_folders (ModestServerAccountSettings *settings,
+						 gboolean enable)
+{
+	ModestServerAccountSettingsPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings));
+
+	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
+	priv->update_all_folders = enable;
+}
