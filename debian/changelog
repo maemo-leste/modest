@@ -1,3 +1,9 @@
+modest (3.90.7-12.1) unstable; urgency=low
+
+  * Add optional IMAP option: Update all folders when checking for new emails
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Thu, 25 Apr 2013 01:45:40 +0200
+
 modest (3.90.7-11.3) unstable; urgency=low
 
   * Forward-port commits from PR 1.3:
