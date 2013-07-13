@@ -261,6 +261,7 @@ update_tny_account (TnyAccount *tny_account,
 		const gchar *hostname;
 		guint port;
 		gboolean offline_sync;
+		gboolean update_all_folders;
 
 		/* First of all delete old options */
 		tny_camel_account_clear_options (TNY_CAMEL_ACCOUNT (tny_account));
@@ -273,12 +274,15 @@ update_tny_account (TnyAccount *tny_account,
 		security = modest_protocol_registry_get_protocol_by_type (protocol_registry, security_type);
 		auth_protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, auth_protocol_type);
 		offline_sync = modest_server_account_settings_get_offline_sync (server_settings);
+		update_all_folders = modest_server_account_settings_get_update_all_folders (server_settings);
 
 		if (offline_sync) {
 			option_offline_sync = tny_pair_new (MODEST_ACCOUNT_OPTION_OFFLINE_SYNC, "");
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account), option_offline_sync);
 			g_object_unref (option_offline_sync);
 		}
+
+		g_object_set_data (G_OBJECT(tny_account), MODEST_ACCOUNT_UPDATE_ALL_FOLDERS, (gpointer)update_all_folders);
 
 		security_option_string = modest_protocol_get (security, MODEST_PROTOCOL_SECURITY_ACCOUNT_OPTION);
 		if (security_option_string) {

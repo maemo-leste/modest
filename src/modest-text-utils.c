@@ -44,17 +44,18 @@
 #include <modest-account-mgr-helpers.h>
 #include <modest-runtime.h>
 #include <ctype.h>
+#include <locale.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H */
 
 /* defines */
-#define FORWARD_STRING _("mcen_ia_editor_original_message")
-#define FROM_STRING _("mail_va_from")
-#define SENT_STRING _("mcen_fi_message_properties_sent")
-#define TO_STRING _("mail_va_to")
-#define SUBJECT_STRING _("mail_va_subject")
+#define FORWARD_STRING "----- Original message -----"
+#define FROM_STRING "From"
+#define SENT_STRING "Sent"
+#define TO_STRING "To"
+#define SUBJECT_STRING "Subject"
 #define EMPTY_STRING ""
 #define SEPARATOR_STRING _HL("ecdg_ti_caption_separator")
 
@@ -250,7 +251,7 @@ forward_cite (const gchar *from,
 		"%s%s %s\n" /* original 'From' string */
 		"%s%s %s\n" /* original 'Sent' string (date/time) */
 		"%s%s %s\n" /* original 'To' string */
-		"%s%s %s\n", /* original 'Subject' string */
+		"%s%s %s", /* original 'Subject' string */
 		FORWARD_STRING,
 		FROM_STRING, separator, from ? from:EMPTY_STRING,
 		SENT_STRING, separator, sent,
@@ -270,11 +271,15 @@ modest_text_utils_inline (const gchar *text,
 	gchar sent_str[101];
 	gchar *cited;
 	gchar *retval;
+	char *locale;
 	
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (content_type, NULL);
 	
+	locale = setlocale(LC_TIME, NULL);
+	setlocale(LC_TIME, "C");
 	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
+	setlocale(LC_TIME, locale);
 
 	cited = forward_cite (from, sent_str, to, subject);
 	
@@ -997,8 +1002,11 @@ static gchar *
 cite (const time_t sent_date, const gchar *from)
 {
 	char sent_str[101];
+	char *locale = setlocale(LC_TIME, NULL);
+	setlocale(LC_TIME, "C");
 	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
-	return g_strdup_printf("On %s, %s wrote:\n", sent_str, from);
+	setlocale(LC_TIME, locale);
+	return g_strdup_printf("On %s %s wrote:", sent_str, from);
 }
 
 static gchar *
