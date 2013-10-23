@@ -1693,10 +1693,32 @@ update_account_notify_user_and_free (UpdateAccountInfo *info,
 	destroy_update_account_info (info);
 }
 
+struct folder_refreshed_struct
+{
+	TnyFolder *folder;
+	gpointer user_data;
+};
+
 static void
 folder_refresh_status_update (GObject *obj,
 			     TnyStatus *status,
 			     gpointer user_data);
+
+static void
+folder_refreshed_cb (TnyFolder *current_folder, 
+		    gboolean canceled, 
+		    GError *err, 
+		    gpointer user_data);
+
+static gboolean
+folder_refreshed_timeout_cb (gpointer user_data)
+{
+	struct folder_refreshed_struct *data = user_data;
+	tny_folder_refresh_async (data->folder, folder_refreshed_cb, folder_refresh_status_update, data->user_data);
+	g_object_unref (data->folder);
+	free (user_data);
+	return FALSE;
+}
 
 static void
 folder_refreshed_cb (TnyFolder *current_folder, 
@@ -1761,7 +1783,10 @@ folder_refreshed_cb (TnyFolder *current_folder,
 
 			tny_list_remove (info->folders2, (GObject*)folder);
 
-			tny_folder_refresh_async (folder, folder_refreshed_cb, folder_refresh_status_update, info);
+			struct folder_refreshed_struct *data = malloc (sizeof (struct folder_refreshed_struct));
+			data->folder = g_object_ref (folder);
+			data->user_data = info;
+			g_timeout_add_seconds (1, folder_refreshed_timeout_cb, data);
 			g_object_unref (folder);
 		}
 
@@ -1950,6 +1975,32 @@ folder_refresh_status_update (GObject *obj,
 	g_slice_free (ModestMailOperationState, state);
 }
 
+struct recurse_folders_struct
+{
+	TnyFolderStore *self;
+	TnyList *list;
+	gboolean refresh;
+	gpointer user_data;
+};
+
+static void 
+recurse_folders_async_cb (TnyFolderStore *folder_store, 
+			  gboolean canceled,
+			  TnyList *list, 
+			  GError *err, 
+			  gpointer user_data);
+
+static gboolean
+recurse_folders_async_timeout_cb (gpointer user_data)
+{
+	struct recurse_folders_struct *data = user_data;
+	tny_folder_store_get_folders_async (data->self,
+		data->list, NULL, data->refresh, recurse_folders_async_cb, NULL, data->user_data);
+	g_object_unref (data->list);
+	free (user_data);
+	return FALSE;
+}
+
 static void 
 recurse_folders_async_cb (TnyFolderStore *folder_store, 
 			  gboolean canceled,
@@ -1970,8 +2021,12 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 		if (err && !priv->error) {
 			/* restart the request */
 			if (info->retries_left) {
-				tny_folder_store_get_folders_async (folder_store,
-					list, NULL, TRUE, recurse_folders_async_cb, NULL, user_data);
+				struct recurse_folders_struct *data = malloc(sizeof(struct recurse_folders_struct));
+				data->self = folder_store;
+				data->list = g_object_ref (list);
+				data->refresh = TRUE;
+				data->user_data = user_data;
+				g_timeout_add_seconds (0, recurse_folders_async_timeout_cb, data);
 				++info->pending_calls;
 
 				--info->retries_left;
@@ -2003,9 +2058,12 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 				/* Add pending call */
 				info->pending_calls++;
 				
-				tny_folder_store_get_folders_async (folder, folders, NULL, FALSE,
-								    recurse_folders_async_cb, 
-								    NULL, info);
+				struct recurse_folders_struct *data = malloc(sizeof(struct recurse_folders_struct));
+				data->self = folder;
+				data->list = g_object_ref (folders);
+				data->refresh = FALSE;
+				data->user_data = info;
+				g_timeout_add_seconds (0, recurse_folders_async_timeout_cb, data);
 				g_object_unref (folders);
 			}
 			
@@ -2070,7 +2128,10 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 
 		if (first) {
 			/* Refresh folder */
-			tny_folder_refresh_async (first, folder_refreshed_cb, folder_refresh_status_update, info);
+			struct folder_refreshed_struct *data = malloc (sizeof (struct folder_refreshed_struct));
+			data->folder = g_object_ref (first);
+			data->user_data = info;
+			g_timeout_add_seconds (1, folder_refreshed_timeout_cb, data);
 			g_object_unref (first);
 		} else {
 			/* We could not perform the folder refresh but
