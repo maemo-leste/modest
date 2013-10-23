@@ -1,3 +1,9 @@
+modest (3.90.7-12.2) unstable; urgency=low
+
+  * Postpone all recursive mail operations via g_timeout_add
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Wed, 23 Oct 2013 22:16:46 +0200
+
 modest (3.90.7-12.1) unstable; urgency=low
 
   * Add optional IMAP option: Update all folders when checking for new emails
