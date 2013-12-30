@@ -1,3 +1,9 @@
+modest (3.90.7-12.2+thumb0) unstable; urgency=low
+
+  * Thumb2 compiled
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Mon, 30 Dec 2013 09:30:11 +0200
+
 modest (3.90.7-12.2) unstable; urgency=low
 
   * Postpone all recursive mail operations via g_timeout_add
