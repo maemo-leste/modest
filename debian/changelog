@@ -1,3 +1,9 @@
+modest (3.90.7-12.3) unstable; urgency=low
+
+  * String mcen_me_viewer_save_attachments is in package modest-l10n not in FM
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sat, 26 Apr 2014 22:46:23 +0200
+
 modest (3.90.7-12.2) unstable; urgency=low
 
   * Postpone all recursive mail operations via g_timeout_add
