@@ -390,7 +390,7 @@ modest_provider_picker_refresh (ModestProviderPicker *self)
 					continue;
 
 				do {
-					gchar *id;
+					gchar *id = NULL;
 					gtk_tree_model_get (priv->model, &iter, 
 							    MODEL_COL_ID, &id,
 							    -1);
