@@ -1016,7 +1016,7 @@ quoted_attachments (GList *attachments)
 	GString *result = g_string_new ("");
 	for (node = attachments; node != NULL; node = g_list_next (node)) {
 		gchar *filename = (gchar *) node->data;
-		g_string_append_printf ( result, "%s %s\n", _("mcen_ia_editor_attach_filename"), filename);
+		g_string_append_printf ( result, "<Attachment>  %s\n", filename);
 	}
 
 	return g_string_free (result, FALSE);
