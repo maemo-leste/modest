@@ -1016,7 +1016,7 @@ quoted_attachments (GList *attachments)
 	GString *result = g_string_new ("");
 	for (node = attachments; node != NULL; node = g_list_next (node)) {
 		gchar *filename = (gchar *) node->data;
-		g_string_append_printf ( result, "%s %s\n", _("mcen_ia_editor_attach_filename"), filename);
+		g_string_append_printf ( result, "<Attachment>  %s\n", filename);
 	}
 
 	return g_string_free (result, FALSE);
@@ -2254,13 +2254,9 @@ quote_name_part (GString **str, gchar **cur, gchar **start)
 			*start = g_utf8_next_char (*cur);
 		} else {
 			*str = g_string_append_c (*str, '"');
-			*str = g_string_append_len (*str, *start,
-						    (g_utf8_pointer_to_offset (*start, blank) -
-						     g_utf8_pointer_to_offset (*start, *start)));
+			*str = g_string_append_len (*str, *start, (blank - *start));
 			*str = g_string_append_c (*str, '"');
-			*str = g_string_append_len (*str, blank,
-						    (g_utf8_pointer_to_offset (*start, *cur) -
-						     g_utf8_pointer_to_offset (*start, blank)));
+			*str = g_string_append_len (*str, blank, (*cur - blank));
 			*str = g_string_append (*str, ";");
 			*start = g_utf8_next_char (*cur);
 		}

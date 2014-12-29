@@ -343,7 +343,7 @@ modest_provider_picker_refresh (ModestProviderPicker *self)
 {	
 	ModestProviderPickerPrivate *priv;
 	GtkListStore *liststore;	
-	GSList *provider_ids_used_already = NULL, *provider_protos, *tmp;
+	GSList *provider_protos, *tmp;
 	ModestProtocolRegistry *registry;
 
 	g_return_if_fail (MODEST_IS_PROVIDER_PICKER(self));
@@ -390,7 +390,7 @@ modest_provider_picker_refresh (ModestProviderPicker *self)
 					continue;
 
 				do {
-					gchar *id;
+					gchar *id = NULL;
 					gtk_tree_model_get (priv->model, &iter, 
 							    MODEL_COL_ID, &id,
 							    -1);
@@ -418,9 +418,6 @@ modest_provider_picker_refresh (ModestProviderPicker *self)
 	}
 	g_slist_free (provider_protos);
 	
-	g_slist_foreach (provider_ids_used_already, (GFunc)g_free, NULL);
-	g_slist_free (provider_ids_used_already);
-
 }
 
 /**

@@ -92,21 +92,23 @@ modest_account_mgr_get_signature (ModestAccountMgr *self,
 
 ModestProtocolType modest_account_mgr_get_store_protocol (ModestAccountMgr *self, const gchar* name)
 {
-       ModestProtocolType result = MODEST_PROTOCOLS_STORE_POP; /* Arbitrary default */
-       
+       ModestProtocolType result = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
        gchar *server_account_name = modest_account_mgr_get_string (self, name,
 								   MODEST_ACCOUNT_STORE_ACCOUNT,
 								   FALSE);
        if (server_account_name) {
-	       ModestServerAccountSettings* server_settings = 
+	       ModestServerAccountSettings* server_settings =
                        modest_account_mgr_load_server_settings (self, server_account_name, FALSE);
-               result = modest_server_account_settings_get_protocol (server_settings);
-	       
-               g_object_unref (server_settings);
-               
+
+	       /* Easy setup wizard precreates accounts without
+		  settings so this could happen */
+	       if (server_settings) {
+		       result = modest_server_account_settings_get_protocol (server_settings);
+		       g_object_unref (server_settings);
+	       }
                g_free (server_account_name);
        }
-       
+
        return result;
 }
 

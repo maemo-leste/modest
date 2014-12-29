@@ -1,3 +1,24 @@
+modest (3.90.7-13.2) unstable; urgency=low
+
+  * For forwarded messages use neutral english strings instead localized one
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Mon, 22 Dec 2014 16:31:30 +0100
+
+modest (3.90.7-13.1) unstable; urgency=low
+
+  * Forward-port commits from PR 1.1, PR 1.2 and PR 1.3:
+  * Fixed bug: https://bugs.maemo.org/show_bug.cgi?id=11993
+  * Fixed a crash in HTML -> text conversor when the body is empty
+  * Fixed a couple of G_CRITICAL's while creating accounts
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Mon, 19 May 2014 14:05:18 +0200
+
+modest (3.90.7-12.3) unstable; urgency=low
+
+  * String mcen_me_viewer_save_attachments is in package modest-l10n not in FM
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sat, 26 Apr 2014 22:46:23 +0200
+
 modest (3.90.7-12.2+thumb0) unstable; urgency=low
 
   * Thumb2 compiled

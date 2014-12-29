@@ -193,12 +193,14 @@ static ssize_t
 html_to_text_read (TnyStream *self, char *buffer, size_t n)
 {
 	ModestStreamHtmlToTextPrivate *priv;
-	gint i;
+	gint i = 0;
 
 	priv = MODEST_STREAM_HTML_TO_TEXT_GET_PRIVATE (self);
 
-	for (i = 0; (i < n) && ((priv->position + i) < priv->buffer->len) ; i++)
-		buffer[i] = priv->buffer->str[priv->position + i];
+	if (priv->buffer) {
+		for (i = 0; (i < n) && ((priv->position + i) < priv->buffer->len) ; i++)
+			buffer[i] = priv->buffer->str[priv->position + i];
+	}
 
 	priv->position += i;
 
@@ -240,7 +242,11 @@ html_to_text_is_eos (TnyStream *self)
 
 	priv = MODEST_STREAM_HTML_TO_TEXT_GET_PRIVATE(self);
 
-	return (priv->position >= (priv->buffer->len - 1));
+	/* This could happen if the body is empty */
+	if (!priv->buffer)
+		return TRUE;
+	else
+		return (priv->position >= (priv->buffer->len - 1));
 }
 
 

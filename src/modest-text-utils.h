@@ -35,6 +35,7 @@
 
 #include <time.h>
 #include <glib.h>
+#include <glib/gi18n.h>
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 
@@ -106,7 +107,7 @@
 #define _FM_REPLACE_FILE _FM("docm_nc_replace_file")
 #define _FM_REPLACE_MULTIPLE _FM("docm_nc_replace_multiple")
 #define _FM_READ_ONLY_LOCATION _FM("sfil_ib_readonly_location")
-#define _FM_SAVE_OBJECT_FILES _FM("mcen_me_viewer_save_attachments")
+#define _FM_SAVE_OBJECT_FILES _("mcen_me_viewer_save_attachments")
 #define _FM_CHANGE_FOLDER_NEW_FOLDER ("ckdg_bd_change_folder_new_folder")
 #else
 #define _HL_SAVE _("Save")

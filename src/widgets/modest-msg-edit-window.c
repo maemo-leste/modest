@@ -4337,7 +4337,7 @@ update_signature (ModestMsgEditWindow *self,
 				gtk_text_buffer_get_end_iter (priv->text_buffer ,&match_end);
 				gtk_text_buffer_delete (priv->text_buffer, &match_start, &match_end);
 				iter = match_start;
-			} else if (gtk_text_iter_forward_search (&iter, _("mcen_ia_editor_original_message"), 0,
+			} else if (gtk_text_iter_forward_search (&iter, "----- Original message -----", 0,
 								 &match_start, &match_end, NULL)) {
 				iter = match_start;
 			}
