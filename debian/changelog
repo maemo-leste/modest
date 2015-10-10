@@ -1,3 +1,10 @@
+modest (3.90.7-13.3) unstable; urgency=low
+
+  * Use correct body and attachments when email is miltipart/alternative
+    containing miltipart/mixed nodes
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Sat, 10 Oct 2015 08:05:36 +0300
+
 modest (3.90.7-13.2) unstable; urgency=low
 
   * For forwarded messages use neutral english strings instead localized one

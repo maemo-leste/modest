@@ -488,8 +488,8 @@ modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_ht
 		/* Makes no sense to look for related MIME parts if we
 		   only want the plain text parts */
 		if (want_html &&
-		    g_str_has_prefix (content_type, "multipart/related") ||
-		    g_str_has_prefix (content_type, "multipart/mixed")) {
+		    (g_str_has_prefix (content_type, "multipart/related") ||
+		     g_str_has_prefix (content_type, "multipart/mixed"))) {
 			/* In an alternative the last part is supposed
 			   to be the richest */
 			if (related_or_mixed)
@@ -560,8 +560,8 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	}
 
 	if (header_content_type_lower &&
-	    g_str_has_prefix (header_content_type_lower, "multipart/related") ||
-	    g_str_has_prefix (header_content_type_lower, "multipart/mixed"))
+	    (g_str_has_prefix (header_content_type_lower, "multipart/related") ||
+	     g_str_has_prefix (header_content_type_lower, "multipart/mixed")))
 		is_related_or_mixed = TRUE;
 
 	g_free (header_content_type_lower);
