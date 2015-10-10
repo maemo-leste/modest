@@ -760,7 +760,7 @@ set_message (ModestWebkitMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 
 	if (!msg) {
 		tny_header_view_clear (TNY_HEADER_VIEW (priv->mail_header_view));
-		modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
+		modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL, TRUE);
 		gtk_widget_hide_all (priv->mail_header_view);
 		gtk_widget_hide_all (priv->attachments_box);
 #ifdef MODEST_TOOKIT_HILDON2
@@ -784,7 +784,7 @@ set_message (ModestWebkitMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	g_object_unref (header);
 
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
-					     other_body?NULL:msg);
+					     other_body?NULL:msg, TRUE);
 
 	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), tny_msg_get_allow_external_images (msg));
 
@@ -871,7 +871,7 @@ set_header (ModestWebkitMsgView *self, TnyHeader *header)
 	priv->msg = NULL;
 	
 	tny_header_view_set_header (TNY_HEADER_VIEW (priv->mail_header_view), header);
-	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
+	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL, TRUE);
 	gtk_widget_show_all (priv->mail_header_view);
 	gtk_widget_hide_all (priv->attachments_box);
 	gtk_widget_hide_all (priv->priority_box);

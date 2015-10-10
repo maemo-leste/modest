@@ -73,7 +73,7 @@ GType modest_attachments_view_get_type (void);
 
 GtkWidget* modest_attachments_view_new (TnyMsg *msg);
 
-void modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg);
+void modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg, gboolean want_html);
 void modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part,
 					     gboolean detect_size, guint64 size);
 void modest_attachments_view_remove_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part);

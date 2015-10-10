@@ -454,12 +454,12 @@ modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html, gboolean *is_html)
 }
 
 
-static TnyMimePart*
+TnyMimePart*
 modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_html)
 {
 	TnyList *parts;
 	TnyIterator *iter;
-	TnyMimePart *part = NULL, *related = NULL;
+	TnyMimePart *part = NULL, *related_or_mixed = NULL;
 	TnyMimePart *first_part = NULL;
 	const gchar *desired_mime_type = want_html ? "text/html" : "text/plain";
 
@@ -487,12 +487,14 @@ modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_ht
 
 		/* Makes no sense to look for related MIME parts if we
 		   only want the plain text parts */
-		if (want_html && g_str_has_prefix (content_type, "multipart/related")) {
+		if (want_html &&
+		    g_str_has_prefix (content_type, "multipart/related") ||
+		    g_str_has_prefix (content_type, "multipart/mixed")) {
 			/* In an alternative the last part is supposed
 			   to be the richest */
-			if (related)
-				g_object_unref (related);
-			related = g_object_ref (part);
+			if (related_or_mixed)
+				g_object_unref (related_or_mixed);
+			related_or_mixed = g_object_ref (part);
 		}
 
 		g_object_unref (part);
@@ -503,12 +505,12 @@ modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_ht
 	g_object_unref (parts);
 
 	if (part == NULL) {
-		if (related) {
+		if (related_or_mixed) {
 			TnyMimePart *retval;
 			if (first_part)
 				g_object_unref (first_part);
-			retval = modest_tny_msg_find_body_part_from_mime_part (related, want_html);
-			g_object_unref (related);
+			retval = modest_tny_msg_find_body_part_from_mime_part (related_or_mixed, want_html);
+			g_object_unref (related_or_mixed);
 			return retval;
 		} else {
 			return first_part;
@@ -516,8 +518,8 @@ modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_ht
 	} else {
 		if (first_part)
 			g_object_unref (first_part);
-		if (related)
-			g_object_unref (related);
+		if (related_or_mixed)
+			g_object_unref (related_or_mixed);
 		return part;
 	}
 }
@@ -530,7 +532,7 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	TnyIterator *iter = NULL;
 	gchar *header_content_type;
 	gchar *header_content_type_lower = NULL;
-	gboolean is_related = FALSE;
+	gboolean is_related_or_mixed = FALSE;
 
 	if (!msg)
 		return NULL;
@@ -558,8 +560,9 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	}
 
 	if (header_content_type_lower &&
-	    g_str_has_prefix (header_content_type_lower, "multipart/related"))
-		is_related = TRUE;
+	    g_str_has_prefix (header_content_type_lower, "multipart/related") ||
+	    g_str_has_prefix (header_content_type_lower, "multipart/mixed"))
+		is_related_or_mixed = TRUE;
 
 	g_free (header_content_type_lower);
 	g_free (header_content_type);
@@ -627,7 +630,7 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 				/* We found that some multipart/related emails include
 				   empty text/plain parts at the end that could confuse the body
 				   detection algorithm */
-				if (is_related && g_str_has_prefix (content_type, "text/plain")) {
+				if (is_related_or_mixed && g_str_has_prefix (content_type, "text/plain")) {
 					fallback = g_object_ref (part);
 				} else {
 					/* we found the body. Doesn't have to be the desired mime part, first

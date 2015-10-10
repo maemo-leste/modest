@@ -109,7 +109,7 @@ modest_attachments_view_new (TnyMsg *msg)
 						    "resize-mode", GTK_RESIZE_PARENT,
 						    NULL);
 
-	modest_attachments_view_set_message (self, msg);
+	modest_attachments_view_set_message (self, msg, FALSE);
 
 	return GTK_WIDGET (self);
 }
@@ -136,7 +136,7 @@ add_digest_attachments (ModestAttachmentsView *attachments_view, TnyMimePart *pa
 }
 
 void
-modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg)
+modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg, gboolean want_html)
 {
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (attachments_view);
 	TnyList *parts;
@@ -214,13 +214,24 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	while (!tny_iterator_is_done (iter)) {
 		TnyMimePart *part;
 		gchar *content_type;
+		TnyMimePart *body = NULL;
+		gboolean has_body = FALSE;
 
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
+
+		if (part && is_alternate) {
+			body = modest_tny_msg_find_body_part_in_alternative (part, want_html);
+
+			if (body) {
+				has_body = TRUE;
+				g_object_unref (body);
+			}
+		}
 
 		if (part && (modest_tny_mime_part_is_attachment_for_modest (part))) {
 			modest_attachments_view_add_attachment (attachments_view, part, TRUE, 0);
 
-		} else if (part && !is_alternate) {
+		} else if (part && (!is_alternate || has_body)) {
 			content_type = g_ascii_strdown (tny_mime_part_get_content_type (part), -1);
 			g_strstrip (content_type);
 
@@ -241,7 +252,6 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 				body_found = TRUE;
 			}
 		}
-
 
 		if (part)
 			g_object_unref (part);

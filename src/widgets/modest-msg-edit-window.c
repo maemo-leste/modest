@@ -1522,7 +1522,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	g_free (body);
 
 	/* Add attachments to the view */
-	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
+	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg, is_html);
 	priv->attachments = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
 	if (tny_list_get_length (priv->attachments) == 0) {
 		gtk_widget_hide (priv->attachments_caption);

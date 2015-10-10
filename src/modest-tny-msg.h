@@ -119,6 +119,9 @@ TnyMsg* modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* mailfro
  */	 
 TnyMimePart*  modest_tny_msg_find_body_part  (TnyMsg * self, gboolean want_html);
 
+TnyMimePart* modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg,
+							   gboolean want_html);
+
 /**
  * modest_tny_msg_find_calendar_part:
  * @self: a message
