@@ -826,7 +826,7 @@ create_empty_view (ModestWindow *self)
 	gtk_widget_show_all (button);
 
 	priv->show_more_button2 = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
-	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button2), _("TODO: show more"));
+	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button2), _("mcen_va_more"));
 	gtk_widget_hide_all (priv->show_more_button2);
 
 	hbox = gtk_hbox_new (TRUE, 0);
@@ -929,7 +929,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	g_object_unref (new_message_pixbuf);
 
 	priv->show_more_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
-	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button), _("TODO: show more"));
+	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button), _("mcen_va_more"));
 
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->show_more_button, TRUE, TRUE, 0);
@@ -1178,7 +1178,7 @@ update_view (ModestHeaderWindow *self,
 		gtk_widget_show_all (priv->show_more_button);
 		gtk_widget_show_all (priv->show_more_button2);
 	}
-	show_more_value = g_strdup_printf (_("TODO: %d of %d shown"), visible, all_count);
+	show_more_value = g_strdup_printf (_("mcen_va_more_toview"), visible, all_count);
 
 	hildon_button_set_value (HILDON_BUTTON (priv->show_more_button),
 				 show_more_value);
