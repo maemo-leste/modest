@@ -53,6 +53,8 @@
 #include <gdk/gdkkeysyms.h>
 #include <modest-isearch-toolbar.h>
 
+#define SHOW_LATEST_SIZE 250
+
 typedef enum {
 	CONTENTS_STATE_NONE = 0,
 	CONTENTS_STATE_EMPTY = 1,
@@ -76,6 +78,7 @@ struct _ModestHeaderWindowPrivate {
 #ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *new_message_button;
 	GtkWidget *show_more_button;
+	GtkWidget *show_more_button2;
 #endif
 	/* state bar */
 	ContentsState contents_state;
@@ -283,6 +286,7 @@ modest_header_window_init (ModestHeaderWindow *obj)
 #ifdef MODEST_TOOLKIT_HILDON2
 	priv->new_message_button = NULL;
 	priv->show_more_button = NULL;
+	priv->show_more_button2 = NULL;
 #endif
 	priv->x_coord = 0;
 	priv->y_coord = 0;
@@ -449,6 +453,12 @@ connect_signals (ModestHeaderWindow *self)
 	priv->sighandlers =
 		modest_signal_mgr_connect (priv->sighandlers,
 					   G_OBJECT (priv->show_more_button),
+					   "clicked",
+					   G_CALLBACK (modest_header_window_show_more), self);
+
+priv->sighandlers =
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (priv->show_more_button2),
 					   "clicked",
 					   G_CALLBACK (modest_header_window_show_more), self);
 
@@ -726,7 +736,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	ModestHeaderWindowPrivate *priv;
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
-	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), 50);
+	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), SHOW_LATEST_SIZE);
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 	priv->notify_model = g_signal_connect ((GObject*) header_view, "notify::model",
 					       G_CALLBACK (on_header_view_model_changed), self);
@@ -801,6 +811,10 @@ create_empty_view (ModestWindow *self)
 #ifdef MODEST_TOOLKIT_HILDON2
 	GdkPixbuf *new_message_pixbuf;
 	GtkWidget *button = NULL;
+	GtkWidget *hbox = NULL;
+	ModestHeaderWindowPrivate *priv;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
 	button = hildon_button_new (MODEST_EDITABLE_SIZE, 
 				    HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 
@@ -810,7 +824,17 @@ create_empty_view (ModestWindow *self)
 				 gtk_image_new_from_pixbuf (new_message_pixbuf));
 	g_object_unref (new_message_pixbuf);
 	gtk_widget_show_all (button);
-	gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
+
+	priv->show_more_button2 = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
+	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button2), _("TODO: show more"));
+	gtk_widget_hide_all (priv->show_more_button2);
+
+	hbox = gtk_hbox_new (TRUE, 0);
+	gtk_widget_show (hbox);
+	gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (hbox), priv->show_more_button2, TRUE, TRUE, 0);
+
+	gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 #endif
 
 	gtk_widget_show (vbox);
@@ -1142,14 +1166,19 @@ update_view (ModestHeaderWindow *self,
 	visible = modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view));
 	if (visible > all_count)
 		visible = all_count;
-	if (visible == all_count)
+	if (visible == all_count) {
 		gtk_widget_hide_all (priv->show_more_button);
-	else
+		gtk_widget_hide_all (priv->show_more_button2);
+	} else {
 		gtk_widget_show_all (priv->show_more_button);
+		gtk_widget_show_all (priv->show_more_button2);
+	}
 	show_more_value = g_strdup_printf (_("TODO: %d of %d shown"), visible, all_count);
 
 	hildon_button_set_value (HILDON_BUTTON (priv->show_more_button),
 				 show_more_value);
+	hildon_button_set_value (HILDON_BUTTON (priv->show_more_button2),
+					 show_more_value);
 #endif
 }
 
@@ -1642,7 +1671,8 @@ modest_header_window_show_more (GtkAction *action, gpointer userdata)
 
 	if (modest_header_view_get_not_latest (MODEST_HEADER_VIEW (priv->header_view)) > 0) {
 		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view),
-						    modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view)) + 50);
+						    modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view)) +
+						    SHOW_LATEST_SIZE);
 	}
 }
 #endif
