@@ -1080,8 +1080,8 @@ static void setup_menu (ModestHeaderWindow *self)
 	hildon_button_set_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5, 1.0, 1.0);
 	hildon_button_set_title_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
 	hildon_button_set_value_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
-	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->show_more_button),
-						  NULL);
+
+	modest_window_add_item_to_menu (MODEST_WINDOW (self), GTK_BUTTON (priv->show_more_button), NULL);
 	gtk_widget_hide_all (priv->show_more_button);
 
 	modest_window_add_to_menu (MODEST_WINDOW (self),
