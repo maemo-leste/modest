@@ -1,3 +1,9 @@
+modest (3.90.7-13.4) unstable; urgency=low
+
+  * Add missing patches from Nokia PR1.3
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Sun, 18 Oct 2015 19:20:13 +0300
+
 modest (3.90.7-13.3) unstable; urgency=low
 
   * Use correct body and attachments when email is miltipart/alternative
