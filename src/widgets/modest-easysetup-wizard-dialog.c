@@ -456,8 +456,6 @@ on_account_country_selector_changed (GtkWidget *widget, gpointer user_data)
 	g_assert(self);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
-	priv->dirty = TRUE;
-
 	/* Fill the providers selector, based on the selected country: */
 	if (priv->presets != NULL) {
 		gint mcc = modest_country_selector_get_active_country_mcc (priv->account_country_selector);
@@ -506,9 +504,6 @@ on_account_serviceprovider_selector_changed (GtkWidget *widget, gint column, gpo
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
-	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-
-	priv->dirty = TRUE;
 
 	update_user_email_from_provider (self);
 }
