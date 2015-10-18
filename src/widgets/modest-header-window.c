@@ -747,7 +747,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 		if (modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
 								    protocol_type,
 								    MODEST_PROTOCOL_REGISTRY_STORE_LIMIT_HEADER_WINDOW)) {
-			priv->limit_headers = FALSE;
+			priv->limit_headers = TRUE;
 		}
 		g_object_unref (account);
 	}
@@ -1081,7 +1081,7 @@ static void setup_menu (ModestHeaderWindow *self)
 	hildon_button_set_title_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
 	hildon_button_set_value_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
 
-	modest_window_add_item_to_menu (MODEST_WINDOW (self), GTK_BUTTON (priv->show_more_button), NULL);
+	modest_window_add_item_to_menu (MODEST_WINDOW (self), GTK_WIDGET (priv->show_more_button), NULL);
 	gtk_widget_hide_all (priv->show_more_button);
 
 	modest_window_add_to_menu (MODEST_WINDOW (self),
@@ -1131,7 +1131,7 @@ update_view (ModestHeaderWindow *self,
 	gboolean all_marked_as_deleted = FALSE;
 	TnyFolder *folder;
 	guint all_count;
-#ifndef MODEST_TOOLKIT_HILDON2
+#ifdef MODEST_TOOLKIT_HILDON2
 	gchar *show_more_value;
 	guint visible;
 #endif
@@ -1177,13 +1177,12 @@ update_view (ModestHeaderWindow *self,
 
 	if (refilter)
 		modest_header_view_refilter (MODEST_HEADER_VIEW (priv->header_view));
-#ifndef MODEST_TOOLKIT_HILDON2
+#ifdef MODEST_TOOLKIT_HILDON2
 	visible = modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view));
 
 	if (visible > 0 && all_count > 0 && visible < all_count && folder_empty) {
 		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view), visible + SHOW_LATEST_SIZE);
 	}
-
 	if (visible > all_count)
 		visible = all_count;
 	if (visible == 0 || visible == all_count) {
