@@ -73,9 +73,10 @@ struct _ModestHeaderWindowPrivate {
 	GtkWidget *empty_view;
 	GtkWidget *contents_view;
 	GtkWidget *top_vbox;
+#ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *new_message_button;
 	GtkWidget *show_more_button;
-
+#endif
 	/* state bar */
 	ContentsState contents_state;
 
@@ -279,11 +280,13 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->queue_change_handler = 0;
 	priv->model_weak_ref = NULL;
 	priv->current_store_account = NULL;
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->new_message_button = NULL;
+	priv->show_more_button = NULL;
+#endif
 	priv->x_coord = 0;
 	priv->y_coord = 0;
 	priv->notify_model = 0;
-
 }
 
 static void
@@ -443,6 +446,11 @@ connect_signals (ModestHeaderWindow *self)
 					   G_OBJECT (priv->new_message_button),
 					   "clicked",
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
+	priv->sighandlers =
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (priv->show_more_button),
+					   "clicked",
+					   G_CALLBACK (modest_header_window_show_more), self);
 
 	/* Delete using horizontal gesture */
 	/* DISABLED because it's unreliabile */
@@ -896,8 +904,13 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	hildon_button_set_image (HILDON_BUTTON (priv->new_message_button), gtk_image_new_from_pixbuf (new_message_pixbuf));
 	g_object_unref (new_message_pixbuf);
 
+	priv->show_more_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
+	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button), _("TODO: show more"));
+
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (action_area_box), priv->show_more_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
+	gtk_widget_show_all (priv->show_more_button);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->header_view), TRUE);
 #endif
 	
@@ -1060,24 +1073,10 @@ static void setup_menu (ModestHeaderWindow *self)
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_details),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
 
-#ifdef MODEST_TOOLKIT_HILDON2
-	priv->show_more_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
-	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button), _("mcen_va_more"));
-	hildon_button_set_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5, 1.0, 1.0);
-	hildon_button_set_title_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
-	hildon_button_set_value_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
-	modest_window_add_item_to_menu (MODEST_WINDOW (self), priv->show_more_button,
-					NULL);
-	gtk_widget_hide_all (priv->show_more_button);
-#endif
-
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_cancel_send),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
 #ifndef MODEST_TOOLKIT_HILDON2
-	modest_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: show more"), NULL,
-				   MODEST_WINDOW_MENU_CALLBACK (modest_header_window_show_more),
-				   NULL);
 	modest_window_add_to_menu (MODEST_WINDOW (self), _HL("wdgt_bd_search"), "<Control>f",
 				   MODEST_WINDOW_MENU_CALLBACK (toggle_isearch_toolbar), NULL);
 #endif
