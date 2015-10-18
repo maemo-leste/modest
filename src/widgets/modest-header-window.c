@@ -744,6 +744,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 								    MODEST_PROTOCOL_REGISTRY_STORE_LIMIT_HEADER_WINDOW)) {
 			limit_headers = TRUE;
 		}
+		g_object_unref (account);
 	}
 	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), limit_headers?SHOW_LATEST_SIZE:0);
 
