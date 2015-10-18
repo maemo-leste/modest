@@ -191,6 +191,7 @@ struct _ModestHeaderViewPrivate {
 	guint refilter_handler_id;
 	GtkTreeModel *filtered_model;
 	GtkTreeIter refilter_iter;
+	gint show_latest;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -634,6 +635,8 @@ modest_header_view_init (ModestHeaderView *obj)
 	guint i, j;
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj);
+
+	priv->show_latest = 0;
 
 	priv->folder  = NULL;
 	priv->is_outbox = FALSE;
@@ -1191,6 +1194,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	headers = TNY_LIST (tny_gtk_header_list_model_new ());
+	tny_gtk_header_list_model_set_show_latest (TNY_GTK_HEADER_LIST_MODEL (headers), priv->show_latest);
 	tny_gtk_header_list_model_set_update_in_batches (TNY_GTK_HEADER_LIST_MODEL (headers), 300);
 
 	/* Start the monitor in the callback of the
@@ -2917,4 +2921,35 @@ modest_header_view_refilter_by_chunks (ModestHeaderView *self)
 	if (gtk_tree_model_get_iter_first (priv->filtered_model, &(priv->refilter_iter))) {
 		priv->refilter_handler_id = g_idle_add (refilter_idle_handler, self);
 	}
+}
+
+void
+modest_header_view_set_show_latest (ModestHeaderView *header_view,
+				    gint show_latest)
+{
+	ModestHeaderViewPrivate *priv;
+	GtkTreeModel *sortable, *filter, *model;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
+	priv->show_latest = show_latest;
+
+	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
+		filter = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
+		if (GTK_IS_TREE_MODEL_FILTER (filter)) {
+			model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+			if (model) {
+				tny_gtk_header_list_model_set_show_latest (TNY_GTK_HEADER_LIST_MODEL (model), priv->show_latest);
+			}
+		}
+	}
+}
+
+gint
+modest_header_view_get_show_latest (ModestHeaderView *header_view)
+{
+	ModestHeaderViewPrivate *priv;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
+	return priv->show_latest;
 }
