@@ -185,6 +185,8 @@ static gboolean on_key_press(GtkWidget *widget,
 					gpointer user_data);
 static void on_screen_changed(GdkScreen *screen,
 		              gpointer userdata);
+static void modest_header_window_show_more (GtkAction *action,
+					    gpointer userdata);
 #endif
 
 static void  isearch_toolbar_close  (GtkWidget *widget,
@@ -716,6 +718,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	ModestHeaderWindowPrivate *priv;
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
+	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), 50);
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 	priv->notify_model = g_signal_connect ((GObject*) header_view, "notify::model",
 					       G_CALLBACK (on_header_view_model_changed), self);
@@ -1072,6 +1075,9 @@ static void setup_menu (ModestHeaderWindow *self)
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_cancel_send),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
 #ifndef MODEST_TOOLKIT_HILDON2
+	modest_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: show more"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_header_window_show_more),
+				   NULL);
 	modest_window_add_to_menu (MODEST_WINDOW (self), _HL("wdgt_bd_search"), "<Control>f",
 				   MODEST_WINDOW_MENU_CALLBACK (toggle_isearch_toolbar), NULL);
 #endif
@@ -1602,6 +1608,23 @@ on_screen_changed (GdkScreen *screen,
 	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
 	gtk_widget_queue_resize(priv->new_message_button);
+}
+
+static void
+modest_header_window_show_more (GtkAction *action, gpointer userdata)
+{
+	ModestHeaderWindow *self;
+	ModestHeaderWindowPrivate *priv = NULL;
+
+	self = MODEST_HEADER_WINDOW (userdata);
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	if (!priv->header_view)
+		return;
+
+	if (modest_header_view_get_not_latest (MODEST_HEADER_VIEW (priv->header_view)) > 0) {
+		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view),
+						    modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view)) + 50);
+	}
 }
 #endif
 
