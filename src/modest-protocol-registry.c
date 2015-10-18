@@ -465,6 +465,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_REMOTE_STORE_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_HAS_LEAVE_ON_SERVER_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_STORE_FORBID_INCOMING_XFERS,
+				      MODEST_PROTOCOL_REGISTRY_STORE_LIMIT_HEADER_WINDOW,
 				      NULL);
 	g_object_unref (protocol);
 
@@ -493,6 +494,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_REMOTE_STORE_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS,
+				      MODEST_PROTOCOL_REGISTRY_STORE_LIMIT_HEADER_WINDOW,
 				      NULL);
 	g_object_unref (protocol);
 

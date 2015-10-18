@@ -49,6 +49,7 @@
 #include <modest-text-utils.h>
 #include <modest-ui-dimming-rules.h>
 #include <modest-tny-folder.h>
+#include <modest-tny-account.h>
 #include <tny-simple-list.h>
 #include <gdk/gdkkeysyms.h>
 #include <modest-isearch-toolbar.h>
@@ -734,10 +735,26 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	GtkWidget *header_view;
 	GtkWidget *delete_item, *mark_read_item, *mark_unread_item;
 	ModestHeaderWindowPrivate *priv;
+	TnyAccount *account;
+	ModestProtocolType protocol_type;
+	gboolean limit_headers;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
-	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), SHOW_LATEST_SIZE);
-	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	account = modest_tny_folder_get_account (folder);
+	limit_headers = FALSE;
+	if (account) {
+		protocol_type = modest_tny_account_get_protocol_type (account);
+		if (modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+								    protocol_type,
+								    MODEST_PROTOCOL_REGISTRY_STORE_LIMIT_HEADER_WINDOW)) {
+			limit_headers = TRUE;
+		}
+	}
+	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), limit_headers?SHOW_LATEST_SIZE:0);
+
 	priv->notify_model = g_signal_connect ((GObject*) header_view, "notify::model",
 					       G_CALLBACK (on_header_view_model_changed), self);
 
@@ -1165,13 +1182,13 @@ update_view (ModestHeaderWindow *self,
 #ifndef MODEST_TOOLKIT_HILDON2
 	visible = modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view));
 
-	if (all_count > 0 && visible < all_count && folder_empty) {
+	if (visible > 0 && all_count > 0 && visible < all_count && folder_empty) {
 		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view), visible + SHOW_LATEST_SIZE);
 	}
 
 	if (visible > all_count)
 		visible = all_count;
-	if (visible == all_count) {
+	if (visible == 0 || visible == all_count) {
 		gtk_widget_hide_all (priv->show_more_button);
 		gtk_widget_hide_all (priv->show_more_button2);
 	} else {

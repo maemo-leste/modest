@@ -58,6 +58,7 @@ G_BEGIN_DECLS
 /* Accounts that do not allow to move messages or folders from */
 #define MODEST_PROTOCOL_REGISTRY_STORE_FORBID_OUTGOING_XFERS "store-forbid-outgoing-xfers"
 #define MODEST_PROTOCOL_REGISTRY_NO_AUTO_UPDATE_PROTOCOLS "no-auto-update"
+#define MODEST_PROTOCOL_REGISTRY_STORE_LIMIT_HEADER_WINDOW "store-limit-header-window"
 
 /* convenience macros */
 #define MODEST_TYPE_PROTOCOL_REGISTRY             (modest_protocol_registry_get_type())
