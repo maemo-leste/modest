@@ -1164,6 +1164,11 @@ update_view (ModestHeaderWindow *self,
 		modest_header_view_refilter (MODEST_HEADER_VIEW (priv->header_view));
 #ifndef MODEST_TOOLKIT_HILDON2
 	visible = modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view));
+
+	if (all_count > 0 && visible < all_count && folder_empty) {
+		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view), visible + SHOW_LATEST_SIZE);
+	}
+
 	if (visible > all_count)
 		visible = all_count;
 	if (visible == all_count) {
