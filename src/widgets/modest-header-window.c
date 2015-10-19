@@ -1688,6 +1688,7 @@ modest_header_window_show_more (GtkAction *action, gpointer userdata)
 		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view),
 						    modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view)) +
 						    SHOW_LATEST_SIZE);
+		update_view (self, NULL);
 	}
 }
 #endif
