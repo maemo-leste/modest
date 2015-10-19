@@ -1,3 +1,9 @@
+modest (3.90.7-13.5) unstable; urgency=low
+
+  * Fix "show more" functionality. Optimize a bit while at it.
+
+ -- Ivaylo Dimitrov <freemangordon@abv.bg>  Mon, 19 Oct 2015 16:18:42 +0300
+
 modest (3.90.7-13.4) unstable; urgency=low
 
   * Add missing patches from Nokia PR1.3
