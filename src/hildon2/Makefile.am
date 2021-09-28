@@ -106,7 +106,9 @@ libmodest_ui_la_LIBADD = \
 	$(MODEST_LIBALARM_LIBS)   \
 	$(MODEST_LIBIPHB_LIBS)   \
 	$(MODEST_HILDON_NOTIFY_LIBS) \
-	$(MODEST_CALENDAR_WIDGETS_LIBS)
+	$(MODEST_CALENDAR_WIDGETS_LIBS) \
+	$(MODEST_X11_LIBS) \
+	-lm
 
 serviceentry_DATA   = com.nokia.modest.service
 desktopentry_DATA   = modest.desktop

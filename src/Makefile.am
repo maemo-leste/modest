@@ -29,10 +29,10 @@ INCLUDES=\
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
 modest-marshal.c: modest-marshal.list
-	glib-genmarshal --body --prefix=modest_marshal < modest-marshal.list > modest-marshal.c
+	glib-genmarshal --body --prefix=modest_marshal - < modest-marshal.list > modest-marshal.c
 
 modest-marshal.h: modest-marshal.list
-	glib-genmarshal --header --prefix=modest_marshal < modest-marshal.list > modest-marshal.h
+	glib-genmarshal --header --prefix=modest_marshal - < modest-marshal.list > modest-marshal.h
 
 noinst_LTLIBRARIES = libmodest.la
 

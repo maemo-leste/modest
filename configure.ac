@@ -147,7 +147,7 @@ fi
 
 dnl # GLib/Gobject/Gtk/Gconf => mandatory
 
-PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-${gtk_html_version} libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gnomevfs-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0)
+PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gio-2.0 libgtkhtml-${gtk_html_version} libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gio-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0)
 AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
 
@@ -248,7 +248,7 @@ fi
 
 dnl -------- TOOLKIT SELECTION: *HILDON API* -----------
 if test "x$with_toolkit" == "xhildon2"; then
-   hildonpkgs="hildon-1 hildon-fm-2"
+   hildonpkgs="hildon-1 hildon-fm-2 x11"
    hildon_api=`$PKG_CONFIG --modversion hildon-1 | cut -d. -f1`
    AC_DEFINE_UNQUOTED(MODEST_HILDON_API, $hildon_api, ["the API version of hildon"])
    MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_HILDON_API=$hildon_api"
