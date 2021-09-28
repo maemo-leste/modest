@@ -1,12 +1,9 @@
-usr/bin/modest*
-usr/share/dbus-1/services/*
+/usr/bin/modest*
+/usr/share/dbus-1/services/*
 usr/share/applications/*
 usr/share/applications/hildon/*
-usr/share/doc/modest/*
-usr/share/mime/packages/*
 usr/share/modest/ui/*
 usr/share/modest/provider-data/*
-usr/share/pixmaps/modest/*
 etc/osso-backup/applications/modest.conf
 etc/osso-cud-scripts/modest-clean.sh
 etc/osso-backup/pre-backup.d/*
