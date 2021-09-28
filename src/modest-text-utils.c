@@ -1938,7 +1938,7 @@ modest_text_utils_text_buffer_get_text (GtkTextBuffer *buffer)
 	slice = gtk_text_buffer_get_slice (buffer, &start, &end, FALSE);
 	current = slice;
 
-	while (current && current != '\0') {
+	while (current && *current != '\0') {
 		if (g_utf8_get_char (current) == 0xFFFC) {
 			result = g_string_append_c (result, ' ');
 			current = g_utf8_next_char (current);
