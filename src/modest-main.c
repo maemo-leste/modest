@@ -135,7 +135,9 @@ main (int argc, char *argv[])
 	GOptionContext *context;
 
 	ModestWindowMgr *mgr;
-
+#ifdef MODEST_TOOLKIT_HILDON2
+	hildon_gtk_init(&argc, &argv);
+#endif
 	context = g_option_context_new ("- Modest email client");
 	g_option_context_add_main_entries (context, option_entries, GETTEXT_PACKAGE);
 	g_option_context_add_group (context, gtk_get_option_group (TRUE));
