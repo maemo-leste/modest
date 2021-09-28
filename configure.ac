@@ -302,12 +302,9 @@ if test x$maemo_launcher = xtrue
 then
 	PKG_CHECK_MODULES(MAEMO_LAUNCHER, [maemo-launcher-app])
 	AC_SUBST(MAEMO_LAUNCHER_CFLAGS)
+	MAEMO_LAUNCHER_LIBS="-Xcompiler \"$MAEMO_LAUNCHER_LIBS\""
 	AC_SUBST(MAEMO_LAUNCHER_LIBS)
-	MAEMO_LAUNCHER_MODEST_LDFLAGS="-shared "
-else
-	MAEMO_LAUNCHER_MODEST_LDFLAGS="-export-dynamic "
 fi
-AC_SUBST(MAEMO_LAUNCHER_MODEST_LDFLAGS)
 
 dnl --------------- EDITOR -----------
 PKG_CHECK_MODULES(MODEST_WPEDITOR,wpeditor,have_wpeditor=true,have_wpeditor=false)

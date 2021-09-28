@@ -198,10 +198,7 @@ modest_DEPENDENCIES = \
 	libmodest.la
 
 modest_CFLAGS = $(MAEMO_LAUNCHER_CFLAGS)
-modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
 modest_LDADD = \
-	$(filter-out $(modest_UNWANTED), \
-	$(MAEMO_LAUNCHER_LIBS) 				\
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_MOZEMBED_LIBS) 			\
 	$(MODEST_PLATFORM_LIBS)	                        \
@@ -211,9 +208,9 @@ modest_LDADD = \
 	$(MODEST_OGS_LIBS)				\
 	$(MODEST_LIBTIME_LIBS)                          \
 	${easysetupmaybe}				\
-	libmodest.la)
+	libmodest.la
 
-modest_LDFLAGS = $(MAEMO_LAUNCHER_MODEST_LDFLAGS) -Wl,--version-script=export.map
+modest_LDFLAGS = -Wl,--version-script=export.map $(MAEMO_LAUNCHER_LIBS)
 
 # modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
 
