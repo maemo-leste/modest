@@ -619,34 +619,30 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 static guint64
 count_part_size (const gchar *part)
 {
-	GnomeVFSURI *vfs_uri;
-	gchar *escaped_filename;
-	gchar *filename;
-	GnomeVFSFileInfo *info;
+	GFile *file = g_file_new_for_uri(part);
+	GFileInfo *info;
 	guint64 result;
+
+	info = g_file_query_info (file,
+				  G_FILE_ATTRIBUTE_STANDARD_FAST_CONTENT_TYPE ","
+				  G_FILE_ATTRIBUTE_STANDARD_SIZE,
+				  G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	g_object_unref(file);
 
 	/* Estimation of attachment size if we cannot get it from file info */
 	result = 32768;
 
-	vfs_uri = gnome_vfs_uri_new (part);
-
-	escaped_filename = g_path_get_basename (gnome_vfs_uri_get_path (vfs_uri));
-	filename = gnome_vfs_unescape_string_for_display (escaped_filename);
-	g_free (escaped_filename);
-	gnome_vfs_uri_unref (vfs_uri);
-
-	info = gnome_vfs_file_info_new ();
+	g_return_val_if_fail (info != NULL, result);
 	
-	if (gnome_vfs_get_file_info (part, 
-				     info, 
-				     GNOME_VFS_FILE_INFO_GET_MIME_TYPE)
-	    == GNOME_VFS_OK) {
-		if (info->valid_fields & GNOME_VFS_FILE_INFO_FIELDS_SIZE) {
-			result = info->size;
-		}
+	if (g_file_info_has_attribute (
+		    info, G_FILE_ATTRIBUTE_STANDARD_FAST_CONTENT_TYPE) &&
+	    g_file_info_has_attribute (
+		    info, G_FILE_ATTRIBUTE_STANDARD_SIZE)) {
+		result = g_file_info_get_attribute_uint64 (
+				 info, G_FILE_ATTRIBUTE_STANDARD_SIZE);
 	}
-	g_free (filename);
-	gnome_vfs_file_info_unref (info);
+
+	g_object_unref (info);
 
 	return result;
 }
@@ -684,7 +680,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	ModestWindow *msg_win = NULL;
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr();
 	ModestTnyAccountStore *store = modest_runtime_get_account_store();
-	GnomeVFSFileSize total_size, allowed_size;
+	guint64 total_size, allowed_size;
 	guint64 available_disk, expected_size, parts_size;
 	guint parts_count;
 
@@ -779,7 +775,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 	while (attachments) {
-		GnomeVFSFileSize att_size;
+		guint64 att_size;
 		att_size =
 			modest_msg_edit_window_attach_file_one((ModestMsgEditWindow *)msg_win,
 							       attachments->data, allowed_size);

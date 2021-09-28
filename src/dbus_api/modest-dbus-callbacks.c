@@ -43,12 +43,10 @@
 #include "modest-platform.h"
 #include "modest-defs.h"
 #include <libmodest-dbus-client/libmodest-dbus-client.h>
-#include <libgnomevfs/gnome-vfs-utils.h>
 #include <stdio.h>
 #include <string.h>
 #include <glib/gstdio.h>
 #include <hildon/hildon-program.h>
-#include <libgnomevfs/gnome-vfs-mime.h>
 #include <tny-fs-stream.h>
 
 #ifdef MODEST_TOOLKIT_HILDON2
@@ -106,7 +104,7 @@ uri_unescape(const gchar* uri, size_t len)
 	 * so we can use gnome_vfs_unescape_string().
 	 * This is not efficient. */
 	gchar * escaped_nullterminated = g_strndup (uri, len);
-	gchar *result = gnome_vfs_unescape_string (escaped_nullterminated, NULL);
+	gchar *result = g_uri_unescape_string (escaped_nullterminated, NULL);
 	g_free (escaped_nullterminated);
 	
 	return result;

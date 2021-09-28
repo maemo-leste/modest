@@ -3082,7 +3082,7 @@ typedef struct
 typedef struct
 {
 	GList *pairs;
-	GnomeVFSResult result;
+	GError *error;
 	gchar *uri;
 	ModestMsgViewWindow *window;
 } SaveMimePartInfo;
@@ -3120,11 +3120,11 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 	 * modest_platform_system_banner is or does Gtk+ code */
 
 	gdk_threads_enter (); /* CHECKED */
-	if (info->result == GNOME_VFS_ERROR_CANCELLED) {
-		/* nothing */
-	} else if (info->result == GNOME_VFS_OK) {
+	if (!info->error) {
 		modest_platform_system_banner (NULL, NULL, _CS_SAVED);
-	} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
+	} else if (g_error_matches (info->error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+		/* nothing */
+	} else if (g_error_matches (info->error, G_IO_ERROR, G_IO_ERROR_NO_SPACE)) {
 		gchar *msg = NULL;
 
 		/* Check if the uri belongs to the external mmc */
@@ -3137,6 +3137,7 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 	} else {
 		modest_platform_system_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
 	}
+	g_clear_error (&info->error);
 	set_progress_hint (info->window, FALSE);
 	save_mime_part_info_free (info, FALSE);
 	gdk_threads_leave (); /* CHECKED */
@@ -3153,7 +3154,8 @@ save_mime_part_to_file_connect_handler (gboolean canceled,
 {
 	if (canceled || err) {
 		if (canceled && !err) {
-			info->result = GNOME_VFS_ERROR_CANCELLED;
+			g_clear_error (&info->error);
+			info->error = g_error_new_literal(G_IO_ERROR, G_IO_ERROR_CANCELLED, NULL);
 		}
 		g_idle_add ((GSourceFunc) idle_save_mime_part_show_result, info);
 	} else {
@@ -3193,7 +3195,8 @@ save_mime_part_to_file_connect_idle (SaveMimePartInfo *info)
 static gpointer
 save_mime_part_to_file (SaveMimePartInfo *info)
 {
-	GnomeVFSHandle *handle;
+	GFile *file;
+	GFileOutputStream *out;
 	TnyStream *stream;
 	SaveMimePartPair *pair = (SaveMimePartPair *) info->pairs->data;
 
@@ -3229,8 +3232,11 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 		}
 	}
 
-	info->result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0644);
-	if (info->result == GNOME_VFS_OK) {
+	file = g_file_new_for_uri (pair->filename);
+	out = g_file_create (file, G_FILE_CREATE_NONE, NULL, &info->error);
+	g_object_unref(file);
+
+	if (out) {
 		GError *error = NULL;
 		gboolean decode_in_provider;
 		gssize written;
@@ -3238,7 +3244,7 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 		const gchar *account;
 		ModestProtocol *protocol = NULL;
 
-		stream = tny_vfs_stream_new (handle);
+		stream = tny_vfs_stream_new (G_OBJECT(out));
 
 		decode_in_provider = FALSE;
 		mgr = modest_runtime_get_account_mgr ();
@@ -3259,20 +3265,23 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 			written = tny_mime_part_decode_to_stream (pair->part, stream, &error);
 
 		if (written < 0) {
-			g_warning ("modest: could not save attachment %s: %d (%s)\n", pair->filename, error?error->code:-1, error?error->message:"Unknown error");
+			g_warning ("modest: could not save attachment %s: %d (%s)\n", pair->filename,
+				   error ? error->code : -1, error ? error->message : "Unknown error");
 
 			if (error && (error->domain == TNY_ERROR_DOMAIN) &&
 			    (error->code == TNY_IO_ERROR_WRITE) &&
 			    (errno == ENOSPC)) {
-				info->result = GNOME_VFS_ERROR_NO_SPACE;
+				info->error = g_error_new_literal(G_IO_ERROR, G_IO_ERROR_NO_SPACE, error->message);
 			} else {
-				info->result = GNOME_VFS_ERROR_IO;
+				info->error = g_error_new_literal(G_IO_ERROR, G_IO_ERROR_FAILED, error->message);
 			}
+
+			g_clear_error (&error);
 		}
 		g_object_unref (G_OBJECT (stream));
 	} else {
 		g_warning ("Could not create save attachment %s: %s\n", 
-			   pair->filename, gnome_vfs_result_to_string (info->result));
+			   pair->filename, info->error->message);
 	}
 
 	/* Go on saving remaining files */
@@ -3401,8 +3410,9 @@ save_attachments_response (GtkDialog *dialog,
 				pair = g_slice_new0 (SaveMimePartPair);
 
 				if (tny_list_get_length (mime_parts) > 1) {
-					gchar *escaped = 
-						gnome_vfs_escape_slashes (tny_mime_part_get_filename (mime_part));
+					gchar *escaped = g_uri_escape_string(
+								 tny_mime_part_get_filename (mime_part),
+								 "!$&'()*+,;=:@\"#<>?[]\\^`{}|\x7f", TRUE);
 					pair->filename = g_build_filename (chooser_uri, escaped, NULL);
 					g_free (escaped);
 				} else {
@@ -3419,7 +3429,7 @@ save_attachments_response (GtkDialog *dialog,
 	if (files_to_save != NULL) {
 		SaveMimePartInfo *info = g_slice_new0 (SaveMimePartInfo);
 		info->pairs = files_to_save;
-		info->result = TRUE;
+		info->error = NULL;
 		info->uri = g_strdup (chooser_uri);
 		info->window = g_object_ref (sa_info->window);
 		save_mime_parts_to_file_with_checks ((GtkWindow *) dialog, info);
@@ -3804,28 +3814,37 @@ on_move_focus (GtkWidget *widget,
 static TnyStream *
 fetch_image_open_stream (TnyStreamCache *self, gint64 *expected_size, gchar *uri)
 {
-	GnomeVFSResult result;
-	GnomeVFSHandle *handle = NULL;
-	GnomeVFSFileInfo *info = NULL;
+	GFile *file = NULL;
+	GFileInfo *info = NULL;
+	GFileInputStream *in = NULL;
 	TnyStream *stream;
 
-	result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
-	if (result != GNOME_VFS_OK) {
+	file = g_file_new_for_uri (uri);
+	in = g_file_read (file, NULL, NULL);
+
+	if (!in) {
 		*expected_size = 0;
+		g_object_unref (file);
 		return NULL;
 	}
 	
-	info = gnome_vfs_file_info_new ();
-	result = gnome_vfs_get_file_info_from_handle (handle, info, GNOME_VFS_FILE_INFO_DEFAULT);
-	if (result != GNOME_VFS_OK || ! (info->valid_fields & GNOME_VFS_FILE_INFO_FIELDS_SIZE)) {
+	info = g_file_query_info (file, G_FILE_ATTRIBUTE_STANDARD_SIZE,
+				  G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	g_object_unref (file);
+
+	if (!info || !g_file_info_has_attribute (info, G_FILE_ATTRIBUTE_STANDARD_SIZE)) {
 		/* We put a "safe" default size for going to cache */
 		*expected_size = (300*1024);
 	} else {
-		*expected_size = info->size;
+		*expected_size = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_STANDARD_SIZE);
 	}
-	gnome_vfs_file_info_unref (info);
 
-	stream = tny_vfs_stream_new (handle);
+	if (info) {
+		g_object_unref (info);
+	}
+
+	stream = tny_vfs_stream_new (G_OBJECT(in));
+	g_object_unref (in);
 
 	return stream;
 

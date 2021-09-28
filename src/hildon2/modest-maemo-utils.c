@@ -38,7 +38,6 @@
 #include <errno.h>
 #include <string.h> /* for strlen */
 #include <modest-runtime.h>
-#include <libgnomevfs/gnome-vfs.h>
 #include <tny-fs-stream.h>
 #include <tny-camel-account.h>
 #include <tny-status.h>

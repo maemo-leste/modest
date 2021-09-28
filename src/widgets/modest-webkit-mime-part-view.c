@@ -40,7 +40,6 @@
 #include <modest-runtime.h>
 #include <widgets/modest-mime-part-view.h>
 #include <widgets/modest-zoomable.h>
-#include <libgnomevfs/gnome-vfs.h>
 #include <gdk/gdkkeysyms.h>
 #include <modest-ui-constants.h>
 #include <modest-tny-stream-webkit.h>

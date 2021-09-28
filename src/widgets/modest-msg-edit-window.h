@@ -252,7 +252,7 @@ void                    modest_msg_edit_window_offer_attach_file           (Mode
  *
  * Returns: the filesize (if available)
  */
-GnomeVFSFileSize modest_msg_edit_window_attach_file_one           (ModestMsgEditWindow *window, const gchar *file_uri, GnomeVFSFileSize allowed_size);
+guint64 modest_msg_edit_window_attach_file_one           (ModestMsgEditWindow *window, const gchar *file_uri, guint64 allowed_size);
 
 /**
  * modest_msg_edit_window_remove_attachments:

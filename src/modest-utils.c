@@ -32,7 +32,6 @@
 #include <errno.h>
 #include <string.h> /* for strlen */
 #include <modest-runtime.h>
-#include <libgnomevfs/gnome-vfs.h>
 #include <tny-fs-stream.h>
 #include <tny-camel-account.h>
 #include <tny-status.h>
@@ -63,41 +62,33 @@ modest_utils_get_supported_secure_authentication_error_quark (void)
 gboolean
 modest_utils_folder_writable (const gchar *filename)
 {
+	gboolean rv = TRUE;
 	g_return_val_if_fail (filename, FALSE);
 
 	if (!filename)
 		return FALSE;
 
 	if (g_ascii_strncasecmp (filename, "obex", 4) != 0) {
-		GnomeVFSFileInfo *folder_info = NULL;
-		GnomeVFSResult result = GNOME_VFS_OK;
-		GnomeVFSURI *uri = NULL;
-		GnomeVFSURI *folder_uri = NULL;
+		GFileInfo *info = NULL;
+		GFile *file = NULL;
+		GFile *folder = NULL;
 
-		uri = gnome_vfs_uri_new (filename);
-		folder_uri = gnome_vfs_uri_get_parent (uri);
+		file = g_file_new_for_uri (filename);
+		folder = g_file_get_parent (file);
+		g_object_unref (file);
+		info = g_file_query_info (folder, G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE,
+					  G_FILE_QUERY_INFO_NONE, NULL, NULL);
+		g_object_unref (folder);
 
-		if (folder_uri != NULL) {
-			folder_info = gnome_vfs_file_info_new ();
-			result = gnome_vfs_get_file_info_uri (folder_uri, folder_info,
-							      GNOME_VFS_FILE_INFO_GET_ACCESS_RIGHTS);
-			gnome_vfs_uri_unref (folder_uri);
+		if (!info || !g_file_info_get_attribute_boolean (
+			    info, G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE)) {
+			rv = FALSE;
 		}
-		gnome_vfs_uri_unref (uri);
 
-		if (folder_uri == NULL)
-			return FALSE;
-
-		if ((result != GNOME_VFS_OK) ||
-		    (!((folder_info->permissions & GNOME_VFS_PERM_ACCESS_WRITABLE) ||
-		       (folder_info->permissions & GNOME_VFS_PERM_USER_WRITE)))) {
-
-			gnome_vfs_file_info_unref (folder_info);
-			return FALSE;
-		}
-		gnome_vfs_file_info_unref (folder_info);
+		g_object_unref (info);
 	}
-	return TRUE;
+
+	return rv;
 }
 
 gboolean
@@ -487,25 +478,24 @@ guint64
 modest_utils_get_available_space (const gchar *maildir_path)
 {
 	gchar *folder;
-	gchar *uri_string;
-	GnomeVFSURI *uri;
-	GnomeVFSFileSize size;
+	GFile *file;
+	GFileInfo *info;
+	guint64 size = 0;
 
 	folder = modest_local_folder_info_get_maildir_path (maildir_path);
-	uri_string = gnome_vfs_get_uri_from_local_path (folder);
-	uri = gnome_vfs_uri_new (uri_string);
+	file = g_file_new_for_path (folder);
 	g_free (folder);
-	g_free (uri_string);
 
-	if (uri) {
-		if (gnome_vfs_get_volume_free_space (uri, &size) != GNOME_VFS_OK)
-			size = 0;
-		gnome_vfs_uri_unref (uri);
-	} else {
-		size = 0;
+	info = g_file_query_info (file, G_FILE_ATTRIBUTE_FILESYSTEM_FREE, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+
+	if (info) {
+		size = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
+		g_object_unref (info);
 	}
 
-	return (guint64) size;
+	g_object_unref (file);
+
+	return size;
 }
 static void
 on_destroy_dialog (GtkDialog *dialog)
@@ -704,15 +694,12 @@ modest_utils_run_sort_dialog (ModestWindow *parent_window,
 gchar *
 modest_images_cache_get_id (const gchar *account, const gchar *uri)
 {
-	GnomeVFSURI *vfs_uri;
+	GFile *file;
 	gchar *result;
  
-	vfs_uri = gnome_vfs_uri_new (uri);
-	if (vfs_uri == NULL)
-		return NULL;
- 
-	result = g_strdup_printf ("%s__%x", account, gnome_vfs_uri_hash (vfs_uri));
-	gnome_vfs_uri_unref (vfs_uri);
+        file = g_file_new_for_uri (uri);
+ 	result = g_strdup_printf ("%s__%x", account, g_file_hash (file));
+        g_object_unref (file);
  
 	return result;
 }

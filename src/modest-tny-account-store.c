@@ -69,8 +69,6 @@
 #include <tny-maemo-conic-device.h>
 #endif
 
-#include <libgnomevfs/gnome-vfs-volume-monitor.h>
-
 /* 'private'/'protected' functions */
 static void    modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
 static void    modest_tny_account_store_finalize     (GObject *obj);
@@ -98,12 +96,12 @@ static gchar*  get_password                (TnyAccount *account,
 
 static void    forget_password             (TnyAccount *account);
 
-static void    on_vfs_volume_mounted       (GnomeVFSVolumeMonitor *volume_monitor, 
-					    GnomeVFSVolume *volume, 
+static void    on_mount_added              (GVolumeMonitor *monitor,
+					    GMount *mount,
 					    gpointer user_data);
 
-static void    on_vfs_volume_unmounted     (GnomeVFSVolumeMonitor *volume_monitor, 
-					    GnomeVFSVolume *volume, 
+static void    on_mount_removed            (GVolumeMonitor *monitor,
+					    GMount *mount,
 					    gpointer user_data);
 
 static void    add_connection_specific_transport_accounts         (ModestTnyAccountStore *self);
@@ -142,6 +140,8 @@ struct _ModestTnyAccountStorePrivate {
 
 	/* is sending mail blocked? */
 	gboolean send_mail_blocked;
+
+	GVolumeMonitor *monitor;
 };
 
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -330,21 +330,23 @@ add_mmc_account(ModestTnyAccountStore *self, gboolean emit_insert_signal)
 }
 
 static void
-on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor, 
-		      GnomeVFSVolume *volume, 
-		      gpointer user_data)
+on_mount_added(GVolumeMonitor* monitor,
+	       GMount* mount,
+	       gpointer user_data)
 {
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
 	gchar *volume_path_uri;
- 
+	GFile *root;
 	gchar *uri = NULL;
 
 	self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
+	root = g_mount_get_root (mount);
+
 	/* Check whether this was the external MMC1 card: */
-	uri = gnome_vfs_volume_get_activation_uri (volume);
+	uri = g_file_get_uri (root);
+	g_object_unref (root);
 
 	volume_path_uri = g_strconcat (MODEST_MMC1_VOLUMEPATH_URI_PREFIX,
 				       g_getenv (MODEST_MMC1_VOLUMEPATH_ENV),
@@ -358,20 +360,23 @@ on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor,
 }
 
 static void
-on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor, 
-			GnomeVFSVolume *volume, 
-			gpointer user_data)
+on_mount_removed(GVolumeMonitor *monitor,
+		 GMount *mount,
+		 gpointer user_data)
 {
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
 	gchar *uri = NULL;
 	gchar *volume_path_uri;
+	GFile *root;
 
 	self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
+	root = g_mount_get_root (mount);
+
 	/* Check whether this was the external MMC1 card: */
-	uri = gnome_vfs_volume_get_activation_uri (volume);
+	uri = g_file_get_uri (root);
+	g_object_unref (root);
 	volume_path_uri = g_strconcat (MODEST_MMC1_VOLUMEPATH_URI_PREFIX,
 				       g_getenv (MODEST_MMC1_VOLUMEPATH_ENV),
 				       NULL);
@@ -824,6 +829,11 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->session = NULL;
 	}
 
+	if (priv->monitor) {
+		g_object_unref (priv->monitor);
+		priv->monitor = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -833,49 +843,36 @@ volume_path_is_mounted (const gchar* path)
 	g_return_val_if_fail (path, FALSE);
 
 	gboolean result = FALSE;
-	gchar * path_as_uri = g_filename_to_uri (path, NULL, NULL);
+	gchar *path_as_uri = g_filename_to_uri (path, NULL, NULL);
 	g_return_val_if_fail (path_as_uri, FALSE);
 
-	/* Get the monitor singleton: */
-	GnomeVFSVolumeMonitor *monitor = gnome_vfs_get_volume_monitor();
-
-	/* This seems like a simpler way to do this, but it returns a 	
-	 * GnomeVFSVolume even if the drive is not mounted: */
-	/*
-	GnomeVFSVolume *volume = gnome_vfs_volume_monitor_get_volume_for_path (monitor, 
-	                         g_getenv (MODEST_MMC1_VOLUMEPATH_ENV));
-	if (volume) {
-		gnome_vfs_volume_unref(volume);
-	}
-	*/
+	GVolumeMonitor *monitor = g_volume_monitor_get();
 
 	/* Get the mounted volumes from the monitor: */
-	GList *list = gnome_vfs_volume_monitor_get_mounted_volumes (monitor);
+	GList *list = g_volume_monitor_get_mounts (monitor);
 	GList *iter = list;
+
 	for (iter = list; iter; iter = g_list_next (iter)) {
-		GnomeVFSVolume *volume = (GnomeVFSVolume*)iter->data;
-		if (volume) {
-			/*
-			char *display_name = 
-				gnome_vfs_volume_get_display_name (volume);
-			printf ("volume display name=%s\n", display_name);
-			g_free (display_name);
-			*/
-			
-			char *uri = 
-				gnome_vfs_volume_get_activation_uri (volume);
+		GMount *mount = (GMount *)iter->data;
+		if (mount) {
+			GFile *root = g_mount_get_root (mount);
+			gchar *uri = g_file_get_uri (root);
+
+			g_object_unref (root);
+
 			/* printf ("  uri=%s\n", uri); */
 			if (uri && (strcmp (uri, path_as_uri) == 0))
 				result = TRUE;
 
 			g_free (uri);
 
-			gnome_vfs_volume_unref (volume);
+			if (result)
+				break;
 		}
 	}
 
-	g_list_free (list);
-
+	g_list_free_full (list, g_object_unref);
+	g_object_unref (monitor);
 	g_free (path_as_uri);
 
 	return result;
@@ -919,7 +916,6 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	ModestTnyAccountStorePrivate *priv;
 	TnyAccount *local_account = NULL;
 	TnyLockable *lockable;
-	GnomeVFSVolumeMonitor* monitor = NULL;
 	gboolean auto_update;
 	const gchar *mmc_path = NULL;
 
@@ -965,17 +961,16 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 							 G_CALLBACK (on_account_removed), obj);
 
 	/* Respond to volume mounts and unmounts, such as the
-	   insertion/removal of the memory card. This is a singleton,
-	   so it does not need to be unrefed */
-	monitor = gnome_vfs_get_volume_monitor();
+	   insertion/removal of the memory card. */
+	priv->monitor = g_volume_monitor_get();
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
-						       G_OBJECT(monitor),
-						       "volume-mounted",
-						       G_CALLBACK(on_vfs_volume_mounted),
+						       G_OBJECT(priv->monitor),
+						       "mount-added",
+						       G_CALLBACK(on_mount_added),
 						       obj);
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
-						       G_OBJECT(monitor), "volume-unmounted",
-						       G_CALLBACK(on_vfs_volume_unmounted),
+						       G_OBJECT(priv->monitor), "mount-removed",
+						       G_CALLBACK(on_mount_removed),
 						       obj);
 
 	/* Create the lists of accounts */
@@ -2402,9 +2397,9 @@ modest_tny_account_store_is_disk_full_error (ModestTnyAccountStore *self,
 					     TnyAccount *account)
 {
 	gboolean enough_free_space = TRUE;
-	GnomeVFSURI *cache_dir_uri;
 	const gchar *cache_dir = NULL;
-	GnomeVFSFileSize free_space;
+	GFile *file;
+	GFileInfo *info;
 
 	/* Cache dir is different in case we're using an external storage (like MMC account) */
 	if (account && modest_tny_account_is_memory_card_account (account))
@@ -2414,13 +2409,20 @@ modest_tny_account_store_is_disk_full_error (ModestTnyAccountStore *self,
 	if (!cache_dir)
 		cache_dir = tny_account_store_get_cache_dir ((TnyAccountStore *) self);
 
-	cache_dir_uri = gnome_vfs_uri_new (cache_dir);
-	if (cache_dir_uri) {
-		if (gnome_vfs_get_volume_free_space (cache_dir_uri, &free_space) == GNOME_VFS_OK) {
-			if (free_space < MODEST_TNY_ACCOUNT_STORE_MIN_FREE_SPACE)
-				enough_free_space = FALSE;
+	file = g_file_new_for_uri (cache_dir);
+	info = g_file_query_info (file, G_FILE_ATTRIBUTE_FILESYSTEM_FREE,
+				  G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	g_object_unref (file);
+
+	if (info && g_file_info_has_attribute (info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE)) {
+		guint64 free_space = g_file_info_get_attribute_uint64 (
+					     info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
+
+		if (free_space < MODEST_TNY_ACCOUNT_STORE_MIN_FREE_SPACE) {
+			enough_free_space = FALSE;
 		}
-		gnome_vfs_uri_unref (cache_dir_uri);
+
+		g_object_unref (info);
 	}
 
 	if ((error->code == TNY_SYSTEM_ERROR_MEMORY ||

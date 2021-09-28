@@ -60,7 +60,6 @@
 #include "modest-error.h"
 #include "modest-mail-operation.h"
 #include <modest-count-stream.h>
-#include <libgnomevfs/gnome-vfs.h>
 #include "modest-utils.h"
 #include "modest-debug.h"
 #ifdef MODEST_USE_LIBTIME

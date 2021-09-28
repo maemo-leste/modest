@@ -42,7 +42,6 @@
 #include <widgets/modest-mime-part-view.h>
 #include <widgets/modest-zoomable.h>
 #include <widgets/modest-tny-stream-gtkhtml.h>
-#include <libgnomevfs/gnome-vfs.h>
 #include <gdk/gdkkeysyms.h>
 #include <modest-ui-constants.h>
 

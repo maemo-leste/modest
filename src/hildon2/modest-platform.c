@@ -56,7 +56,6 @@
 #include "modest-tny-folder.h"
 #include "modest-tny-account.h"
 #include <string.h>
-#include <libgnomevfs/gnome-vfs-mime-utils.h>
 #include <modest-account-settings-dialog.h>
 #include <modest-easysetup-wizard-dialog.h>
 #include "modest-hildon2-sort-dialog.h"
@@ -272,8 +271,14 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 	gchar *icon_name  = NULL;
 	gchar **icons, **cursor;
 	
-	if (!mime_type || g_ascii_strcasecmp (mime_type, "application/octet-stream") == 0) 
-		mime_str = g_string_new (gnome_vfs_get_mime_type_for_name (name));
+	if (!mime_type || g_ascii_strcasecmp (mime_type, "application/octet-stream") == 0) {
+		gchar *content_type = g_content_type_guess (name, NULL, 0, NULL);
+		gchar *tmp_mime_type = g_content_type_get_mime_type (content_type);
+
+		g_free (content_type);
+		mime_str = g_string_new (tmp_mime_type);
+		g_free (tmp_mime_type);
+	}
 	else {
 		mime_str = g_string_new (mime_type);
 		g_string_ascii_down (mime_str);
@@ -370,8 +375,10 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 	gint result = 0;
 	DBusConnection *con;
 	gchar *uri_path = NULL;
-	
-	uri_path = gnome_vfs_get_uri_from_local_path (path);	
+	GFile *file = g_file_new_for_path (path);
+
+	uri_path = g_file_get_uri (file);
+	g_object_unref (file);
 	con = osso_get_dbus_connection (modest_maemo_utils_get_osso_context());
 	
 	if (mime_type)
@@ -380,7 +387,9 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 		result = hildon_mime_open_file (con, uri_path);
 	if (result != 1)
 		modest_platform_run_information_dialog (NULL, _("mcen_ni_noregistered_viewer"), FALSE);
-	
+
+	g_free (uri_path);
+
 	return result != 1;
 }
 
@@ -1738,7 +1747,11 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals, const gcha
 		/* Nasty HACK to remove the notifications, set the id
 		   of the existing ones and then close them */
 		notif_id = GPOINTER_TO_INT(notif_list->data);
+#if !defined(NOTIFY_CHECK_VERSION) || !NOTIFY_CHECK_VERSION(0,7,0)
 		notif = notify_notification_new("dummy", NULL, NULL, NULL);
+#else
+		notif = notify_notification_new("dummy", NULL, NULL);
+#endif
 		g_object_set(G_OBJECT(notif), "id", notif_id, NULL);
 
 		/* Close the notification, note that some ids could be

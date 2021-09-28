@@ -50,7 +50,6 @@
 #include <modest-icon-names.h>
 #include "widgets/modest-global-settings-dialog.h"
 #include "modest-tny-msg.h"
-#include <libgnomevfs/gnome-vfs.h>
 #include <string.h>
 #include "modest-text-utils.h"
 #include <locale.h>
@@ -222,13 +221,6 @@ modest_init (int argc, char *argv[])
 	/* initialize the prng, we need it when creating random files */
 	srandom((int)getpid());
 
-	if (!gnome_vfs_initialized()) {
-		if (!gnome_vfs_init ()) {
-			g_printerr ("modest: failed to init gnome-vfs\n");
-			return FALSE;
-		}
-	}
-
 	if (!modest_runtime_init()) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to initialize the modest runtime\n");
@@ -310,9 +302,6 @@ modest_init_uninit (void)
 	if (!modest_platform_uninit())
 		g_printerr ("modest: failed to uninit platform\n");
 	
-	if (gnome_vfs_initialized()) /* apparently, this returns TRUE, even after a shutdown */
-		gnome_vfs_shutdown ();
-
 	_is_initialized = FALSE;
 	return TRUE;
 }
