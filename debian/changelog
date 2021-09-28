@@ -1,3 +1,9 @@
+modest (3.90.8+2) unstable; urgency=low
+
+  * Correctly calculate filesystem free space
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Thu, 28 Sep 2021 20:22:51 +0300
+
 modest (3.90.8+1) unstable; urgency=low
 
   * libmodest-dbus-client has been moved to its own repo
