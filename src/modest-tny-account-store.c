@@ -2410,13 +2410,11 @@ modest_tny_account_store_is_disk_full_error (ModestTnyAccountStore *self,
 		cache_dir = tny_account_store_get_cache_dir ((TnyAccountStore *) self);
 
 	file = g_file_new_for_uri (cache_dir);
-	info = g_file_query_info (file, G_FILE_ATTRIBUTE_FILESYSTEM_FREE,
-				  G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	info = g_file_query_filesystem_info (file, G_FILE_ATTRIBUTE_FILESYSTEM_FREE, NULL, NULL);
 	g_object_unref (file);
 
 	if (info && g_file_info_has_attribute (info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE)) {
-		guint64 free_space = g_file_info_get_attribute_uint64 (
-					     info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
+		guint64 free_space = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
 
 		if (free_space < MODEST_TNY_ACCOUNT_STORE_MIN_FREE_SPACE) {
 			enough_free_space = FALSE;

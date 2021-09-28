@@ -485,15 +485,13 @@ modest_utils_get_available_space (const gchar *maildir_path)
 	folder = modest_local_folder_info_get_maildir_path (maildir_path);
 	file = g_file_new_for_path (folder);
 	g_free (folder);
-
-	info = g_file_query_info (file, G_FILE_ATTRIBUTE_FILESYSTEM_FREE, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	info = g_file_query_filesystem_info (file, G_FILE_ATTRIBUTE_FILESYSTEM_FREE, NULL, NULL);
+	g_object_unref (file);
 
 	if (info) {
 		size = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
 		g_object_unref (info);
 	}
-
-	g_object_unref (file);
 
 	return size;
 }
