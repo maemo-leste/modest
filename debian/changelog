@@ -1,3 +1,9 @@
+modest (3.90.8+3) unstable; urgency=low
+
+  * Initialize hildon on startup
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Thu, 28 Sep 2021 22:07:12 +0300
+
 modest (3.90.8+2) unstable; urgency=low
 
   * Correctly calculate filesystem free space
