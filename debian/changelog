@@ -1,3 +1,10 @@
+modest (3.90.8+1) unstable; urgency=low
+
+  * libmodest-dbus-client has been moved to its own repo
+  * port to gio
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Thu, 28 Sep 2021 20:22:51 +0300
+
 modest (3.90.7-13.5) unstable; urgency=low
 
   * Fix "show more" functionality. Optimize a bit while at it.
