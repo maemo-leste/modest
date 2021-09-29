@@ -1,3 +1,9 @@
+modest (3.90.8+4) unstable; urgency=low
+
+  * use hildon_color_button_get_color to get font color
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Wed, 29 Sep 2021 05:38:41 +0300
+
 modest (3.90.8+3) unstable; urgency=low
 
   * Initialize hildon on startup
