@@ -2,20 +2,58 @@ Source: modest
 Section: mail
 Priority: optional
 Maintainer: Moises Martinez <moises.martinez@nokia.com>
-Build-Depends: debhelper (>= 4.0.0), cdbs, libmodest-dbus-client-dev (>= 3.2.4), gnome-common, gtkhtml3.14-dev, libconic0-dev, libhildon1-dev, libdbus-1-dev,
- libdbus-glib-1-dev, libebook1.2-dev, osso-af-settings, libedataserver1.2-dev, libhildonnotify-dev, libgconf2-dev,
- libglib2.0-dev, libhildonmime-dev, libprofile-dev, libtime-dev, libtinymail-1.0-0-dev, libtinymail-camel-1.0-0-dev,
- libtinymail-maemo-1.0-0-dev, libtinymailui-1.0-0-dev, libtinymail-gio-1.0-0-dev, libtinymailui-gtk-1.0-0-dev, wpeditor0,
- wpeditor-dev, libalarm-dev, gtk-doc-tools, libnotify-dev, libhildonfm2-dev,
- mce-dev, maemo-launcher-dev, profile-data-dev, libiphb-dev, calendar-ui-widgets-0-dev, hildon-control-panel-dev
-#libosso-abook-dev, modest-providers-data
+Build-Depends:
+ debhelper-compat (= 12),
+ libmodest-dbus-client-dev (>= 3.2.4),
+ gnome-common,
+ gtkhtml3.14-dev,
+ libconic0-dev,
+ libhildon1-dev,
+ libdbus-1-dev,
+ libdbus-glib-1-dev,
+ libebook1.2-dev,
+ osso-af-settings,
+ libedataserver1.2-dev,
+ libhildonnotify-dev,
+ libgconf2-dev,
+ libglib2.0-dev,
+ libhildonmime-dev,
+ libprofile-dev,
+ libtime-dev,
+ libtinymail-1.0-0-dev,
+ libtinymail-camel-1.0-0-dev,
+ libtinymail-maemo-1.0-0-dev,
+ libtinymailui-1.0-0-dev,
+ libtinymail-gio-1.0-0-dev,
+ libtinymailui-gtk-1.0-0-dev,
+ wpeditor0,
+ wpeditor-dev,
+ libalarm-dev,
+ gtk-doc-tools,
+ libnotify-dev,
+ libhildonfm2-dev,
+ mce-dev,
+ maemo-launcher-dev,
+ profile-data-dev,
+ libiphb-dev,
+ calendar-ui-widgets-0-dev,
+ hildon-control-panel-dev,
+#libosso-abook-dev,
+#modest-providers-data
 Standards-Version: 3.8.0
 
 Package: modest
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${launcher:Depends}, libmodest-dbus-client, modest-l10n-mr | modest-l10n-mr0,
- osso-icons-theme, osso-countries-l10n-mr | osso-countries-l10n-mr0
-#modest-providers-data, operator-wizard-settings, 
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ ${launcher:Depends},
+ libmodest-dbus-client,
+ modest-l10n-mr | modest-l10n-mr0,
+ osso-icons-theme,
+ osso-countries-l10n-mr | osso-countries-l10n-mr0,
+#modest-providers-data,
+#operator-wizard-settings, 
 Description: an e-mail client for platforms with modest resources
  e-mail client for osso
 
@@ -24,10 +62,3 @@ Architecture: any
 Depends: modest
 Description: Plugin development packages for modest mail client.
  Plugin development packages for modest, the e-mail client for osso.
-
-Package: modest-dbg
-Section: devel
-Architecture: any
-Depends: modest (=${binary:Version})
-Description: debug package for modest
- Contains the debug symbols for modest app
