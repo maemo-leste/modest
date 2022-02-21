@@ -570,7 +570,6 @@ async_get_contacts_cb (EBook *book,
 		       gpointer closure)
 {
 	GSList *addresses, *iter;
-	GList *to_commit_contacts, *to_add_contacts;
 	EContact *self_contact;
 
 	addresses = (GSList *) closure;
@@ -585,8 +584,6 @@ async_get_contacts_cb (EBook *book,
 	}
 
 	iter = addresses;
-	to_commit_contacts = NULL;
-	to_add_contacts = NULL;
 	while (iter) {
 		EContact *contact;
 		const gchar *address;
@@ -599,8 +596,8 @@ async_get_contacts_cb (EBook *book,
 
 		/* Add new or commit existing contact */
 		if (contact) {
-			to_commit_contacts = g_list_prepend (to_commit_contacts, contact);
-			g_debug ("----Preparing to commit contact %s", address);
+			e_book_async_commit_contact (book, contact, NULL, NULL);
+			g_debug ("----Commiting contact %s", address);
 		} else {
 			gchar *email_address, *display_address;
 			GList *email_list = NULL;
@@ -621,24 +618,12 @@ async_get_contacts_cb (EBook *book,
 				g_free (display_address);
 			}
 
-			to_add_contacts = g_list_prepend (to_add_contacts, contact);
-			g_debug ("----Preparing to add contact %s", address);
+			e_book_async_add_contact (book, contact, NULL, NULL);
+			g_debug ("----Adding contact %s", address);
 		}
 
 		iter = g_slist_next (iter);
 	}
-
-	/* Asynchronously add contacts */
-	if (to_add_contacts)
-		e_book_async_add_contacts (book, to_add_contacts, NULL, NULL);
-
-	/* Asynchronously commit contacts */
-	if (to_commit_contacts)
-		e_book_async_commit_contacts (book, to_commit_contacts, NULL, NULL);
-
-	/* Free lists */
-	g_list_free (to_add_contacts);
-	g_list_free (to_commit_contacts);
 
  frees:
 	if (addresses) {
