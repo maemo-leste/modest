@@ -282,7 +282,7 @@ update_tny_account (TnyAccount *tny_account,
 			g_object_unref (option_offline_sync);
 		}
 
-		g_object_set_data (G_OBJECT(tny_account), MODEST_ACCOUNT_UPDATE_ALL_FOLDERS, (gpointer)update_all_folders);
+		g_object_set_data (G_OBJECT(tny_account), MODEST_ACCOUNT_UPDATE_ALL_FOLDERS, GINT_TO_POINTER(update_all_folders));
 
 		security_option_string = modest_protocol_get (security, MODEST_PROTOCOL_SECURITY_ACCOUNT_OPTION);
 		if (security_option_string) {

@@ -1244,7 +1244,7 @@ get_new_cc (TnyHeader *header, const gchar* from, const gchar *new_to)
 		gchar **to_parts, **current;
 
 		to_parts = g_strsplit (new_to, ",", 0);
-		for (current = to_parts; current && *current != '\0'; current++) {
+		for (current = to_parts; *current; current++) {
 			gchar *dup2;
 
 			dup2 = modest_text_utils_remove_address (dup, g_strstrip (*current));

@@ -2098,7 +2098,7 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 
 			folder = TNY_FOLDER (tny_iterator_get_current (iter_all_folders));
 			account = tny_folder_get_account(folder);
-			update_all_folders = g_object_get_data (G_OBJECT(account), MODEST_ACCOUNT_UPDATE_ALL_FOLDERS);
+			update_all_folders = GPOINTER_TO_INT(g_object_get_data (G_OBJECT(account), MODEST_ACCOUNT_UPDATE_ALL_FOLDERS));
 
 			if (!info->update_folder_counts && (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_INBOX || update_all_folders)) {
 				/* Refresh the folder. Our observer receives
