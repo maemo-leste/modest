@@ -234,7 +234,8 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 				     gpointer user_data)
 {
 	TnyHeaderFlags flags;
-	guint date, date_col;
+	time_t date;
+	guint date_col;
 	gboolean received = GPOINTER_TO_INT(user_data);
 
 	if (received)
