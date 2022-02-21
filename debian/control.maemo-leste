@@ -38,7 +38,7 @@ Build-Depends:
  libiphb-dev,
  calendar-ui-widgets-0-dev,
  hildon-control-panel-dev,
-#libosso-abook-dev,
+ libosso-abook-dev,
 #modest-providers-data
 Standards-Version: 3.8.0
 
