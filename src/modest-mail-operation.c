@@ -3173,7 +3173,7 @@ get_msg_async_cb (TnyFolder *folder,
 		if (info->msg == NULL && msg != NULL)
 			info->msg = g_object_ref (msg);
 
-		null_stream = camel_stream_null_new ();
+		null_stream = camel_lite_stream_null_new ();
 		tny_null_stream = tny_camel_stream_new (null_stream);
 		
 		part = TNY_MIME_PART (tny_iterator_get_current (info->get_parts));

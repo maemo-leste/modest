@@ -825,7 +825,7 @@ modest_tny_account_store_finalize (GObject *obj)
 	}
 		
 	if (priv->session) {
-		camel_object_unref (CAMEL_OBJECT(priv->session));
+		camel_lite_object_unref (CAMEL_OBJECT(priv->session));
 		priv->session = NULL;
 	}
 

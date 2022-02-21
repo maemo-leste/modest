@@ -730,11 +730,11 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	 * We have created them so that TnyCamelStoreAccount can find them 
 	 * and report a folder for each directory: */
 	maildir = modest_local_folder_info_get_maildir_path (location_filepath);
-	url = camel_url_new ("maildir:", NULL);
-	camel_url_set_path (url, maildir);
+	url = camel_lite_url_new ("maildir:", NULL);
+	camel_lite_url_set_path (url, maildir);
 	/* Needed by tinymail's DBC assertions */
- 	camel_url_set_host (url, "localhost");
-	url_string = camel_url_to_string (url, 0);
+	camel_lite_url_set_host (url, "localhost");
+	url_string = camel_lite_url_to_string (url, 0);
 	
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
 /* 	printf("DEBUG: %s:\n  url=%s\n", __FUNCTION__, url_string); */
@@ -788,7 +788,7 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	modest_tny_account_set_parent_modest_account_name_for_server_account (
 		TNY_ACCOUNT (tny_account), id);
 	
-	camel_url_free (url);
+	camel_lite_url_free (url);
 	g_free (maildir);
 	g_free (url_string);
 
@@ -832,14 +832,14 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 	gchar *maildir = 
 		modest_per_account_local_outbox_folder_info_get_maildir_path (account_name);
 			
-	CamelURL *url = camel_url_new ("maildir:", NULL);
-	camel_url_set_path (url, maildir);
+	CamelURL *url = camel_lite_url_new ("maildir:", NULL);
+	camel_lite_url_set_path (url, maildir);
 	g_free (maildir);
 	
 	/* Needed by tinymail's DBC assertions */
- 	camel_url_set_host (url, "localhost");
-	gchar *url_string = camel_url_to_string (url, 0);
-	camel_url_free (url);
+	camel_lite_url_set_host (url, "localhost");
+	gchar *url_string = camel_lite_url_to_string (url, 0);
+	camel_lite_url_free (url);
 	
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
 /* 	printf("DEBUG: %s:\n  url=%s\n", __FUNCTION__, url_string); */
