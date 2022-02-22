@@ -1,3 +1,9 @@
+modest (3.90.8+5) unstable; urgency=low
+
+  * enable osso-abook
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Tue, 22 Feb 2021 06:16:41 +0200
+
 modest (3.90.8+4) unstable; urgency=low
 
   * use hildon_color_button_get_color to get font color
