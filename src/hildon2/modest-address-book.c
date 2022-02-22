@@ -574,6 +574,7 @@ async_get_contacts_cb (EBook *book,
 	EContact *self_contact;
 #endif
 	addresses = (GSList *) closure;
+	contacts = g_list_copy (contacts);
 
 	/* Check errors */
 	if (status != E_BOOK_ERROR_OK)
@@ -633,6 +634,9 @@ async_get_contacts_cb (EBook *book,
 	}
 	if (contacts)
 		g_list_free (contacts);
+#if 0
+	g_clear_object(&self_contact);
+#endif
 }
 
 typedef struct _CheckNamesInfo {
