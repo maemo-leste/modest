@@ -3,7 +3,7 @@ Section: mail
 Priority: optional
 Maintainer: Moises Martinez <moises.martinez@nokia.com>
 Build-Depends:
- debhelper-compat (= 12),
+ debhelper-compat (= 10),
  libmodest-dbus-client-dev (>= 3.2.4),
  gnome-common,
  gtkhtml3.14-dev,
