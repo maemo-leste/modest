@@ -1,3 +1,9 @@
+modest (3.90.8+6) unstable; urgency=low
+
+  * Fix invalid memory access on contact selection
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Tue, 22 Feb 2021 10:12:45 +0200
+
 modest (3.90.8+5) unstable; urgency=low
 
   * enable osso-abook
