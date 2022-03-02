@@ -140,13 +140,12 @@ modest_address_book_add_address (const gchar *address,
 	e_vcard_attribute_add_value (attribute, email_address);
 	dialog = osso_abook_temporary_contact_dialog_new (parent, book, attribute, NULL);
 
-	gtk_dialog_run (GTK_DIALOG (dialog));
-
-	gtk_widget_destroy (dialog);
+	g_signal_connect (dialog, "response",
+			  G_CALLBACK (gtk_widget_destroy), NULL);
+	gtk_widget_show (dialog);
 
 	e_vcard_attribute_free (attribute);
 	g_free (email_address);
-
 }
 
 void
