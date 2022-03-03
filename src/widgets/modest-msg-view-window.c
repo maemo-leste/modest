@@ -2412,9 +2412,7 @@ modest_msg_view_window_update_priority (ModestMsgViewWindow *window)
 
 		path = gtk_tree_row_reference_get_path (priv->row_reference);
 		g_return_if_fail (path != NULL);
-		gtk_tree_model_get_iter (priv->header_model, 
-					 &iter, 
-					 gtk_tree_row_reference_get_path (priv->row_reference));
+		gtk_tree_model_get_iter (priv->header_model, &iter, path);
 
 		gtk_tree_model_get (priv->header_model, &iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 				    &header, -1);
@@ -3800,6 +3798,7 @@ update_window_title (ModestMsgViewWindow *window)
 	}
 
 	modest_window_set_title (MODEST_WINDOW (window), subject);
+	g_free (subject);
 }
 
 

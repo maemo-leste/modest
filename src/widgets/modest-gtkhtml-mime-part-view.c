@@ -605,6 +605,7 @@ set_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 			set_text_part (self, part);
 		}
 	}
+	g_free (charset);
 	g_free (header_content_type_lower);
 	g_free (header_content_type);
 

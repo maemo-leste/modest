@@ -1194,6 +1194,7 @@ update_view (ModestHeaderWindow *self,
 
 	hildon_button_set_value (HILDON_BUTTON (priv->show_more_button),
 				 show_more_value);
+	g_free (show_more_value);
 #endif
 }
 

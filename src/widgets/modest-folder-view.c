@@ -914,10 +914,12 @@ messages_cell_data  (GtkTreeViewColumn *column,
 			g_free(account_name);
 		}
 
-		if (settings)
+		if (settings) {
 			item_name = g_strconcat (_("mcen_ti_lastupdated"), "\n",
 					 	get_last_updated_string(self, account_mgr, settings),
 					 	NULL);
+			g_object_unref (settings);
+		}
 	}
 
 
@@ -2338,6 +2340,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	
 			store_protocol = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
 										account_name);
+			g_free (account_name);
 
 			if (modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
 									    store_protocol,

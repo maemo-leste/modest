@@ -2639,8 +2639,12 @@ modest_header_view_get_header_at_pos (ModestHeaderView *header_view,
 
 	/* Get model */
 	tree_model = gtk_tree_view_get_model ((GtkTreeView *) header_view);
-	if (!gtk_tree_model_get_iter (tree_model, &iter, path))
+	if (!gtk_tree_model_get_iter (tree_model, &iter, path)) {
+		gtk_tree_path_free (path);
 		return NULL;
+	}
+
+	gtk_tree_path_free (path);
 
 	/* Get header */
 	gtk_tree_model_get (tree_model, &iter,

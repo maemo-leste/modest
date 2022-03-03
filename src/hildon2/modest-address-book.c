@@ -1420,6 +1420,7 @@ selector_on_response (GtkDialog *dialog,
 				g_debug ("Current selection : %s", current_selection);
 				g_free (current_selection);
 			}
+			gtk_tree_path_free (selected_row);
 		}
 	}
 

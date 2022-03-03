@@ -1725,12 +1725,15 @@ modest_account_mgr_get_account_from_tny_account  (ModestAccountMgr *self,
 	GSList *account_names = modest_account_mgr_account_names(self, TRUE);
 	GSList *cursor = account_names;
 	while (cursor) {
-		const gchar *store = modest_account_mgr_get_string(self,(gchar *)cursor->data,
+		gchar *store = modest_account_mgr_get_string(self,(gchar *)cursor->data,
 						"store_account",FALSE);
 		if (!strcmp(store,tny_account_get_id(TNY_ACCOUNT(account)))) {
+			g_free (store);
 			account_name = g_strdup((gchar *)cursor->data);
 			break;
 		}
+
+		g_free (store);
 		cursor = cursor -> next;
 	}
 	

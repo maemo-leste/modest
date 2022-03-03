@@ -1285,7 +1285,8 @@ modest_account_mgr_account_is_multimailbox (ModestAccountMgr *mgr,
 					*mmb_protocol = protocol;
 				result = TRUE;
 			}
-			
+
+			g_free (proto);
 		}
 	}
 

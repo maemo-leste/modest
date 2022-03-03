@@ -497,6 +497,7 @@ modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_ht
 			related_or_mixed = g_object_ref (part);
 		}
 
+		g_free (content_type);
 		g_object_unref (part);
 		part = NULL;
 
