@@ -569,21 +569,20 @@ async_get_contacts_cb (EBook *book,
 		       gpointer closure)
 {
 	GSList *addresses, *iter;
-#if 0
 	EContact *self_contact;
-#endif
+
 	addresses = (GSList *) closure;
 	contacts = g_list_copy (contacts);
 
 	/* Check errors */
 	if (status != E_BOOK_ERROR_OK)
 		goto frees;
-#if 0
+
 	self_contact = (EContact *) osso_abook_self_contact_get_default ();
 	if (self_contact) {
 		contacts = g_list_prepend (contacts, self_contact);
 	}
-#endif
+
 	iter = addresses;
 	while (iter) {
 		EContact *contact;
@@ -631,11 +630,11 @@ async_get_contacts_cb (EBook *book,
 		g_slist_foreach (addresses, (GFunc) g_free, NULL);
 		g_slist_free (addresses);
 	}
+
 	if (contacts)
 		g_list_free (contacts);
-#if 0
+
 	g_clear_object(&self_contact);
-#endif
 }
 
 typedef struct _CheckNamesInfo {
@@ -1347,7 +1346,6 @@ modest_address_book_has_address (const gchar *address)
 const gchar *
 modest_address_book_get_my_name ()
 {
-#if 0
 	OssoABookSelfContact *self_contact = osso_abook_self_contact_get_default ();
 
 	/* We are not using osso_abook_contact_get_display_name
@@ -1356,7 +1354,6 @@ modest_address_book_get_my_name ()
 	if (self_contact)
 		return e_contact_get ((EContact *) self_contact, E_CONTACT_FULL_NAME);
 	else
-#endif
 		return NULL;
 }
 
