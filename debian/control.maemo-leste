@@ -21,7 +21,7 @@ Build-Depends:
  libprofile-dev,
  libtime-dev,
  libtinymail-1.0-0-dev,
- libtinymail-camel-1.0-0-dev,
+ libtinymail-camel-1.0-0-dev (>= 1.1.97),
  libtinymail-maemo-1.0-0-dev,
  libtinymailui-1.0-0-dev,
  libtinymail-gio-1.0-0-dev,

@@ -1,3 +1,9 @@
+modest (3.90.8+8) unstable; urgency=low
+
+  * Build with latest tinymail
+
+ -- Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>  Thu, 12 Dec 2022 17:10:51 +0200
+
 modest (3.90.8+7) unstable; urgency=low
 
   * Fix several memory leaks
