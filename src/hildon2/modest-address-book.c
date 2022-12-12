@@ -31,13 +31,12 @@
 
 #include <config.h>
 #include <glib/gi18n.h>
+#include "modest-platform.h"
 #include <modest-address-book.h>
 #include <modest-text-utils.h>
 #include <libebook/libebook.h>
 #include "modest-hildon-includes.h"
 #include <libosso-abook/osso-abook.h>
-#include <libedataserver/e-data-server-util.h>
-#include "modest-platform.h"
 #include "modest-runtime.h"
 #include "widgets/modest-window-mgr.h"
 #include "widgets/modest-ui-constants.h"

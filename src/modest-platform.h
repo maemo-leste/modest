@@ -41,6 +41,8 @@
 
 G_BEGIN_DECLS
 
+typedef struct _CamelSettings CamelSettings;
+
 typedef enum _ModestConfirmationDialogType {
 	MODEST_CONFIRMATION_DELETE_FOLDER,
 } ModestConfirmationDialogType;
