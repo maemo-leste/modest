@@ -1438,7 +1438,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	/* Get account and set it into mail_operation */
-	priv->account = g_object_ref (transport_account);
+	priv->account = TNY_ACCOUNT(g_object_ref (transport_account));
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_INFO;
 
 	info = g_slice_new0 (SaveToDraftsInfo);
@@ -2415,7 +2415,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_INFO;
 	priv->account = (TNY_IS_ACCOUNT (parent)) ? 
-		g_object_ref (parent) : 
+		TNY_ACCOUNT(g_object_ref (parent)) : 
 		modest_tny_folder_get_account (TNY_FOLDER (parent));
 
 	/* Check for already existing folder */
@@ -4325,7 +4325,7 @@ void modest_mail_operation_disconnect_account (ModestMailOperation *self, TnyAcc
 
 	priv->done = 0;
 	priv->total = 1;
-	priv->account = g_object_ref (TNY_CAMEL_ACCOUNT (account));
+	priv->account = TNY_ACCOUNT(g_object_ref (TNY_CAMEL_ACCOUNT (account)));
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_DISCONNECT_ACCOUNT;
 

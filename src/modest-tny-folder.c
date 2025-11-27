@@ -568,7 +568,7 @@ modest_tny_folder_store_find_folder_from_uri (TnyFolderStore *folder_store, cons
 
 			folder_url = tny_folder_get_url_string (TNY_FOLDER (child));
 			if (uri_to_find && folder_url && !strcmp (folder_url, uri_to_find))
-				result = g_object_ref (child);
+				result = TNY_FOLDER(g_object_ref (child));
 			g_free (folder_url);
 		}
 

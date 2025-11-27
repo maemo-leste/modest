@@ -1090,9 +1090,9 @@ get_account_protocol_pixbufs (ModestFolderView *folder_view,
 	if (pixbuf) {
 		ThreePixbufs *retval;
 		retval = g_slice_new0 (ThreePixbufs);
-		retval->pixbuf = g_object_ref ((GObject *) pixbuf);
-		retval->pixbuf_open = g_object_ref ((GObject *) pixbuf);
-		retval->pixbuf_close = g_object_ref ((GObject *) pixbuf);
+		retval->pixbuf = GDK_PIXBUF(g_object_ref ((GObject *) pixbuf));
+		retval->pixbuf_open = GDK_PIXBUF(g_object_ref ((GObject *) pixbuf));
+		retval->pixbuf_close = GDK_PIXBUF(g_object_ref ((GObject *) pixbuf));
 		return retval;
 	} else {
 		return NULL;
@@ -1124,7 +1124,7 @@ get_folder_icons (ModestFolderView *folder_view, TnyFolderType type, GObject *in
 	ThreePixbufs *retval = NULL;
 
 	if (TNY_IS_ACCOUNT (instance)) {
-		account = g_object_ref (instance);
+		account = TNY_ACCOUNT(g_object_ref (instance));
 	} else if (TNY_IS_FOLDER (instance) && !TNY_IS_MERGE_FOLDER (instance)) {
 		account = tny_folder_get_account (TNY_FOLDER (instance));
 	}
@@ -1585,7 +1585,7 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 		g_object_unref (G_OBJECT (priv->account_store));
 	}
 
-	priv->account_store = g_object_ref (G_OBJECT (account_store));
+	priv->account_store = TNY_ACCOUNT_STORE(g_object_ref (G_OBJECT (account_store)));
 
 	priv->account_removed_signal =
 		g_signal_connect (G_OBJECT(account_store), "account_removed",

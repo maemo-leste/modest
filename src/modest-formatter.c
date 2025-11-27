@@ -453,7 +453,7 @@ modest_formatter_create_message (ModestFormatter *self, gboolean single_body,
 			tny_mime_part_set_content_type (related_mime_part, "multipart/related");
 			tny_mime_part_add_part (TNY_MIME_PART (result), related_mime_part);
 		} else {
-			related_mime_part = g_object_ref (result);
+			related_mime_part = TNY_MIME_PART(g_object_ref (result));
 		}
 			
 		if (!single_body) {
@@ -543,7 +543,7 @@ modest_formatter_create_body_part (ModestFormatter *self, TnyMsg *msg)
 		tny_mime_part_add_part (TNY_MIME_PART (parent), result);
 		g_object_unref (parent);
 	} else {
-		result = g_object_ref (msg);
+		result = TNY_MIME_PART(g_object_ref (msg));
 	}
 
 	return result;

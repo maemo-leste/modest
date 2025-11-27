@@ -2452,7 +2452,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	}
 	else {
 		/* Invoke the connect and perform */
-		modest_platform_connect_and_perform (info->parent_window,
+		modest_platform_connect_and_perform (MODEST_WINDOW(info->parent_window),
 		force_connection, info->account, do_send_receive_performer, info);
 		info->disconnect_op = NULL;
 	}
@@ -2473,7 +2473,7 @@ modest_ui_actions_send_receive_offline (ModestMailOperation *mail_op, gpointer u
 
 	/* Invoke the connect and perform */
 	modest_platform_connect_and_perform (
-		info->parent_window ? info->parent_window : NULL,
+		info->parent_window ? MODEST_WINDOW(info->parent_window) : NULL,
 		info->force_connection, info->account, do_send_receive_performer, info);
 }
 
@@ -5258,7 +5258,7 @@ static TnyAccount *
 get_account_from_folder_store (TnyFolderStore *folder_store)
 {
 	if (TNY_IS_ACCOUNT (folder_store))
-		return g_object_ref (folder_store);
+		return TNY_ACCOUNT(g_object_ref (folder_store));
 	else
 		return tny_folder_get_account (TNY_FOLDER (folder_store));
 }
@@ -5306,7 +5306,7 @@ modest_ui_actions_on_folder_window_move_to (GtkWidget *folder_view,
 		MoveFolderInfo *info = g_new0 (MoveFolderInfo, 1);
 		DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
 
-		info->src_folder = g_object_ref (src_folder);
+		info->src_folder = TNY_FOLDER(g_object_ref (src_folder));
 		info->dst_folder = g_object_ref (dst_folder);
 		info->delete_original = TRUE;
 		info->folder_view = folder_view;
@@ -5350,7 +5350,7 @@ modest_ui_actions_transfer_messages_helper (ModestWindow *win,
 
 	/* Create the helper */
 	helper = g_slice_new (XferMsgsHelper);
-	helper->dst_folder = g_object_ref (dst_folder);
+	helper->dst_folder = TNY_FOLDER_STORE(g_object_ref (dst_folder));
 	helper->headers = g_object_ref (headers);
 
 	if (need_connection) {

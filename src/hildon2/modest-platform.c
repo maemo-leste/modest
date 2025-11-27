@@ -2784,7 +2784,7 @@ move_to_dialog_set_selected_folder_store (GtkWidget *dialog,
 	if (TNY_IS_FOLDER (folder_store))
 		account = tny_folder_get_account (TNY_FOLDER (folder_store));
 	else
-		account = g_object_ref (folder_store);
+		account = TNY_ACCOUNT(g_object_ref (folder_store));
 
 	if (modest_tny_account_is_virtual_local_folders (account))
 		account_name = modest_conf_get_string (modest_runtime_get_conf(),

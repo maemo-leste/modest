@@ -928,7 +928,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
-	priv->account_mgr = g_object_ref (G_OBJECT(account_mgr));
+	priv->account_mgr = MODEST_ACCOUNT_MGR(g_object_ref (G_OBJECT(account_mgr)));
 	priv->device = g_object_ref (device);
 
 	/* If autoupdate is off then we don't try to connect to the
@@ -1062,7 +1062,7 @@ modest_tny_account_store_get_device (TnyAccountStore *self)
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	if (priv->device) 
-		return g_object_ref (G_OBJECT(priv->device));
+		return TNY_DEVICE(g_object_ref (G_OBJECT(priv->device)));
 	else
 		return NULL;
 }

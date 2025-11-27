@@ -2360,7 +2360,7 @@ filter_row (GtkTreeModel *model,
 			NotifyFilterInfo *info;
 
 			info = g_slice_new0 (NotifyFilterInfo);
-			info->self = g_object_ref (G_OBJECT (user_data));
+			info->self = MODEST_HEADER_VIEW(g_object_ref (G_OBJECT (user_data)));
 			if (header)
 				info->folder = tny_header_get_folder (header);
 			priv->status_timeout = g_timeout_add_full (G_PRIORITY_DEFAULT, 1000,

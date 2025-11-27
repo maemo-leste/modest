@@ -3965,8 +3965,8 @@ on_fetch_image (ModestMsgView *msgview,
 	current_account = modest_window_get_active_account (MODEST_WINDOW (window));
 
 	fidata = g_slice_new0 (FetchImageData);
-	fidata->msg_view = g_object_ref (msgview);
-	fidata->window = g_object_ref (window);
+	fidata->msg_view = GTK_WIDGET(g_object_ref (msgview));
+	fidata->window = GTK_WIDGET(g_object_ref (window));
 	fidata->uri = g_strdup (uri);
 	fidata->cache_id = modest_images_cache_get_id (current_account, uri);
 	fidata->output_stream = g_object_ref (stream);

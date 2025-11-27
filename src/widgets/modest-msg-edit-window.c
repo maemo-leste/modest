@@ -1344,7 +1344,7 @@ get_related_images (ModestMsgEditWindow *self, TnyMsg *msg)
 	content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
 
 	if (content_type && !g_ascii_strcasecmp (content_type, "multipart/related")) {
-		parent = g_object_ref (msg);
+		parent = TNY_MIME_PART(g_object_ref (msg));
 	} else if (content_type && !g_ascii_strcasecmp (content_type, "multipart/mixed")) {
 		TnyList *parts = TNY_LIST (tny_simple_list_new ());
 		TnyIterator *iter;

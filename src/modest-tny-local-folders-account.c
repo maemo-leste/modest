@@ -317,7 +317,7 @@ modest_tny_local_folders_account_get_merged_outbox (ModestTnyLocalFoldersAccount
 
 	priv = TNY_LOCAL_FOLDERS_ACCOUNT_GET_PRIVATE (self);
 	if (priv->outbox_folder)
-		return g_object_ref (priv->outbox_folder);
+		return TNY_FOLDER(g_object_ref (priv->outbox_folder));
 	else
 		return NULL;
 }

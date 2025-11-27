@@ -493,7 +493,7 @@ edit_mode_register_new (const gchar *description,
 
 	reg->description = g_strdup (description);
 	reg->button_label = g_strdup (button_label);
-	reg->tree_view = g_object_ref (tree_view);
+	reg->tree_view = GTK_WIDGET(g_object_ref (tree_view));
 	reg->mode = mode;
 	reg->action = action;
 

@@ -383,7 +383,7 @@ add_images (TnyMsg *msg, GList *images_list, GError **err)
 	content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
 
 	if ((content_type != NULL) && !strcasecmp (content_type, "multipart/related")) {
-		related_part = g_object_ref (msg);
+		related_part = TNY_MIME_PART(g_object_ref (msg));
 	} else if ((content_type != NULL) && !strcasecmp (content_type, "multipart/mixed")) {
 		TnyList *parts = TNY_LIST (tny_simple_list_new ());
 		TnyIterator *iter = NULL;
@@ -1021,7 +1021,7 @@ modest_tny_msg_get_attachments_parent (TnyMsg *msg)
 		g_object_unref (msg_children);
 	}
 	if (result == NULL) {
-		result = g_object_ref (msg);
+		result = TNY_MIME_PART(g_object_ref (msg));
 	}
 
 	return result;
